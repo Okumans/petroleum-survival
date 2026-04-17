@@ -3,6 +3,8 @@
 #include "graphics/camera.hpp"
 #include "graphics/camera_controller.hpp"
 #include "graphics/skybox.hpp"
+#include "graphics/animation.hpp"
+#include "graphics/animator.hpp"
 #include "scene/game_object.hpp"
 
 #include <glad/gl.h>
@@ -27,6 +29,8 @@ private:
   CameraController m_cameraController;
   std::unique_ptr<Skybox> m_skybox;
   std::unique_ptr<GameObject> m_testObject;
+  std::unique_ptr<Animation> m_testAnimation;
+  std::unique_ptr<Animator> m_testAnimator;
 
   // Shadow mapping
   GLuint m_shadowMapFBO;

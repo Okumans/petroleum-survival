@@ -26,6 +26,7 @@ struct AssimpNodeData {
 
 class Animation {
 private:
+  glm::mat4 m_globalTransformation{1.0f};
   float m_duration;
   int m_ticksPerSecond;
   std::vector<Bone> m_bones;
@@ -42,6 +43,7 @@ public:
   float getTicksPerSecond() const { return m_ticksPerSecond; }
   float getDuration() const { return m_duration; }
   const AssimpNodeData &getRootNode() const { return m_rootNode; }
+  const glm::mat4 &getGlobalTransformation() const { return m_globalTransformation; }
   const std::map<std::string, BoneInfo> &getBoneIDMap() const {
     return m_boneInfoMap;
   }

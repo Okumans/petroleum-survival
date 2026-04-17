@@ -11,7 +11,7 @@ Animator::Animator(Animation *animation) {
   m_currentTime = 0.0f;
   m_currentAnimation = animation;
 
-  m_finalBoneMatrices.resize(100);
+  m_finalBoneMatrices.resize(200, glm::mat4(1.0f));
 }
 
 void Animator::updateAnimation(float delta_time) {
@@ -52,7 +52,9 @@ void Animator::_calculateBoneTransform(const AssimpNodeData *node,
   if (bone_iterator != bone_info_map.end()) {
     uint32_t index = bone_iterator->second.id;
     glm::mat4 offset = bone_iterator->second.offset;
-    m_finalBoneMatrices[index] = global_transformation * offset;
+    if (index < 200) {
+      m_finalBoneMatrices[index] = global_transformation * offset;
+    }
   }
 
   for (size_t i = 0; i < node->childrenCount; i++) {

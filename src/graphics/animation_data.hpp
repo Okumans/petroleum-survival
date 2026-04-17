@@ -4,6 +4,6 @@
 #include <glm/glm.hpp>
 
 struct BoneInfo {
-  uint32_t id;
-  glm::mat4 offset;
+  uint32_t id = 0;
+  glm::mat4 offset{1.0f};
 };

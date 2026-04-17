@@ -24,7 +24,7 @@ Animation::Animation(const std::string &animation_path, Model *model) {
   m_ticksPerSecond = animation->mTicksPerSecond;
 
   aiMatrix4x4 global_transformation = scene->mRootNode->mTransformation;
-  global_transformation = global_transformation.Inverse();
+  m_globalTransformation = mat4FromAssimp(global_transformation.Inverse());
 
   _readHierarchyData(m_rootNode, scene->mRootNode);
   _readMissingBones(animation, *model);

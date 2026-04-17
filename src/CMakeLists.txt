@@ -5,7 +5,7 @@ set(ASSETS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/assets)
 file(COPY ${ASSETS_DIR} DESTINATION ${CMAKE_INSTALL_PREFIX})
 # Additionally, install assets for QtCreator and CLion IDE.
 file(COPY ${ASSETS_DIR} DESTINATION ${CMAKE_BINARY_DIR})
-
+ 
 #-----------------------------------------------------------------------------#
 # Embed shaders using xxd
 #-----------------------------------------------------------------------------#

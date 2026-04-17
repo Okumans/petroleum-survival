@@ -91,6 +91,9 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
   vertices.reserve(mesh->mNumVertices);
   indices.reserve(mesh->mNumFaces);
 
+  // Always pre-bake the node transform into vertices (keeps AABB correct
+  // and non-animated appearance consistent). For skinned meshes, the bone
+  // OffsetMatrix is adjusted with inverse(transform) to compensate.
   glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(transform)));
 
   for (size_t i = 0; i < mesh->mNumVertices; ++i) {
@@ -250,7 +253,7 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
   Material material = mat_builder.create();
   glm::vec3 final_color(diffuseColor.r, diffuseColor.g, diffuseColor.b);
 
-  _extractBoneWeightForVertices(vertices, mesh);
+  _extractBoneWeightForVertices(vertices, mesh, transform);
 
   return Mesh(std::move(vertices), std::move(indices), std::move(material),
               final_color, opacity);
@@ -341,7 +344,17 @@ void Model::_setVertexBoneData(Vertex &vertex, uint32_t bone_id, float weight) {
 }
 
 void Model::_extractBoneWeightForVertices(std::vector<Vertex> &vertices,
-                                          aiMesh *mesh) {
+                                          aiMesh *mesh,
+                                          glm::mat4 mesh_transform) {
+  // Pre-compute the inverse of the mesh's accumulated node transform.
+  // Since vertices are pre-baked with mesh_transform, the offset must
+  // undo that bake so the bone math sees mesh-local coordinates:
+  //   finalMatrix * v_stored = boneGlobal * rawOffset * v_local
+  //   finalMatrix * (T * v_local) = boneGlobal * rawOffset * v_local
+  //   => finalMatrix = boneGlobal * rawOffset * inverse(T)
+  //   => adjustedOffset = rawOffset * inverse(T)
+  glm::mat4 inv_mesh_transform = glm::inverse(mesh_transform);
+
   for (size_t bone_index = 0; bone_index < mesh->mNumBones; ++bone_index) {
     std::optional<uint32_t> bone_id;
     std::string bone_name = mesh->mBones[bone_index]->mName.C_Str();
@@ -353,7 +366,8 @@ void Model::_extractBoneWeightForVertices(std::vector<Vertex> &vertices,
       glm::mat4 target_mat;
       std::memcpy(glm::value_ptr(target_mat),
                   &mesh->mBones[bone_index]->mOffsetMatrix, sizeof(float) * 16);
-      new_bone_info.offset = glm::transpose(target_mat);
+      glm::mat4 raw_offset = glm::transpose(target_mat);
+      new_bone_info.offset = raw_offset * inv_mesh_transform;
 
       m_boneInfoMap[bone_name] = new_bone_info;
       bone_id = m_boneCount++;
@@ -372,6 +386,21 @@ void Model::_extractBoneWeightForVertices(std::vector<Vertex> &vertices,
 
       assert(vertex_id <= vertices.size());
       _setVertexBoneData(vertices[vertex_id], bone_id.value(), weight);
+    }
+  }
+
+  // Weight normalization pass to prevent spaghetti deformations when total weight deviates from 1.0.
+  // This physically ensures the vertices don't collapse or explode outward.
+  for (auto &vertex : vertices) {
+    float total_weight = 0.0f;
+    for (size_t i = 0; i < MAX_BONE_INFLUENCE; ++i) {
+      total_weight += vertex.m_weights[i];
+    }
+    
+    if (total_weight > 0.0f) {
+      for (size_t i = 0; i < MAX_BONE_INFLUENCE; ++i) {
+        vertex.m_weights[i] /= total_weight;
+      }
     }
   }
 }

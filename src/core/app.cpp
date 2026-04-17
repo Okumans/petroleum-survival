@@ -130,7 +130,8 @@ App::~App() = default;
 void App::_setupResources() {
   // Helpers
   auto loadModel = [](ModelName name, const std::string &path) {
-    return [name, path]() { ModelManager::loadModel(name, path.c_str()); };
+    return
+        [name, path]() { ModelManager::loadModel(name, path.c_str(), false); };
   };
 
   // Shaders
@@ -184,7 +185,7 @@ void App::_setupResources() {
   m_loadingTasks.push_back(
       {"Model: Kasane Teto",
        loadModel(ModelName::KASANE_TETO,
-                 ASSETS_PATH "/objects/kasane_teto/teto_jogging.fbx")});
+                 ASSETS_PATH "/objects/vampire_test/dancing_vampire.dae")});
 
   // Skybox
   m_loadingTasks.push_back(

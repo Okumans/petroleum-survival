@@ -97,7 +97,14 @@ void Game::setup() {
 
   m_testObject = std::make_unique<GameObject>(
       ModelManager::getModel(ModelName::KASANE_TETO));
-  m_testObject->setScale(0.2f);
+  m_testObject->setScale(1.0f);
+  // m_testObject->setRotation({90.0f, 0.0f, 0.0f});
+
+  m_testAnimation = std::make_unique<Animation>(
+      ASSETS_PATH "/objects/vampire_test/dancing_vampire.dae",
+      m_testObject->getModel().get());
+
+  m_testAnimator = std::make_unique<Animator>(m_testAnimation.get());
 
   reset();
 }
@@ -130,6 +137,10 @@ void Game::update(double delta_time) {
 
   _updateCamera(delta_time);
   m_cameraController.update(static_cast<float>(delta_time));
+
+  if (m_testAnimator) {
+    m_testAnimator->updateAnimation(static_cast<float>(delta_time));
+  }
 }
 
 void Game::render(double delta_time) {
@@ -154,6 +165,17 @@ void Game::render(double delta_time) {
         .camera = m_camera,
         .deltaTime = delta_time,
     };
+    if (m_testAnimator) {
+      shadow_shader.setBool("u_HasAnimation", true);
+      auto matrices = m_testAnimator->getFinalBoneMatrices();
+      for (size_t i = 0; i < matrices.size(); ++i) {
+        shadow_shader.setMat4(std::format("finalBonesMatrices[{}]", i),
+                              matrices[i]);
+      }
+    } else {
+      shadow_shader.setBool("u_HasAnimation", false);
+    }
+
     if (m_testObject)
       m_testObject->draw(shadow_draw_ctx);
   }
@@ -216,6 +238,18 @@ void Game::render(double delta_time) {
   if (m_testObject) {
     pbr_shader.setVec3("u_BaseColor", glm::vec3(1.0f));
     pbr_shader.setVec2("u_UVOffset", glm::vec2(0.0f));
+
+    if (true && m_testAnimator) {
+      pbr_shader.setBool("u_HasAnimation", true);
+      auto matrices = m_testAnimator->getFinalBoneMatrices();
+      for (size_t i = 0; i < matrices.size(); ++i) {
+        pbr_shader.setMat4(std::format("finalBonesMatrices[{}]", i),
+                           matrices[i]);
+      }
+    } else {
+      pbr_shader.setBool("u_HasAnimation", false);
+    }
+
     RenderContext ctx = {
         .shader = pbr_shader,
         .camera = m_camera,
