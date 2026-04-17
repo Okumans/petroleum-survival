@@ -15,7 +15,8 @@ static glm::mat4 mat4FromAssimp(const aiMatrix4x4 &from) {
 Animation::Animation(const std::string &animation_path, Model *model) {
   Assimp::Importer importer;
   const aiScene *scene =
-      importer.ReadFile(animation_path, aiProcess_Triangulate);
+      importer.ReadFile(animation_path,
+                        aiProcess_Triangulate | aiProcess_GlobalScale);
 
   assert(scene && scene->mRootNode);
 

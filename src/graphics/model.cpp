@@ -44,7 +44,8 @@ void Model::_loadModel(const char *path, bool flip_vertical) {
   Assimp::Importer import;
   const aiScene *scene = import.ReadFile(
       path, aiProcess_Triangulate | aiProcess_FlipUVs |
-                aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
+                aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices |
+                aiProcess_GlobalScale);
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       !scene->mRootNode) {
@@ -162,6 +163,9 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
   aiGetMaterialFloat(assimp_material, AI_MATKEY_ROUGHNESS_FACTOR,
                      &roughnessFactor);
   aiGetMaterialFloat(assimp_material, AI_MATKEY_OPACITY, &opacity);
+  if (opacity <= 0.0f) {
+    opacity = 1.0f;
+  }
   aiGetMaterialColor(assimp_material, AI_MATKEY_COLOR_DIFFUSE, &diffuseColor);
 
   mat_builder.setMetallicFactor(metallicFactor);
