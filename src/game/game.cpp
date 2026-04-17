@@ -150,7 +150,10 @@ void Game::render(double delta_time) {
 
   {
     RenderContext shadow_draw_ctx = {
-        .shader = shadow_shader, .camera = m_camera, .deltaTime = delta_time};
+        .shader = shadow_shader,
+        .camera = m_camera,
+        .deltaTime = delta_time,
+    };
     if (m_testObject)
       m_testObject->draw(shadow_draw_ctx);
   }
@@ -194,9 +197,9 @@ void Game::render(double delta_time) {
   pbr_shader.setInt("u_SpecularEnvMap", 10);
 
   // Bind Irradiance Map for diffuse IBL
-  auto irradianceMap =
+  auto irradiance_map =
       TextureManager::getTexture(TextureName("irradiance_map"));
-  glBindTextureUnit(12, irradianceMap->getTexID());
+  glBindTextureUnit(12, irradiance_map->getTexID());
   pbr_shader.setInt("u_IrradianceMap", 12);
 
   // Bind Shadow Map
@@ -214,16 +217,22 @@ void Game::render(double delta_time) {
     pbr_shader.setVec3("u_BaseColor", glm::vec3(1.0f));
     pbr_shader.setVec2("u_UVOffset", glm::vec2(0.0f));
     RenderContext ctx = {
-        .shader = pbr_shader, .camera = m_camera, .deltaTime = delta_time};
+        .shader = pbr_shader,
+        .camera = m_camera,
+        .deltaTime = delta_time,
+    };
     m_testObject->draw(ctx);
   }
 
   if (m_debugAABB && m_testObject) {
-    RenderContext debugCtx = {
-        .shader = pbr_shader, .camera = m_camera, .deltaTime = delta_time};
-    DebugDrawer::drawAABB(debugCtx, m_testObject->getHitboxAABB(),
+    RenderContext debug_ctx = {
+        .shader = pbr_shader,
+        .camera = m_camera,
+        .deltaTime = delta_time,
+    };
+    DebugDrawer::drawAABB(debug_ctx, m_testObject->getHitboxAABB(),
                           {1.0f, 0.0f, 0.0f});
-    DebugDrawer::drawAABB(debugCtx, m_testObject->getWorldAABB(),
+    DebugDrawer::drawAABB(debug_ctx, m_testObject->getWorldAABB(),
                           {1.0f, 1.0f, 0.0f});
   }
 

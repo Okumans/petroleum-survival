@@ -6,8 +6,8 @@
 #include "graphics/model.hpp"
 
 #include <assimp/scene.h>
+#include <cstdint>
 #include <glm/glm.hpp>
-
 
 #include <map>
 #include <string>
@@ -20,7 +20,7 @@ struct BoneInfo;
 struct AssimpNodeData {
   glm::mat4 transformation;
   std::string name;
-  int childrenCount;
+  uint32_t childrenCount;
   std::vector<AssimpNodeData> children;
 };
 

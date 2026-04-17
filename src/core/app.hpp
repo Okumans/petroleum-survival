@@ -1,7 +1,6 @@
 #pragma once
 
 #include "game/game.hpp"
-#include "graphics/camera.hpp"
 #include "ui/ui_manager.hpp"
 
 #include <GLFW/glfw3.h>
@@ -20,8 +19,6 @@
 struct InputState {
   bool isFirstMouse = false;
   float mouseLastX = 0.0f, mouseLastY = 0.0f;
-
-  void setMousePosition(float pos_x, float pos_y) {}
 };
 
 struct AppState {
