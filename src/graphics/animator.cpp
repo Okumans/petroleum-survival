@@ -1,18 +1,17 @@
 #include "animator.hpp"
 
+#include "glm/fwd.hpp"
 #include "graphics/animation.hpp"
 #include "graphics/animation_data.hpp"
 #include "graphics/bone.hpp"
 
 #include <cmath>
 #include <cstdint>
+#include <format>
 
-Animator::Animator(Animation *animation) {
-  m_currentTime = 0.0f;
-  m_currentAnimation = animation;
-
-  m_finalBoneMatrices.resize(200, glm::mat4(1.0f));
-}
+Animator::Animator(Animation *animation)
+    : m_finalBoneMatrices(100, glm::mat4(1.0f)), m_currentAnimation(animation),
+      m_currentTime(0.0f) {}
 
 void Animator::updateAnimation(float delta_time) {
   m_deltaTime = delta_time;
@@ -29,6 +28,13 @@ void Animator::updateAnimation(float delta_time) {
 void Animator::playAnimation(Animation *p_animation) {
   m_currentAnimation = p_animation;
   m_currentTime = 0.0f;
+}
+
+void Animator::apply(Shader &shader) {
+  auto matrices = getFinalBoneMatrices();
+  for (size_t i = 0; i < matrices.size(); ++i) {
+    shader.setMat4(std::format("finalBonesMatrices[{}]", i), matrices[i]);
+  }
 }
 
 void Animator::_calculateBoneTransform(const AssimpNodeData *node,

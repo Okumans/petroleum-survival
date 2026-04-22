@@ -27,34 +27,29 @@ class TextureManager {
 public:
   static std::unordered_map<TextureName, std::shared_ptr<Texture>> textures;
 
-  static std::shared_ptr<Texture> loadTexture(TextureName name,
-                                              TextureType type,
-                                              const char *texture_path,
-                                              bool flip_vertical = false);
+  static std::shared_ptr<Texture> load(TextureName name, TextureType type,
+                                       const char *texture_path,
+                                       bool flip_vertical = false);
+  static std::shared_ptr<Texture> load(TextureName name, TextureType type,
+                                       const void *data, size_t size,
+                                       bool flip_vertical = false);
+  static Texture load(TextureType type, const char *texture_path,
+                      bool flip_vertical = false);
+  static Texture load(TextureType type, const void *data, size_t size,
+                      bool flip_vertical = false);
 
-  static std::shared_ptr<Texture> loadTexture(TextureName name,
-                                              TextureType type,
-                                              const void *data, size_t size,
-                                              bool flip_vertical = false);
-
-  static Texture loadTexture(TextureType type, const char *texture_path,
-                             bool flip_vertical = false);
-
-  static Texture loadTexture(TextureType type, const void *data, size_t size,
-                             bool flip_vertical = false);
+  static Texture &get(TextureName name);
+  static std::shared_ptr<Texture> copy(TextureName name);
+  static Texture *tryGet(TextureName name);
+  static bool exists(TextureName name);
+  static std::shared_ptr<Texture> manage(TextureName name, Texture &&texture);
+  static void clear();
 
   static std::shared_ptr<Texture>
   loadCubemap(TextureName name, const std::vector<std::string> &faces);
-
-  static std::shared_ptr<Texture> manage(TextureName name, Texture &&texture);
-
-  static std::shared_ptr<Texture> getTexture(TextureName name);
-  static Texture &getTextureRef(TextureName name);
 
   static Texture generateStaticWhiteTexture();
   static Texture generateStaticBlackTexture();
   static Texture generateStaticNormalTexture();
   static Texture generateStaticPBRDefaultTexture();
-
-  static bool exists(TextureName name);
 };

@@ -73,40 +73,40 @@ App::App(GLFWwindow *window) : m_window(window) {
 
   // 1. Initial Resources (UI & Font)
 #ifdef EMBED_SHADER
-  ShaderManager::loadShaderSource(
+  ShaderManager::loadFromSource(
       ShaderType::UI, arr_to_str(ui_vert_glsl, ui_vert_glsl_len).c_str(),
       arr_to_str(ui_frag_glsl, ui_frag_glsl_len).c_str());
 
-  ShaderManager::loadShaderSource(
+  ShaderManager::loadFromSource(
       ShaderType::PBR, arr_to_str(pbr_vert_glsl, pbr_vert_glsl_len).c_str(),
       arr_to_str(pbr_frag_glsl, pbr_frag_glsl_len).c_str());
 
-  ShaderManager::loadShaderSource(
+  ShaderManager::loadFromSource(
       ShaderType::SKYBOX,
       arr_to_str(skybox_vert_glsl, skybox_vert_glsl_len).c_str(),
       arr_to_str(skybox_frag_glsl, skybox_frag_glsl_len).c_str());
 
-  ShaderManager::loadShaderSource(
+  ShaderManager::loadFromSource(
       ShaderType::SHADOW,
       arr_to_str(shadow_vert_glsl, shadow_vert_glsl_len).c_str(),
       arr_to_str(shadow_frag_glsl, shadow_frag_glsl_len).c_str());
 
-  ShaderManager::loadShaderSource(
+  ShaderManager::loadFromSource(
       ShaderType::IRRADIANCE,
       arr_to_str(irradiance_vert_glsl, irradiance_vert_glsl_len).c_str(),
       arr_to_str(irradiance_frag_glsl, irradiance_frag_glsl_len).c_str());
 
-  ShaderManager::loadShaderSource(
+  ShaderManager::loadFromSource(
       ShaderType::WATER, arr_to_str(pbr_vert_glsl, pbr_vert_glsl_len).c_str(),
       arr_to_str(water_frag_glsl, water_frag_glsl_len).c_str());
 
-  ShaderManager::loadShaderSource(
+  ShaderManager::loadFromSource(
       ShaderType::DEBUG,
       arr_to_str(debug_vert_glsl, debug_vert_glsl_len).c_str(),
       arr_to_str(debug_frag_glsl, debug_frag_glsl_len).c_str());
 #else
-  ShaderManager::loadShader(ShaderType::UI, UI_VERTEX_SHADER_PATH,
-                            UI_FRAGMENT_SHADER_PATH);
+  ShaderManager::loadFromPath(ShaderType::UI, UI_VERTEX_SHADER_PATH,
+                              UI_FRAGMENT_SHADER_PATH);
 #endif
   m_font.loadDefaultFont();
 
@@ -130,32 +130,31 @@ App::~App() = default;
 void App::_setupResources() {
   // Helpers
   auto loadModel = [](ModelName name, const std::string &path) {
-    return
-        [name, path]() { ModelManager::loadModel(name, path.c_str(), false); };
+    return [name, path]() { ModelManager::load(name, path.c_str(), false); };
   };
 
   // Shaders
 #ifndef EMBED_SHADER
   m_loadingTasks.push_back(
       {"Shaders", []() {
-         ShaderManager::loadShader(ShaderType::PBR,
-                                   SHADER_PATH "/pbr.vert.glsl",
-                                   SHADER_PATH "/pbr.frag.glsl");
-         ShaderManager::loadShader(ShaderType::SKYBOX,
-                                   SHADER_PATH "/skybox.vert.glsl",
-                                   SHADER_PATH "/skybox.frag.glsl");
-         ShaderManager::loadShader(ShaderType::SHADOW,
-                                   SHADER_PATH "/shadow.vert.glsl",
-                                   SHADER_PATH "/shadow.frag.glsl");
-         ShaderManager::loadShader(ShaderType::IRRADIANCE,
-                                   SHADER_PATH "/irradiance.vert.glsl",
-                                   SHADER_PATH "/irradiance.frag.glsl");
-         ShaderManager::loadShader(ShaderType::WATER,
-                                   SHADER_PATH "/pbr.vert.glsl",
-                                   SHADER_PATH "/water.frag.glsl");
-         ShaderManager::loadShader(ShaderType::DEBUG,
-                                   SHADER_PATH "/debug.vert.glsl",
-                                   SHADER_PATH "/debug.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::PBR,
+                                     SHADER_PATH "/pbr.vert.glsl",
+                                     SHADER_PATH "/pbr.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::SKYBOX,
+                                     SHADER_PATH "/skybox.vert.glsl",
+                                     SHADER_PATH "/skybox.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::SHADOW,
+                                     SHADER_PATH "/shadow.vert.glsl",
+                                     SHADER_PATH "/shadow.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::IRRADIANCE,
+                                     SHADER_PATH "/irradiance.vert.glsl",
+                                     SHADER_PATH "/irradiance.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::WATER,
+                                     SHADER_PATH "/pbr.vert.glsl",
+                                     SHADER_PATH "/water.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::DEBUG,
+                                     SHADER_PATH "/debug.vert.glsl",
+                                     SHADER_PATH "/debug.frag.glsl");
        }});
 #endif
 
@@ -183,9 +182,8 @@ void App::_setupResources() {
 
   // Models
   m_loadingTasks.push_back(
-      {"Model: Kasane Teto",
-       loadModel(ModelName::KASANE_TETO,
-                 ASSETS_PATH "/objects/vampire_test/dancing_vampire.dae")});
+      {"Model: Kasane Teto", loadModel(ModelName::KASANE_TETO, ASSETS_PATH
+                                       "/objects/kasane_teto/teto.dae")});
 
   // Skybox
   m_loadingTasks.push_back(
@@ -306,7 +304,32 @@ void App::_updateUIElements(double delta_time) {
 
 void App::_handleProcessInput(double delta_time) {
   (void)delta_time;
-  // Movement handled in camera controller or character controller later
+
+  const float step_amount = 0.6f;
+  glm::vec3 direction(0.0f);
+
+  if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS ||
+      glfwGetKey(m_window, GLFW_KEY_UP) == GLFW_PRESS) {
+    direction += glm::vec3(0.0f, 0.0f, -step_amount);
+  }
+
+  if (glfwGetKey(m_window, GLFW_KEY_A) == GLFW_PRESS ||
+      glfwGetKey(m_window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+    direction += glm::vec3(-step_amount, 0.0f, 0.0f);
+  }
+
+  if (glfwGetKey(m_window, GLFW_KEY_S) == GLFW_PRESS ||
+      glfwGetKey(m_window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+    direction += glm::vec3(0.0f, 0.0f, step_amount);
+  }
+
+  if (glfwGetKey(m_window, GLFW_KEY_D) == GLFW_PRESS ||
+      glfwGetKey(m_window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+    direction += glm::vec3(step_amount, 0.0f, 0.0f);
+  }
+
+  if (direction != glm::vec3(0.0f))
+    m_game.movePlayer(direction);
 }
 
 void App::_handleKeyCallback(int key, int scancode, int action, int mods) {

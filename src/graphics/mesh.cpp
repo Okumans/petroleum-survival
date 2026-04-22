@@ -7,11 +7,8 @@
 #include <cstdint>
 #include <utility>
 
-Mesh::Mesh(std::vector<Vertex> &&vertices,
-           std::vector<uint32_t> &&indices,
-           Material material,
-           glm::vec3 color,
-           float opacity)
+Mesh::Mesh(std::vector<Vertex> &&vertices, std::vector<uint32_t> &&indices,
+           Material material, glm::vec3 color, float opacity)
     : m_vertices(std::move(vertices)), m_indices(std::move(indices)),
       m_material(material), m_baseColor(color), m_opacity(opacity), m_vao(0),
       m_vbo(0), m_ebo(0) {
@@ -49,84 +46,53 @@ void Mesh::_setupMesh() {
   glCreateBuffers(1, &m_vbo);
   glCreateBuffers(1, &m_ebo);
 
-  glNamedBufferStorage(m_vbo,
-                       m_vertices.size() * sizeof(Vertex),
-                       m_vertices.data(),
-                       0);
-  glNamedBufferStorage(m_ebo,
-                       m_indices.size() * sizeof(uint32_t),
-                       m_indices.data(),
-                       0);
+  glNamedBufferStorage(m_vbo, m_vertices.size() * sizeof(Vertex),
+                       m_vertices.data(), 0);
+  glNamedBufferStorage(m_ebo, m_indices.size() * sizeof(uint32_t),
+                       m_indices.data(), 0);
 
   glVertexArrayVertexBuffer(m_vao, 0, m_vbo, 0, sizeof(Vertex));
   glVertexArrayElementBuffer(m_vao, m_ebo);
 
   // Position vec3
   glEnableVertexArrayAttrib(m_vao, 0);
-  glVertexArrayAttribFormat(m_vao,
-                            0,
-                            3,
-                            GL_FLOAT,
-                            GL_FALSE,
+  glVertexArrayAttribFormat(m_vao, 0, 3, GL_FLOAT, GL_FALSE,
                             offsetof(Vertex, position));
   glVertexArrayAttribBinding(m_vao, 0, 0);
 
   // Normal vec3
   glEnableVertexArrayAttrib(m_vao, 1);
-  glVertexArrayAttribFormat(m_vao,
-                            1,
-                            3,
-                            GL_FLOAT,
-                            GL_FALSE,
+  glVertexArrayAttribFormat(m_vao, 1, 3, GL_FLOAT, GL_FALSE,
                             offsetof(Vertex, normal));
   glVertexArrayAttribBinding(m_vao, 1, 0);
 
   // TexCoords vec2
   glEnableVertexArrayAttrib(m_vao, 2);
-  glVertexArrayAttribFormat(m_vao,
-                            2,
-                            2,
-                            GL_FLOAT,
-                            GL_FALSE,
+  glVertexArrayAttribFormat(m_vao, 2, 2, GL_FLOAT, GL_FALSE,
                             offsetof(Vertex, texCoords));
   glVertexArrayAttribBinding(m_vao, 2, 0);
 
   // Tangent vec3
   glEnableVertexArrayAttrib(m_vao, 3);
-  glVertexArrayAttribFormat(m_vao,
-                            3,
-                            3,
-                            GL_FLOAT,
-                            GL_FALSE,
+  glVertexArrayAttribFormat(m_vao, 3, 3, GL_FLOAT, GL_FALSE,
                             offsetof(Vertex, tangent));
   glVertexArrayAttribBinding(m_vao, 3, 0);
 
   // Bitangent vec3
   glEnableVertexArrayAttrib(m_vao, 4);
-  glVertexArrayAttribFormat(m_vao,
-                            4,
-                            3,
-                            GL_FLOAT,
-                            GL_FALSE,
+  glVertexArrayAttribFormat(m_vao, 4, 3, GL_FLOAT, GL_FALSE,
                             offsetof(Vertex, bitangent));
   glVertexArrayAttribBinding(m_vao, 4, 0);
 
   // BoneIDs ivec4
   glEnableVertexArrayAttrib(m_vao, 5);
-  glVertexArrayAttribIFormat(m_vao,
-                             5,
-                             MAX_BONE_INFLUENCE,
-                             GL_INT,
+  glVertexArrayAttribIFormat(m_vao, 5, MAX_BONE_INFLUENCE, GL_INT,
                              offsetof(Vertex, m_boneIDs));
   glVertexArrayAttribBinding(m_vao, 5, 0);
 
   // Weights vec4
   glEnableVertexArrayAttrib(m_vao, 6);
-  glVertexArrayAttribFormat(m_vao,
-                            6,
-                            MAX_BONE_INFLUENCE,
-                            GL_FLOAT,
-                            GL_FALSE,
+  glVertexArrayAttribFormat(m_vao, 6, MAX_BONE_INFLUENCE, GL_FLOAT, GL_FALSE,
                             offsetof(Vertex, m_weights));
   glVertexArrayAttribBinding(m_vao, 6, 0);
 }
@@ -141,8 +107,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
   if (material.getDiffuse()) {
     glBindTextureUnit(counter, material.getDiffuse()->getTexID());
   } else {
-    glBindTextureUnit(
-        counter, TextureManager::getTexture(STATIC_WHITE_TEXTURE)->getTexID());
+    glBindTextureUnit(counter,
+                      TextureManager::get(STATIC_WHITE_TEXTURE).getTexID());
   }
   counter++;
 
@@ -151,8 +117,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
   if (material.getNormal()) {
     glBindTextureUnit(counter, material.getNormal()->getTexID());
   } else {
-    glBindTextureUnit(
-        counter, TextureManager::getTexture(STATIC_NORMAL_TEXTURE)->getTexID());
+    glBindTextureUnit(counter,
+                      TextureManager::get(STATIC_NORMAL_TEXTURE).getTexID());
   }
   counter++;
 
@@ -161,8 +127,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
   if (material.getHeight()) {
     glBindTextureUnit(counter, material.getHeight()->getTexID());
   } else {
-    glBindTextureUnit(
-        counter, TextureManager::getTexture(STATIC_BLACK_TEXTURE)->getTexID());
+    glBindTextureUnit(counter,
+                      TextureManager::get(STATIC_BLACK_TEXTURE).getTexID());
   }
   counter++;
 
@@ -172,8 +138,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
     glBindTextureUnit(counter, material.getMetallic()->getTexID());
   } else {
     // Default Metallic = 0.0 (Black)
-    glBindTextureUnit(
-        counter, TextureManager::getTexture(STATIC_BLACK_TEXTURE)->getTexID());
+    glBindTextureUnit(counter,
+                      TextureManager::get(STATIC_BLACK_TEXTURE).getTexID());
   }
   counter++;
 
@@ -183,8 +149,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
     glBindTextureUnit(counter, material.getRoughness()->getTexID());
   } else {
     // Default Roughness = 1.0 (White)
-    glBindTextureUnit(
-        counter, TextureManager::getTexture(STATIC_WHITE_TEXTURE)->getTexID());
+    glBindTextureUnit(counter,
+                      TextureManager::get(STATIC_WHITE_TEXTURE).getTexID());
   }
   counter++;
 
@@ -193,8 +159,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
   if (material.getAO()) {
     glBindTextureUnit(counter, material.getAO()->getTexID());
   } else {
-    glBindTextureUnit(
-        counter, TextureManager::getTexture(STATIC_WHITE_TEXTURE)->getTexID());
+    glBindTextureUnit(counter,
+                      TextureManager::get(STATIC_WHITE_TEXTURE).getTexID());
   }
   counter++;
 
@@ -216,4 +182,3 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
   glBindVertexArray(m_vao);
   glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
 }
-

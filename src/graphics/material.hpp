@@ -43,6 +43,7 @@ public:
         m_roughnessFactor(other.m_roughnessFactor),
         m_aoFactor(other.m_aoFactor) {}
 
+  Material() = default;
   Material(const Material &other) = default;
   Material &operator=(const Material &other) = default;
 
@@ -140,27 +141,27 @@ public:
 
     // Diffuse fallback
     if (m_diffuse == nullptr)
-      m_diffuse = TextureManager::getTexture(STATIC_WHITE_TEXTURE);
+      m_diffuse = TextureManager::copy(STATIC_WHITE_TEXTURE);
 
     // Metallic fallback
     if (m_metallic == nullptr)
-      m_metallic = TextureManager::getTexture(STATIC_PBR_DEFAULT_TEXTURE);
+      m_metallic = TextureManager::copy(STATIC_PBR_DEFAULT_TEXTURE);
 
     // Roughness fallback (also use the PBR default for consistency)
     if (m_roughness == nullptr)
-      m_roughness = TextureManager::getTexture(STATIC_PBR_DEFAULT_TEXTURE);
+      m_roughness = TextureManager::copy(STATIC_PBR_DEFAULT_TEXTURE);
 
     // Ambient Occlusion fallback
     if (m_ao == nullptr)
-      m_ao = TextureManager::getTexture(STATIC_WHITE_TEXTURE);
+      m_ao = TextureManager::copy(STATIC_WHITE_TEXTURE);
 
     // Normal fallback
     if (m_normal == nullptr)
-      m_normal = TextureManager::getTexture(STATIC_NORMAL_TEXTURE);
+      m_normal = TextureManager::copy(STATIC_NORMAL_TEXTURE);
 
     // Height fallback
     if (m_height == nullptr)
-      m_height = TextureManager::getTexture(STATIC_BLACK_TEXTURE);
+      m_height = TextureManager::copy(STATIC_BLACK_TEXTURE);
 
     return Material(std::move(m_diffuse), std::move(m_normal),
                     std::move(m_height), std::move(m_metallic),

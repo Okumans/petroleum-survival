@@ -14,11 +14,11 @@ public:
       EnumMapValidator<EnumMap<ShaderType, std::unique_ptr<Shader>>>>
       s_shaders;
 
-  static Shader &loadShader(ShaderType type, const char *vertShaderPath,
-                            const char *fragShaderPath);
+  static Shader &loadFromPath(ShaderType type, const char *vertShaderPath,
+                              const char *fragShaderPath);
 
-  static Shader &loadShaderSource(ShaderType type, const char *vertShaderSource,
-                                  const char *fragShaderSource);
+  static Shader &loadFromSource(ShaderType type, const char *vertShaderSource,
+                                const char *fragShaderSource);
 
-  static Shader &getShader(ShaderType type);
+  static Shader &get(ShaderType type);
 };

@@ -67,10 +67,10 @@ void Game::setup() {
 
   // Generate Irradiance Map
   std::shared_ptr<Texture> skybox_tex =
-      TextureManager::getTexture(TextureName("skybox"));
+      TextureManager::copy(TextureName("skybox"));
   m_skybox->setTexture(skybox_tex);
 
-  Shader &irradiance_shader = ShaderManager::getShader(ShaderType::IRRADIANCE);
+  Shader &irradiance_shader = ShaderManager::get(ShaderType::IRRADIANCE);
   std::shared_ptr<Texture> irradiance_map = IBLGenerator::generateIrradianceMap(
       *skybox_tex, *m_skybox, irradiance_shader);
   TextureManager::manage(TextureName("irradiance_map"),
@@ -95,13 +95,12 @@ void Game::setup() {
                              .position = glm::vec3(0.0f, -5.0f, 0.0f),
                              .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
 
-  m_testObject = std::make_unique<GameObject>(
-      ModelManager::getModel(ModelName::KASANE_TETO));
-  m_testObject->setScale(1.0f);
-  // m_testObject->setRotation({90.0f, 0.0f, 0.0f});
+  m_testObject =
+      std::make_unique<Player>(ModelManager::copy(ModelName::KASANE_TETO));
+  m_testObject->setScale(20.0f);
 
   m_testAnimation = std::make_unique<Animation>(
-      ASSETS_PATH "/objects/vampire_test/dancing_vampire.dae",
+      ASSETS_PATH "/objects/kasane_teto/teto_walking_normal.dae",
       m_testObject->getModel().get());
 
   m_testAnimator = std::make_unique<Animator>(m_testAnimation.get());
@@ -137,11 +136,14 @@ void Game::update(double delta_time) {
 
   _updateCamera(delta_time);
   m_cameraController.update(static_cast<float>(delta_time));
+  m_testObject->update(delta_time);
 
   if (m_testAnimator) {
     m_testAnimator->updateAnimation(static_cast<float>(delta_time));
   }
 }
+
+void Game::movePlayer(glm::vec3 vec) { m_testObject->moveWithAnimation(vec); }
 
 void Game::render(double delta_time) {
   glEnable(GL_DEPTH_TEST);
@@ -150,7 +152,7 @@ void Game::render(double delta_time) {
   m_lightSpaceMatrix =
       LightingManager::calculateLightSpaceMatrix(glm::vec3(0.0f));
 
-  Shader &shadow_shader = ShaderManager::getShader(ShaderType::SHADOW);
+  Shader &shadow_shader = ShaderManager::get(ShaderType::SHADOW);
   shadow_shader.use();
   shadow_shader.setMat4("u_LightSpaceMatrix", m_lightSpaceMatrix);
 
@@ -165,13 +167,10 @@ void Game::render(double delta_time) {
         .camera = m_camera,
         .deltaTime = delta_time,
     };
+
     if (m_testAnimator) {
       shadow_shader.setBool("u_HasAnimation", true);
-      auto matrices = m_testAnimator->getFinalBoneMatrices();
-      for (size_t i = 0; i < matrices.size(); ++i) {
-        shadow_shader.setMat4(std::format("finalBonesMatrices[{}]", i),
-                              matrices[i]);
-      }
+      m_testAnimator->apply(shadow_shader);
     } else {
       shadow_shader.setBool("u_HasAnimation", false);
     }
@@ -189,8 +188,8 @@ void Game::render(double delta_time) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Bind and draw Skybox first (as background)
-  auto skyboxTex = TextureManager::getTexture(TextureName("skybox"));
-  Shader &skybox_shader = ShaderManager::getShader(ShaderType::SKYBOX);
+  auto skyboxTex = TextureManager::copy(TextureName("skybox"));
+  Shader &skybox_shader = ShaderManager::get(ShaderType::SKYBOX);
   glDepthMask(GL_FALSE);
 
   m_skybox->draw({
@@ -207,7 +206,7 @@ void Game::render(double delta_time) {
   glm::mat4 projection = m_camera.getProjectionMatrix();
   glm::mat4 view = m_camera.getViewMatrix();
 
-  Shader &pbr_shader = ShaderManager::getShader(ShaderType::PBR);
+  Shader &pbr_shader = ShaderManager::get(ShaderType::PBR);
   pbr_shader.use();
   pbr_shader.setMat4("u_Projection", projection);
   pbr_shader.setMat4("u_View", view);
@@ -219,8 +218,7 @@ void Game::render(double delta_time) {
   pbr_shader.setInt("u_SpecularEnvMap", 10);
 
   // Bind Irradiance Map for diffuse IBL
-  auto irradiance_map =
-      TextureManager::getTexture(TextureName("irradiance_map"));
+  auto irradiance_map = TextureManager::copy(TextureName("irradiance_map"));
   glBindTextureUnit(12, irradiance_map->getTexID());
   pbr_shader.setInt("u_IrradianceMap", 12);
 
@@ -241,11 +239,7 @@ void Game::render(double delta_time) {
 
     if (true && m_testAnimator) {
       pbr_shader.setBool("u_HasAnimation", true);
-      auto matrices = m_testAnimator->getFinalBoneMatrices();
-      for (size_t i = 0; i < matrices.size(); ++i) {
-        pbr_shader.setMat4(std::format("finalBonesMatrices[{}]", i),
-                           matrices[i]);
-      }
+      m_testAnimator->apply(pbr_shader);
     } else {
       pbr_shader.setBool("u_HasAnimation", false);
     }
@@ -277,6 +271,7 @@ void Game::render(double delta_time) {
 void Game::_updateCamera(double delta_time) {
   (void)delta_time;
   if (m_testObject) {
-    m_cameraController.follow(m_testObject->getPosition());
+    // m_cameraController.follow(m_testObject->getPosition());
+    m_cameraController.follow({0.0f, 0.0f, 0.0f});
   }
 }

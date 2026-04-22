@@ -39,25 +39,18 @@ void StaticElement::draw(Shader &shader) {
 }
 
 // InteractiveElement
-InteractiveElement::InteractiveElement(std::string name,
-                                       UIHitbox box,
-                                       GLuint tex_id,
-                                       std::function<void()> cb)
+InteractiveElement::InteractiveElement(std::string name, UIHitbox box,
+                                       GLuint tex_id, std::function<void()> cb)
     : StaticElement(std::move(name), box, tex_id), onClick(std::move(cb)) {}
 
-InteractiveElement::InteractiveElement(std::string name,
-                                       UIHitbox box,
+InteractiveElement::InteractiveElement(std::string name, UIHitbox box,
                                        glm::vec4 color,
                                        std::function<void()> cb)
     : StaticElement(std::move(name), box, color), onClick(std::move(cb)) {}
 
 // TextElement
-TextElement::TextElement(std::string name,
-                         UIHitbox box,
-                         std::string text,
-                         const BitmapFont &font,
-                         glm::vec4 color,
-                         float scale)
+TextElement::TextElement(std::string name, UIHitbox box, std::string text,
+                         const BitmapFont &font, glm::vec4 color, float scale)
     : text(std::move(text)), font(font), color(color), scale(scale) {
   this->name = std::move(name);
   this->bounds = box;
@@ -106,62 +99,45 @@ UIManager::~UIManager() {
   glDeleteVertexArrays(1, &m_vao);
 }
 
-void UIManager::addStaticElement(std::string name,
-                                 UIHitbox box,
+void UIManager::addStaticElement(std::string name, UIHitbox box,
                                  glm::vec4 color) {
   m_elements.push_back(
       std::make_unique<StaticElement>(std::move(name), box, color));
 }
 
-void UIManager::addStaticElement(std::string name,
-                                 UIHitbox box,
+void UIManager::addStaticElement(std::string name, UIHitbox box,
                                  GLuint tex_id) {
   m_elements.push_back(
       std::make_unique<StaticElement>(std::move(name), box, tex_id));
 }
 
-void UIManager::addInteractiveElement(std::string name,
-                                      UIHitbox box,
-                                      GLuint tex_id,
-                                      std::function<void()> cb) {
-  auto element = std::make_unique<InteractiveElement>(std::move(name),
-                                                      box,
-                                                      tex_id,
-                                                      std::move(cb));
+void UIManager::addInteractiveElement(std::string name, UIHitbox box,
+                                      GLuint tex_id, std::function<void()> cb) {
+  auto element = std::make_unique<InteractiveElement>(std::move(name), box,
+                                                      tex_id, std::move(cb));
   m_interactives.push_back(element.get());
   m_elements.push_back(std::move(element));
 }
 
-void UIManager::addInteractiveElement(std::string name,
-                                      UIHitbox box,
+void UIManager::addInteractiveElement(std::string name, UIHitbox box,
                                       glm::vec4 color,
                                       std::function<void()> cb) {
-  auto element = std::make_unique<InteractiveElement>(std::move(name),
-                                                      box,
-                                                      color,
-                                                      std::move(cb));
+  auto element = std::make_unique<InteractiveElement>(std::move(name), box,
+                                                      color, std::move(cb));
   m_interactives.push_back(element.get());
   m_elements.push_back(std::move(element));
 }
 
-void UIManager::addTextElement(std::string name,
-                               UIHitbox box,
-                               std::string text,
-                               const BitmapFont &font,
-                               glm::vec4 color,
+void UIManager::addTextElement(std::string name, UIHitbox box, std::string text,
+                               const BitmapFont &font, glm::vec4 color,
                                float scale) {
-  m_elements.push_back(std::make_unique<TextElement>(std::move(name),
-                                                     box,
-                                                     std::move(text),
-                                                     font,
-                                                     color,
-                                                     scale));
+  m_elements.push_back(std::make_unique<TextElement>(
+      std::move(name), box, std::move(text), font, color, scale));
 }
 
 UIBase *UIManager::getElement(const std::string &name) {
-  auto it = std::ranges::find_if(m_elements, [&name](const auto &el) {
-    return el->name == name;
-  });
+  auto it = std::ranges::find_if(
+      m_elements, [&name](const auto &el) { return el->name == name; });
 
   return it != m_elements.end() ? it->get() : nullptr;
 }
@@ -183,7 +159,7 @@ bool UIManager::handleClick(double mouseX, double mouseY) {
 }
 
 void UIManager::render(int windowWidth, int windowHeight) {
-  Shader &shader = ShaderManager::getShader(ShaderType::UI);
+  Shader &shader = ShaderManager::get(ShaderType::UI);
   shader.use();
 
   m_lastWindowWidth = windowWidth;
@@ -213,12 +189,10 @@ void UIManager::render(int windowWidth, int windowHeight) {
 GLuint UIManager::getVAO() const { return m_vao; }
 
 void UIManager::_setup_buffers() {
-  UIVertex vertices[] = {{{0.0f, 0.0f}, {0.0f, 0.0f}},
-                         {{0.0f, 1.0f}, {0.0f, 1.0f}},
-                         {{1.0f, 1.0f}, {1.0f, 1.0f}},
-                         {{0.0f, 0.0f}, {0.0f, 0.0f}},
-                         {{1.0f, 1.0f}, {1.0f, 1.0f}},
-                         {{1.0f, 0.0f}, {1.0f, 0.0f}}};
+  UIVertex vertices[] = {
+      {{0.0f, 0.0f}, {0.0f, 0.0f}}, {{0.0f, 1.0f}, {0.0f, 1.0f}},
+      {{1.0f, 1.0f}, {1.0f, 1.0f}}, {{0.0f, 0.0f}, {0.0f, 0.0f}},
+      {{1.0f, 1.0f}, {1.0f, 1.0f}}, {{1.0f, 0.0f}, {1.0f, 0.0f}}};
 
   // Create UI VBO
   glCreateBuffers(1, &m_vbo);
@@ -229,21 +203,13 @@ void UIManager::_setup_buffers() {
 
   // index 0: vec2; position attribute
   glEnableVertexArrayAttrib(m_vao, 0);
-  glVertexArrayAttribFormat(m_vao,
-                            0,
-                            2,
-                            GL_FLOAT,
-                            GL_FALSE,
+  glVertexArrayAttribFormat(m_vao, 0, 2, GL_FLOAT, GL_FALSE,
                             offsetof(UIVertex, pos));
   glVertexArrayAttribBinding(m_vao, 0, 0);
 
   // index 1: vec2; position attribute
   glEnableVertexArrayAttrib(m_vao, 1);
-  glVertexArrayAttribFormat(m_vao,
-                            1,
-                            2,
-                            GL_FLOAT,
-                            GL_FALSE,
+  glVertexArrayAttribFormat(m_vao, 1, 2, GL_FLOAT, GL_FALSE,
                             offsetof(UIVertex, uv));
   glVertexArrayAttribBinding(m_vao, 1, 0);
 

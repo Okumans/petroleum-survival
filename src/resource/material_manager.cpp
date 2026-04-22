@@ -1,21 +1,26 @@
 #include "material_manager.hpp"
-#include <print>
 
-std::unordered_map<std::string, Material> MaterialManager::materials;
+std::unordered_map<std::string, Material> MaterialManager::s_materials;
 
-void MaterialManager::addMaterial(const std::string &name,
-                                  const Material &material) {
-  MaterialManager::materials.insert({name, material});
+void MaterialManager::load(const std::string &name, const Material &material) {
+  MaterialManager::s_materials[name] = material;
 }
 
-const Material &MaterialManager::getMaterial(const std::string &name) {
-  if (!MaterialManager::materials.contains(name)) {
-    std::println("{} doesn't exist!?", name);
+const Material *MaterialManager::tryGet(const std::string &name) {
+  auto it = MaterialManager::s_materials.find(name);
+  if (it == MaterialManager::s_materials.end()) {
+    return nullptr;
   }
 
-  return MaterialManager::materials.at(name);
+  return &it->second;
+}
+
+void MaterialManager::clear() { MaterialManager::s_materials.clear(); }
+
+const Material &MaterialManager::get(const std::string &name) {
+  return MaterialManager::s_materials.at(name);
 }
 
 bool MaterialManager::exists(const std::string &name) {
-  return MaterialManager::materials.contains(name);
+  return MaterialManager::s_materials.contains(name);
 }

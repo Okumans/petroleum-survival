@@ -163,9 +163,6 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
   aiGetMaterialFloat(assimp_material, AI_MATKEY_ROUGHNESS_FACTOR,
                      &roughnessFactor);
   aiGetMaterialFloat(assimp_material, AI_MATKEY_OPACITY, &opacity);
-  if (opacity <= 0.0f) {
-    opacity = 1.0f;
-  }
   aiGetMaterialColor(assimp_material, AI_MATKEY_COLOR_DIFFUSE, &diffuseColor);
 
   mat_builder.setMetallicFactor(metallicFactor);
@@ -310,20 +307,20 @@ std::shared_ptr<Texture> Model::_loadMaterialTexture(aiMaterial *mat,
     if (!TextureManager::exists(texture_name)) {
       if (embedded_tex) {
         if (embedded_tex->mHeight == 0) {
-          return TextureManager::loadTexture(
-              texture_name, typeName, embedded_tex->pcData,
-              embedded_tex->mWidth, flip_vertical);
+          return TextureManager::load(texture_name, typeName,
+                                      embedded_tex->pcData,
+                                      embedded_tex->mWidth, flip_vertical);
         }
 
-        return TextureManager::loadTexture(
+        return TextureManager::load(
             texture_name, typeName, embedded_tex->pcData,
             embedded_tex->mWidth * embedded_tex->mHeight * 4, flip_vertical);
       }
 
-      return TextureManager::loadTexture(texture_name, typeName,
-                                         unique_name.c_str(), flip_vertical);
+      return TextureManager::load(texture_name, typeName, unique_name.c_str(),
+                                  flip_vertical);
     } else {
-      return TextureManager::getTexture(texture_name);
+      return TextureManager::copy(texture_name);
     }
   }
 
@@ -393,14 +390,15 @@ void Model::_extractBoneWeightForVertices(std::vector<Vertex> &vertices,
     }
   }
 
-  // Weight normalization pass to prevent spaghetti deformations when total weight deviates from 1.0.
-  // This physically ensures the vertices don't collapse or explode outward.
+  // Weight normalization pass to prevent spaghetti deformations when total
+  // weight deviates from 1.0. This physically ensures the vertices don't
+  // collapse or explode outward.
   for (auto &vertex : vertices) {
     float total_weight = 0.0f;
     for (size_t i = 0; i < MAX_BONE_INFLUENCE; ++i) {
       total_weight += vertex.m_weights[i];
     }
-    
+
     if (total_weight > 0.0f) {
       for (size_t i = 0; i < MAX_BONE_INFLUENCE; ++i) {
         vertex.m_weights[i] /= total_weight;

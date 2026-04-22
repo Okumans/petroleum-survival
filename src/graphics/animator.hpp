@@ -1,5 +1,6 @@
 #pragma once
 
+#include "graphics/shader.hpp"
 #include <glm/glm.hpp>
 
 #include <vector>
@@ -20,6 +21,8 @@ public:
   void updateAnimation(float delta_time);
 
   void playAnimation(Animation *p_animation);
+
+  void apply(Shader &shader);
 
   const std::vector<glm::mat4> &getFinalBoneMatrices() const {
     return m_finalBoneMatrices;

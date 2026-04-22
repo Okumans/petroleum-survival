@@ -12,33 +12,15 @@ void DebugDrawer::_init() {
   if (m_initialized)
     return;
 
-  float vertices[] =
-      {0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1};
+  float vertices[] = {0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0,
+                      0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1};
 
   uint32_t indices[] = {
-      0,
-      1,
-      1,
-      2,
-      2,
-      3,
-      3,
+      0, 1, 1, 2, 2, 3, 3,
       0, // bottom
-      4,
-      5,
-      5,
-      6,
-      6,
-      7,
-      7,
+      4, 5, 5, 6, 6, 7, 7,
       4, // top
-      0,
-      4,
-      1,
-      5,
-      2,
-      6,
-      3,
+      0, 4, 1, 5, 2, 6, 3,
       7 // sides
   };
 
@@ -59,14 +41,13 @@ void DebugDrawer::_init() {
   m_initialized = true;
 }
 
-void DebugDrawer::drawAABB(const RenderContext &ctx,
-                           const AABB &aabb,
+void DebugDrawer::drawAABB(const RenderContext &ctx, const AABB &aabb,
                            const glm::vec3 &color) {
   if (aabb.isEmpty())
     return;
   _init();
 
-  Shader &shader = ShaderManager::getShader(ShaderType::DEBUG);
+  Shader &shader = ShaderManager::get(ShaderType::DEBUG);
   shader.use();
 
   glm::mat4 model = glm::mat4(1.0f);

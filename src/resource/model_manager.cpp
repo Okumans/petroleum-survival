@@ -8,17 +8,30 @@ SettableNotInitialized<
     EnumMapValidator<EnumMap<ModelName, std::shared_ptr<Model>>>>
     ModelManager::s_models;
 
-std::shared_ptr<Model> ModelManager::loadModel(ModelName name,
-                                               const char *model_path,
-                                               bool flip_vertical) {
+std::shared_ptr<Model>
+ModelManager::load(ModelName name, const char *model_path, bool flip_vertical) {
   s_models.set(name, std::make_shared<Model>(model_path, flip_vertical));
   return ModelManager::s_models.getUnvalidated(name);
 }
 
-std::shared_ptr<Model> ModelManager::getModel(ModelName name) {
+Model &ModelManager::get(ModelName name) {
+  return *ModelManager::s_models.ensureInitialized()[name];
+}
+
+std::shared_ptr<Model> ModelManager::copy(ModelName name) {
   return ModelManager::s_models.ensureInitialized()[name];
 }
 
+Model *ModelManager::tryGet(ModelName name) {
+  return ModelManager::s_models.ensureInitialized()[name].get();
+}
+
 bool ModelManager::exists(ModelName name) {
-  return ModelManager::s_models.ensureInitialized()[name] == nullptr;
+  return ModelManager::s_models.ensureInitialized()[name] != nullptr;
+}
+
+void ModelManager::clear() {
+  for (auto model_name : magic_enum::enum_values<ModelName>()) {
+    ModelManager::s_models.set(model_name, nullptr);
+  }
 }

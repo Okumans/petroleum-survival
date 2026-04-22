@@ -5,6 +5,7 @@
 #include "resource/material_manager.hpp"
 #include "resource/texture_manager.hpp"
 
+#include <cmath>
 #include <concepts>
 #include <filesystem>
 #include <format>
@@ -38,7 +39,7 @@ inline void loadMaterialFolder(const std::string &materialName,
       continue;
     }
 
-    auto tex = TextureManager::loadTexture(
+    auto tex = TextureManager::load(
         TextureName(std::format("{}_{}", materialName, suffix)), type,
         fullPath.c_str());
 
@@ -68,7 +69,7 @@ inline void loadMaterialFolder(const std::string &materialName,
   }
 
   if (foundAny) {
-    MaterialManager::addMaterial(materialName, builder.create());
+    MaterialManager::load(materialName, builder.create());
   }
 }
 
@@ -76,6 +77,13 @@ template <typename T, std::invocable<T &> F>
 constexpr T withBase(T base, F modifier) {
   modifier(base);
   return base;
+}
+
+inline float lerpAngle(float start, float end, float t) {
+  float diff = std::fmod(end - start + 180.0f, 360.0f) - 180.0f;
+  if (diff < -180.0f)
+    diff += 360.0f;
+  return start + diff * t;
 }
 
 #include "enum_map.hpp" // IWYU pragma: keep

@@ -19,6 +19,15 @@ private:
   static const int MAX_LIGHTS = 4;
 
 public:
+  // Consistent API
+  static void add(const Light &light);
+  static void set(size_t index, const Light &light);
+  static const Light &get(size_t index);
+  static const Light *tryGet(size_t index);
+  static bool exists(size_t index);
+  static size_t count();
+  static void clear();
+
   static void addLight(const Light &light);
   static void setLight(size_t index, const Light &light);
   static void clearLights();

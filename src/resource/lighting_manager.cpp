@@ -5,19 +5,43 @@
 
 std::vector<Light> LightingManager::m_lights = {};
 
-void LightingManager::addLight(const Light &light) {
+void LightingManager::add(const Light &light) {
   if (m_lights.size() < MAX_LIGHTS) {
     m_lights.push_back(light);
   }
 }
 
-void LightingManager::setLight(size_t index, const Light &light) {
+void LightingManager::set(size_t index, const Light &light) {
   if (index < m_lights.size()) {
     m_lights[index] = light;
   }
 }
 
-void LightingManager::clearLights() { m_lights.clear(); }
+const Light &LightingManager::get(size_t index) { return m_lights.at(index); }
+
+const Light *LightingManager::tryGet(size_t index) {
+  if (index >= m_lights.size()) {
+    return nullptr;
+  }
+
+  return &m_lights[index];
+}
+
+bool LightingManager::exists(size_t index) { return index < m_lights.size(); }
+
+size_t LightingManager::count() { return m_lights.size(); }
+
+void LightingManager::clear() { m_lights.clear(); }
+
+void LightingManager::addLight(const Light &light) {
+  add(light);
+}
+
+void LightingManager::setLight(size_t index, const Light &light) {
+  set(index, light);
+}
+
+void LightingManager::clearLights() { clear(); }
 
 void LightingManager::apply(Shader &shader) {
   shader.setInt("u_NumLights", (int)m_lights.size());

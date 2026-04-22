@@ -6,9 +6,11 @@
 
 class MaterialManager {
 public:
-  static std::unordered_map<std::string, Material> materials;
+  static std::unordered_map<std::string, Material> s_materials;
 
-  static void addMaterial(const std::string &name, const Material &material);
-  static const Material &getMaterial(const std::string &name);
+  static void load(const std::string &name, const Material &material);
+  static const Material &get(const std::string &name);
+  static const Material *tryGet(const std::string &name);
   static bool exists(const std::string &name);
+  static void clear();
 };

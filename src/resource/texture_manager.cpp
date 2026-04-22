@@ -18,30 +18,31 @@ template <> struct hash<TextureName> {
 std::unordered_map<TextureName, std::shared_ptr<Texture>>
     TextureManager::textures;
 
-std::shared_ptr<Texture> TextureManager::loadTexture(TextureName name,
-                                                     TextureType type,
-                                                     const char *texture_path,
-                                                     bool flip_vertical) {
+std::shared_ptr<Texture> TextureManager::load(TextureName name,
+                                              TextureType type,
+                                              const char *texture_path,
+                                              bool flip_vertical) {
   textures[name] = std::make_shared<Texture>(texture_path, type, flip_vertical);
 
   return TextureManager::textures.at(name);
 }
 
-std::shared_ptr<Texture>
-TextureManager::loadTexture(TextureName name, TextureType type,
-                            const void *data, size_t size, bool flip_vertical) {
+std::shared_ptr<Texture> TextureManager::load(TextureName name,
+                                              TextureType type,
+                                              const void *data, size_t size,
+                                              bool flip_vertical) {
   textures[name] = std::make_shared<Texture>(data, size, type, flip_vertical);
 
   return TextureManager::textures.at(name);
 }
 
-Texture TextureManager::loadTexture(TextureType type, const char *texture_path,
-                                    bool flip_vertical) {
+Texture TextureManager::load(TextureType type, const char *texture_path,
+                             bool flip_vertical) {
   return Texture(texture_path, type, flip_vertical);
 }
 
-Texture TextureManager::loadTexture(TextureType type, const void *data,
-                                    size_t size, bool flip_vertical) {
+Texture TextureManager::load(TextureType type, const void *data, size_t size,
+                             bool flip_vertical) {
   return Texture(data, size, type, flip_vertical);
 }
 
@@ -94,7 +95,7 @@ Texture TextureManager::generateStaticBlackTexture() {
 
 Texture TextureManager::generateStaticNormalTexture() {
   GLuint normal_texture;
-  int size = 16;
+  const size_t size = 16;
   glCreateTextures(GL_TEXTURE_2D, 1, &normal_texture);
   glTextureStorage2D(normal_texture, 1, GL_RGBA8, size, size);
   // Flat normal map color is (0.5, 0.5, 1.0), which is 0x80, 0x80, 0xFF
@@ -114,7 +115,7 @@ Texture TextureManager::generateStaticNormalTexture() {
 
 Texture TextureManager::generateStaticPBRDefaultTexture() {
   GLuint pbr_texture;
-  int size = 16;
+  const size_t size = 16;
   glCreateTextures(GL_TEXTURE_2D, 1, &pbr_texture);
   glTextureStorage2D(pbr_texture, 1, GL_RGBA8, size, size);
   // Default PBR: Roughness=1.0 (G=255), Metallic=0.0 (B=0)
@@ -132,12 +133,21 @@ Texture TextureManager::generateStaticPBRDefaultTexture() {
   return Texture(pbr_texture, TextureType::METALLIC, true);
 }
 
-Texture &TextureManager::getTextureRef(TextureName name) {
-  return *TextureManager::textures.at(name);
+Texture *TextureManager::tryGet(TextureName name) {
+  auto it = TextureManager::textures.find(name);
+  if (it == TextureManager::textures.end()) {
+    return nullptr;
+  }
+
+  return it->second.get();
 }
 
-std::shared_ptr<Texture> TextureManager::getTexture(TextureName name) {
-  if (!TextureManager::textures.contains(name)) {
+Texture &TextureManager::get(TextureName name) {
+  return *copy(name);
+}
+
+std::shared_ptr<Texture> TextureManager::copy(TextureName name) {
+  if (TextureManager::textures.find(name) == TextureManager::textures.end()) {
     std::println("{} don't exists!?", name.name);
   }
 
@@ -147,3 +157,5 @@ std::shared_ptr<Texture> TextureManager::getTexture(TextureName name) {
 bool TextureManager::exists(TextureName name) {
   return TextureManager::textures.find(name) != TextureManager::textures.end();
 }
+
+void TextureManager::clear() { TextureManager::textures.clear(); }
