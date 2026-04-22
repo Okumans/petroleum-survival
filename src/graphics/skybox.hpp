@@ -17,7 +17,7 @@ public:
   void setTexture(std::shared_ptr<Texture> skybox_tex);
 
   virtual void draw(const RenderContext &ctx) override;
-  GLuint getVAO() const { return m_vao; }
+  [[nodiscard]] GLuint getVAO() const { return m_vao; }
 
 private:
   void _setupSkybox();

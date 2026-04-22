@@ -31,30 +31,32 @@ private:
   std::vector<KeyRotation> m_rotations;
   std::vector<KeyScale> m_scales;
 
-  int m_numPositions;
-  int m_numRotations;
-  int m_numScalings;
+  uint32_t m_numPositions;
+  uint32_t m_numRotations;
+  uint32_t m_numScalings;
 
   glm::mat4 m_localTransform;
   std::string m_name;
-  int m_id;
+  uint32_t m_id;
 
 public:
-  Bone(const std::string &name, int id, const aiNodeAnim *channel);
+  Bone(const std::string &name, uint32_t id, const aiNodeAnim *channel);
 
   void update(float animation_time);
 
-  glm::mat4 getLocalTransform() const { return m_localTransform; }
-  std::string getBoneName() const { return m_name; }
-  int getBoneID() const { return m_id; }
+  [[nodiscard]] glm::mat4 getLocalTransform() const { return m_localTransform; }
+  [[nodiscard]] std::string getBoneName() const { return m_name; }
+  [[nodiscard]] uint32_t getBoneID() const { return m_id; }
 
-  int getPositionIndex(float animation_time) const;
-  int getRotationIndex(float animation_time) const;
-  int getScaleIndex(float animation_time) const;
+  [[nodiscard]] uint32_t getPositionIndex(float animation_time) const;
+  [[nodiscard]] uint32_t getRotationIndex(float animation_time) const;
+  [[nodiscard]] uint32_t getScaleIndex(float animation_time) const;
 
 private:
-  float _getScaleFactor(float last_timestamp, float next_timestamp, float animation_time) const;
-  glm::mat4 _interpolatePosition(float animation_time) const;
-  glm::mat4 _interpolateRotation(float animation_time) const;
-  glm::mat4 _interpolateScaling(float animation_time) const;
+  [[nodiscard]] float _getScaleFactor(float last_timestamp,
+                                      float next_timestamp,
+                                      float animation_time) const;
+  [[nodiscard]] glm::mat4 _interpolatePosition(float animation_time) const;
+  [[nodiscard]] glm::mat4 _interpolateRotation(float animation_time) const;
+  [[nodiscard]] glm::mat4 _interpolateScaling(float animation_time) const;
 };

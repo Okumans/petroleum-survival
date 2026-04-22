@@ -16,10 +16,10 @@ const float ZOOM = 45.0f;
 class Camera {
 public:
   // Camera Attributes
-  glm::vec3 Position;
-  float MovementSpeed;
-  float MouseSensitivity;
-  float Zoom;
+  glm::vec3 position;
+  float movementSpeed;
+  float mouseSensitivity;
+  float zoom;
 
 private:
   // Euler Angles
@@ -42,34 +42,34 @@ public:
          float pitch = PITCH);
 
   // Constructor with scalar values
-  Camera(float posX, float posY, float posZ, float upX, float upY, float upZ,
-         float yaw, float pitch);
+  Camera(float pos_x, float pos_y, float pos_z, float up_x, float up_y,
+         float up_z, float yaw, float pitch);
 
   // Matrix Getters
-  glm::mat4 getViewMatrix() const;
-  glm::mat4 getProjectionMatrix() const;
-  float getAspect() const;
+  [[nodiscard]] glm::mat4 getViewMatrix() const;
+  [[nodiscard]] glm::mat4 getProjectionMatrix() const;
+  [[nodiscard]] float getAspect() const;
 
   // Input Processing
   void processKeyboard(Camera_Movement direction, float deltaTime);
-  void processMouseMovement(float xoffset, float yoffset,
-                            GLboolean constrainPitch = true);
-  void processMouseScroll(float yoffset);
+  void processMouseMovement(float x_offset, float y_offset,
+                            GLboolean constrain_pitch);
+  void processMouseScroll(float y_offset);
 
   // Setters & Getters
   void setYaw(float yaw, bool update_camera_vectors = true);
   void setPitch(float pitch, bool update_camera_vectors = true);
 
-  float getYaw() const;
-  float getPitch() const;
+  [[nodiscard]] float getYaw() const;
+  [[nodiscard]] float getPitch() const;
 
-  glm::vec3 getRight() const;
-  glm::vec3 getFront() const;
+  [[nodiscard]] glm::vec3 getRight() const;
+  [[nodiscard]] glm::vec3 getFront() const;
+
+  [[nodiscard]] float getSceneWidth() const { return m_sceneWidth; }
+  [[nodiscard]] float getSceneHeight() const { return m_sceneHeight; }
 
   void updateSceneSize(float width, float height);
-
-  float getSceneWidth() const { return m_sceneWidth; }
-  float getSceneHeight() const { return m_sceneHeight; }
 
 private:
   // Internal update logic

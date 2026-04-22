@@ -46,36 +46,17 @@ Texture::Texture(const std::vector<std::string> &faces)
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
       if (isHDR) {
-        glTextureSubImage3D(m_texID,
-                            0,
-                            0,
-                            0,
-                            i,
-                            width,
-                            height,
-                            1,
-                            GL_RGB,
-                            GL_FLOAT,
-                            data);
+        glTextureSubImage3D(m_texID, 0, 0, 0, i, width, height, 1, GL_RGB,
+                            GL_FLOAT, data);
       } else {
-        glTextureSubImage3D(m_texID,
-                            0,
-                            0,
-                            0,
-                            i,
-                            width,
-                            height,
-                            1,
-                            GL_RGBA,
-                            GL_UNSIGNED_BYTE,
-                            data);
+        glTextureSubImage3D(m_texID, 0, 0, 0, i, width, height, 1, GL_RGBA,
+                            GL_UNSIGNED_BYTE, data);
       }
       glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
       stbi_image_free(data);
     } else {
-      std::println(stderr,
-                   "Cubemap texture failed to load at path: {}",
+      std::println(stderr, "Cubemap texture failed to load at path: {}",
                    faces[i]);
     }
   }
@@ -95,9 +76,7 @@ Texture::Texture(const char *path, TextureType type, bool flip_vertical)
   m_texID = _loadTexture(path, flip_vertical);
 }
 
-Texture::Texture(const void *data,
-                 size_t size,
-                 TextureType type,
+Texture::Texture(const void *data, size_t size, TextureType type,
                  bool flip_vertical)
     : m_ownTex(true), m_type(type) {
   m_texID = _loadTextureFromMemory(data, size, flip_vertical);
@@ -134,19 +113,14 @@ GLuint Texture::_loadTexture(const char *path, bool flip_vertical) {
   return textureID;
 }
 
-GLuint Texture::_loadTextureFromMemory(const void *data,
-                                       size_t size,
+GLuint Texture::_loadTextureFromMemory(const void *data, size_t size,
                                        bool flip_vertical) {
   int width, height, nrComponents;
 
   stbi_set_flip_vertically_on_load(flip_vertical);
-  unsigned char *pixels =
-      stbi_load_from_memory(static_cast<const stbi_uc *>(data),
-                            static_cast<int>(size),
-                            &width,
-                            &height,
-                            &nrComponents,
-                            0);
+  unsigned char *pixels = stbi_load_from_memory(
+      static_cast<const stbi_uc *>(data), static_cast<int>(size), &width,
+      &height, &nrComponents, 0);
 
   if (!pixels) {
     std::println(stderr, "ERROR::TEXTURE::LOAD_FROM_MEMORY_FAILED");
@@ -158,9 +132,7 @@ GLuint Texture::_loadTextureFromMemory(const void *data,
   return textureID;
 }
 
-GLuint Texture::_createTexture(unsigned char *data,
-                               int width,
-                               int height,
+GLuint Texture::_createTexture(unsigned char *data, int width, int height,
                                int nrComponents) {
   // 1. Determine Formats
   GLenum internalFormat, dataFormat;
@@ -190,15 +162,8 @@ GLuint Texture::_createTexture(unsigned char *data,
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   // 6. Upload Data (DSA)
-  glTextureSubImage2D(textureID,
-                      0,
-                      0,
-                      0,
-                      width,
-                      height,
-                      dataFormat,
-                      GL_UNSIGNED_BYTE,
-                      data);
+  glTextureSubImage2D(textureID, 0, 0, 0, width, height, dataFormat,
+                      GL_UNSIGNED_BYTE, data);
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 4); // Reset to default
 
@@ -211,8 +176,7 @@ GLuint Texture::_createTexture(unsigned char *data,
   glTextureParameteri(textureID, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
   // Use NEAREST for that blocky Crossy Road look, or LINEAR for smooth
-  glTextureParameteri(textureID,
-                      GL_TEXTURE_MIN_FILTER,
+  glTextureParameteri(textureID, GL_TEXTURE_MIN_FILTER,
                       GL_NEAREST_MIPMAP_LINEAR);
   glTextureParameteri(textureID, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 

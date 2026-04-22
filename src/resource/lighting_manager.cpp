@@ -33,16 +33,6 @@ size_t LightingManager::count() { return m_lights.size(); }
 
 void LightingManager::clear() { m_lights.clear(); }
 
-void LightingManager::addLight(const Light &light) {
-  add(light);
-}
-
-void LightingManager::setLight(size_t index, const Light &light) {
-  set(index, light);
-}
-
-void LightingManager::clearLights() { clear(); }
-
 void LightingManager::apply(Shader &shader) {
   shader.setInt("u_NumLights", (int)m_lights.size());
 

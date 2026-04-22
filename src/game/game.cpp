@@ -21,7 +21,7 @@ Game::Game()
       m_shadowMapTex(0), m_state(GameState::LOADING) {
   m_camera.setPitch(-45.0f);
   m_camera.setYaw(-90.0f);
-  m_camera.Zoom = 45.0f;
+  m_camera.zoom = 45.0f;
 }
 
 Game::~Game() {
@@ -77,23 +77,23 @@ void Game::setup() {
                          std::move(*irradiance_map));
 
   // Setup Lights
-  LightingManager::clearLights();
+  LightingManager::clear();
 
   // 1. "Sun" Light (Directional, casts shadows)
-  LightingManager::addLight({.type = LightType::DIRECTIONAL,
-                             .position = glm::vec3(0.3f, -1.0f, 0.1f),
-                             .color = glm::vec3(11.0f, 9.0f, 8.0f) * .8f,
-                             .castsShadows = true});
+  LightingManager::add({.type = LightType::DIRECTIONAL,
+                        .position = glm::vec3(0.3f, -1.0f, 0.1f),
+                        .color = glm::vec3(11.0f, 9.0f, 8.0f) * .8f,
+                        .castsShadows = true});
 
   // 2. Sky Blue Fill Light (Directional)
-  LightingManager::addLight({.type = LightType::DIRECTIONAL,
-                             .position = glm::vec3(0.5f, -1.0f, 0.2f),
-                             .color = glm::vec3(0.1f, 0.15f, 0.25f)});
+  LightingManager::add({.type = LightType::DIRECTIONAL,
+                        .position = glm::vec3(0.5f, -1.0f, 0.2f),
+                        .color = glm::vec3(0.1f, 0.15f, 0.25f)});
 
   // 3. Ground Bounce Fill (Point light)
-  LightingManager::addLight({.type = LightType::POINT,
-                             .position = glm::vec3(0.0f, -5.0f, 0.0f),
-                             .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
+  LightingManager::add({.type = LightType::POINT,
+                        .position = glm::vec3(0.0f, -5.0f, 0.0f),
+                        .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
 
   m_testObject =
       std::make_unique<Player>(ModelManager::copy(ModelName::KASANE_TETO));
@@ -101,7 +101,7 @@ void Game::setup() {
 
   m_testAnimation = std::make_unique<Animation>(
       ASSETS_PATH "/objects/kasane_teto/teto_walking_normal.dae",
-      m_testObject->getModel().get());
+      m_testObject->copyModel().get());
 
   m_testAnimator = std::make_unique<Animator>(m_testAnimation.get());
 
@@ -131,7 +131,7 @@ void Game::update(double delta_time) {
 
   Light sun = LightingManager::getShadowCaster();
   sun.position = sun_dir;
-  LightingManager::setLight(0, sun);
+  LightingManager::set(0, sun);
   // -----------------------------
 
   _updateCamera(delta_time);
@@ -210,7 +210,7 @@ void Game::render(double delta_time) {
   pbr_shader.use();
   pbr_shader.setMat4("u_Projection", projection);
   pbr_shader.setMat4("u_View", view);
-  pbr_shader.setVec3("u_CameraPos", m_camera.Position);
+  pbr_shader.setVec3("u_CameraPos", m_camera.position);
   pbr_shader.setMat4("u_LightSpaceMatrix", m_lightSpaceMatrix);
 
   // Bind Skybox for reflections

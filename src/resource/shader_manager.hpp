@@ -16,9 +16,7 @@ public:
 
   static Shader &loadFromPath(ShaderType type, const char *vertShaderPath,
                               const char *fragShaderPath);
-
   static Shader &loadFromSource(ShaderType type, const char *vertShaderSource,
                                 const char *fragShaderSource);
-
-  static Shader &get(ShaderType type);
+  [[nodiscard]] static Shader &get(ShaderType type);
 };

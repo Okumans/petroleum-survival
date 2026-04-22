@@ -5,11 +5,12 @@
 #include <string>
 
 class Shader {
-public:
-  unsigned int ID;
+private:
+  unsigned int m_id;
 
-  Shader(const char *vertexShaderPath, const char *fragmentShaderPath,
-         const char *geometryShaderPath = nullptr);
+public:
+  Shader(const char *vertex_shader_path, const char *fragment_shader_path,
+         const char *geometry_shader_path = nullptr);
   Shader(GLuint ID);
   ~Shader();
 
@@ -17,13 +18,13 @@ public:
   Shader &operator=(const Shader &) = delete;
   Shader(Shader &&other) noexcept;
 
-  static Shader fromFile(const char *vertexShaderPath,
-                         const char *fragmentShaderPath,
-                         const char *geometryShaderPath = nullptr);
+  static Shader fromFile(const char *vertex_shader_path,
+                         const char *fragment_shader_path,
+                         const char *geometry_shader_path = nullptr);
 
-  static Shader fromSource(const char *vertexShaderSource,
-                           const char *fragmentShaderSource,
-                           const char *geometryShaderSource = nullptr);
+  static Shader fromSource(const char *vertex_shader_source,
+                           const char *fragment_shader_source,
+                           const char *geometry_shader_source = nullptr);
 
   void use();
 
@@ -39,6 +40,8 @@ public:
   void setMat2(const std::string &name, const glm::mat2 &mat);
   void setMat3(const std::string &name, const glm::mat3 &mat);
   void setMat4(const std::string &name, const glm::mat4 &mat);
+
+  [[nodiscard]] GLuint getID() const { return m_id; }
 
 private:
   static void checkCompileErrors(GLuint shader, std::string type);

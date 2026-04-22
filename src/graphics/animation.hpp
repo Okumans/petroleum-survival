@@ -40,11 +40,13 @@ public:
 
   Bone *findBone(const std::string &name);
 
-  float getTicksPerSecond() const { return m_ticksPerSecond; }
-  float getDuration() const { return m_duration; }
-  const AssimpNodeData &getRootNode() const { return m_rootNode; }
-  const glm::mat4 &getGlobalTransformation() const { return m_globalTransformation; }
-  const std::map<std::string, BoneInfo> &getBoneIDMap() const {
+  [[nodiscard]] float getTicksPerSecond() const { return m_ticksPerSecond; }
+  [[nodiscard]] float getDuration() const { return m_duration; }
+  [[nodiscard]] const AssimpNodeData &getRootNode() const { return m_rootNode; }
+  [[nodiscard]] const glm::mat4 &getGlobalTransformation() const {
+    return m_globalTransformation;
+  }
+  [[nodiscard]] const std::map<std::string, BoneInfo> &getBoneIDMap() const {
     return m_boneInfoMap;
   }
 

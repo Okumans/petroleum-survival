@@ -2,34 +2,28 @@
 #include <cmath>
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch)
-    : MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM),
+    : movementSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM),
       m_yaw(yaw), m_pitch(pitch), m_front(glm::vec3(0.0f, 0.0f, -1.0f)),
       m_worldUp(up) {
-  Position = position;
-  _updateCameraVectors();
+  this->position = position;
+  this->_updateCameraVectors();
 }
 
-Camera::Camera(float posX,
-               float posY,
-               float posZ,
-               float upX,
-               float upY,
-               float upZ,
-               float yaw,
-               float pitch)
-    : MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM),
+Camera::Camera(float pos_x, float pos_y, float pos_z, float up_x, float up_y,
+               float up_z, float yaw, float pitch)
+    : movementSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM),
       m_yaw(yaw), m_pitch(pitch), m_front(glm::vec3(0.0f, 0.0f, -1.0f)) {
-  Position = glm::vec3(posX, posY, posZ);
-  m_worldUp = glm::vec3(upX, upY, upZ);
+  position = glm::vec3(pos_x, pos_y, pos_z);
+  m_worldUp = glm::vec3(up_x, up_y, up_z);
   _updateCameraVectors();
 }
 
 glm::mat4 Camera::getViewMatrix() const {
-  return glm::lookAt(Position, Position + m_front, m_up);
+  return glm::lookAt(position, position + m_front, m_up);
 }
 
 glm::mat4 Camera::getProjectionMatrix() const {
-  return glm::perspective(glm::radians(Zoom), getAspect(), 0.1f, 100.0f);
+  return glm::perspective(glm::radians(zoom), getAspect(), 0.1f, 100.0f);
 }
 
 float Camera::getAspect() const {
@@ -37,27 +31,26 @@ float Camera::getAspect() const {
 }
 
 void Camera::processKeyboard(Camera_Movement direction, float deltaTime) {
-  float velocity = MovementSpeed * deltaTime;
+  float velocity = movementSpeed * deltaTime;
   if (direction == FORWARD)
-    Position += m_front * velocity;
+    position += m_front * velocity;
   if (direction == BACKWARD)
-    Position -= m_front * velocity;
+    position -= m_front * velocity;
   if (direction == LEFT)
-    Position -= m_right * velocity;
+    position -= m_right * velocity;
   if (direction == RIGHT)
-    Position += m_right * velocity;
+    position += m_right * velocity;
 }
 
-void Camera::processMouseMovement(float xoffset,
-                                  float yoffset,
-                                  GLboolean constrainPitch) {
-  xoffset *= MouseSensitivity;
-  yoffset *= MouseSensitivity;
+void Camera::processMouseMovement(float x_offset, float y_offset,
+                                  GLboolean constrain_pitch) {
+  x_offset *= mouseSensitivity;
+  y_offset *= mouseSensitivity;
 
-  m_yaw += xoffset;
-  m_pitch += yoffset;
+  m_yaw += x_offset;
+  m_pitch += y_offset;
 
-  if (constrainPitch) {
+  if (constrain_pitch) {
     if (m_pitch > 89.0f)
       m_pitch = 89.0f;
     if (m_pitch < -89.0f)
@@ -67,12 +60,12 @@ void Camera::processMouseMovement(float xoffset,
   _updateCameraVectors();
 }
 
-void Camera::processMouseScroll(float yoffset) {
-  Zoom -= (float)yoffset;
-  if (Zoom < 1.0f)
-    Zoom = 1.0f;
-  if (Zoom > 45.0f)
-    Zoom = 45.0f;
+void Camera::processMouseScroll(float y_offset) {
+  zoom -= y_offset;
+  if (zoom < 1.0f)
+    zoom = 1.0f;
+  if (zoom > 45.0f)
+    zoom = 45.0f;
 }
 
 void Camera::setYaw(float yaw, bool update_camera_vectors) {

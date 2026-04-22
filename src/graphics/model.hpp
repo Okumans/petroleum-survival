@@ -31,10 +31,16 @@ public:
   Model(Model &&) noexcept;
 
   void draw(const RenderContext &ctx) override;
-  const std::vector<Mesh> &getMeshes() const { return m_meshes; }
+  [[nodiscard]] const std::vector<Mesh> &getMeshes() const { return m_meshes; }
 
-  std::map<std::string, BoneInfo> &getBoneInfoMap() { return m_boneInfoMap; }
-  uint32_t &getBoneCount() { return m_boneCount; }
+  [[nodiscard]] std::map<std::string, BoneInfo> &getBoneInfoMap() {
+    return m_boneInfoMap;
+  }
+  [[nodiscard]] const std::map<std::string, BoneInfo> &getBoneInfoMap() const {
+    return m_boneInfoMap;
+  }
+  [[nodiscard]] uint32_t &getBoneCount() { return m_boneCount; }
+  [[nodiscard]] uint32_t getBoneCount() const { return m_boneCount; }
 
 private:
   void _loadModel(const char *path, bool flip_vertical);

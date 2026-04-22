@@ -10,21 +10,22 @@ class MaterialBuilder;
 
 class Material {
 private:
-  std::shared_ptr<Texture> m_diffuse;
-  std::shared_ptr<Texture> m_normal;
-  std::shared_ptr<Texture> m_height;
-  std::shared_ptr<Texture> m_metallic;
-  std::shared_ptr<Texture> m_roughness;
-  std::shared_ptr<Texture> m_ao;
+  using ShareTexture = std::shared_ptr<Texture>;
+
+  ShareTexture m_diffuse;
+  ShareTexture m_normal;
+  ShareTexture m_height;
+  ShareTexture m_metallic;
+  ShareTexture m_roughness;
+  ShareTexture m_ao;
 
   float m_metallicFactor;
   float m_roughnessFactor;
   float m_aoFactor;
 
 public:
-  Material(std::shared_ptr<Texture> diffuse, std::shared_ptr<Texture> normal,
-           std::shared_ptr<Texture> height, std::shared_ptr<Texture> metallic,
-           std::shared_ptr<Texture> roughness, std::shared_ptr<Texture> ao,
+  Material(ShareTexture diffuse, ShareTexture normal, ShareTexture height,
+           ShareTexture metallic, ShareTexture roughness, ShareTexture ao,
            float metallicFactor = 0.0f, float roughnessFactor = 1.0f,
            float aoFactor = 1.0f)
       : m_diffuse(std::move(diffuse)), m_normal(std::move(normal)),
@@ -47,16 +48,30 @@ public:
   Material(const Material &other) = default;
   Material &operator=(const Material &other) = default;
 
-  const std::shared_ptr<Texture> &getDiffuse() const { return m_diffuse; }
-  const std::shared_ptr<Texture> &getNormal() const { return m_normal; }
-  const std::shared_ptr<Texture> &getHeight() const { return m_height; }
-  const std::shared_ptr<Texture> &getMetallic() const { return m_metallic; }
-  const std::shared_ptr<Texture> &getRoughness() const { return m_roughness; }
-  const std::shared_ptr<Texture> &getAO() const { return m_ao; }
+  [[nodiscard]] ShareTexture copyDiffuse() const { return m_diffuse; }
+  [[nodiscard]] ShareTexture copyNormal() const { return m_normal; }
+  [[nodiscard]] ShareTexture copyHeight() const { return m_height; }
+  [[nodiscard]] ShareTexture copyMetallic() const { return m_metallic; }
+  [[nodiscard]] ShareTexture copyRoughness() const { return m_roughness; }
+  [[nodiscard]] ShareTexture copyAO() const { return m_ao; }
 
-  float getMetallicFactor() const { return m_metallicFactor; }
-  float getRoughnessFactor() const { return m_roughnessFactor; }
-  float getAOFactor() const { return m_aoFactor; }
+  [[nodiscard]] const Texture &getDiffuse() const { return *m_diffuse; }
+  [[nodiscard]] const Texture &getNormal() const { return *m_normal; }
+  [[nodiscard]] const Texture &getHeight() const { return *m_height; }
+  [[nodiscard]] const Texture &getMetallic() const { return *m_metallic; }
+  [[nodiscard]] const Texture &getRoughness() const { return *m_roughness; }
+  [[nodiscard]] const Texture &getAO() const { return *m_ao; }
+
+  [[nodiscard]] float getMetallicFactor() const { return m_metallicFactor; }
+  [[nodiscard]] float getRoughnessFactor() const { return m_roughnessFactor; }
+  [[nodiscard]] float getAOFactor() const { return m_aoFactor; }
+
+  [[nodiscard]] bool existsDiffuse() const { return m_diffuse != nullptr; }
+  [[nodiscard]] bool existsNormal() const { return m_normal != nullptr; }
+  [[nodiscard]] bool existsHeight() const { return m_height != nullptr; }
+  [[nodiscard]] bool existsMetallic() const { return m_metallic != nullptr; }
+  [[nodiscard]] bool existsRoughness() const { return m_roughness != nullptr; }
+  [[nodiscard]] bool existsAO() const { return m_ao != nullptr; }
 
   static MaterialBuilder builder();
   static MaterialBuilder builder(const Material &ref_material);
@@ -81,10 +96,11 @@ public:
         m_metallic(nullptr), m_roughness(nullptr), m_ao(nullptr) {}
 
   MaterialBuilder(const Material &ref_material)
-      : m_diffuse(ref_material.getDiffuse()),
-        m_normal(ref_material.getNormal()), m_height(ref_material.getHeight()),
-        m_metallic(ref_material.getMetallic()),
-        m_roughness(ref_material.getRoughness()), m_ao(ref_material.getAO()),
+      : m_diffuse(ref_material.copyDiffuse()),
+        m_normal(ref_material.copyNormal()),
+        m_height(ref_material.copyHeight()),
+        m_metallic(ref_material.copyMetallic()),
+        m_roughness(ref_material.copyRoughness()), m_ao(ref_material.copyAO()),
         m_metallicFactor(ref_material.getMetallicFactor()),
         m_roughnessFactor(ref_material.getRoughnessFactor()),
         m_aoFactor(ref_material.getAOFactor()) {}

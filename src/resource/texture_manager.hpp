@@ -38,18 +38,18 @@ public:
   static Texture load(TextureType type, const void *data, size_t size,
                       bool flip_vertical = false);
 
-  static Texture &get(TextureName name);
-  static std::shared_ptr<Texture> copy(TextureName name);
-  static Texture *tryGet(TextureName name);
-  static bool exists(TextureName name);
+  [[nodiscard]] static Texture &get(TextureName name);
+  [[nodiscard]] static std::shared_ptr<Texture> copy(TextureName name);
+  [[nodiscard]] static Texture *tryGet(TextureName name);
+  [[nodiscard]] static bool exists(TextureName name);
   static std::shared_ptr<Texture> manage(TextureName name, Texture &&texture);
   static void clear();
 
   static std::shared_ptr<Texture>
   loadCubemap(TextureName name, const std::vector<std::string> &faces);
 
-  static Texture generateStaticWhiteTexture();
-  static Texture generateStaticBlackTexture();
-  static Texture generateStaticNormalTexture();
-  static Texture generateStaticPBRDefaultTexture();
+  [[nodiscard]] static Texture generateStaticWhiteTexture();
+  [[nodiscard]] static Texture generateStaticBlackTexture();
+  [[nodiscard]] static Texture generateStaticNormalTexture();
+  [[nodiscard]] static Texture generateStaticPBRDefaultTexture();
 };

@@ -36,8 +36,8 @@ public:
 
   Texture(Texture &&other) noexcept;
 
-  GLuint getTexID() const { return m_texID; };
-  TextureType getType() const { return m_type; };
+  [[nodiscard]] GLuint getTexID() const { return m_texID; };
+  [[nodiscard]] TextureType getType() const { return m_type; };
 
 private:
   GLuint _loadTexture(const char *path, bool flip_vertical);

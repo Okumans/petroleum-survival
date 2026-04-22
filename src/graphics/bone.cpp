@@ -1,4 +1,5 @@
 #include "bone.hpp"
+#include <cstdint>
 
 // Helpers mimicking `AssimpGLMHelpers` to keep things localized and isolated
 static glm::vec3 vec3FromAssimp(const aiVector3D &vec) {
@@ -9,11 +10,12 @@ static glm::quat quatFromAssimp(const aiQuaternion &quat) {
   return glm::quat(quat.w, quat.x, quat.y, quat.z);
 }
 
-Bone::Bone(const std::string &name, int id, const aiNodeAnim *channel)
+Bone::Bone(const std::string &name, uint32_t id, const aiNodeAnim *channel)
     : m_localTransform(1.0f), m_name(name), m_id(id) {
 
   m_numPositions = channel->mNumPositionKeys;
-  for (int position_index = 0; position_index < m_numPositions; ++position_index) {
+  for (size_t position_index = 0; position_index < m_numPositions;
+       ++position_index) {
     aiVector3D ai_position = channel->mPositionKeys[position_index].mValue;
     float timestamp = channel->mPositionKeys[position_index].mTime;
 
@@ -24,7 +26,8 @@ Bone::Bone(const std::string &name, int id, const aiNodeAnim *channel)
   }
 
   m_numRotations = channel->mNumRotationKeys;
-  for (int rotation_index = 0; rotation_index < m_numRotations; ++rotation_index) {
+  for (size_t rotation_index = 0; rotation_index < m_numRotations;
+       ++rotation_index) {
     aiQuaternion ai_orientation = channel->mRotationKeys[rotation_index].mValue;
     float timestamp = channel->mRotationKeys[rotation_index].mTime;
 
@@ -35,7 +38,7 @@ Bone::Bone(const std::string &name, int id, const aiNodeAnim *channel)
   }
 
   m_numScalings = channel->mNumScalingKeys;
-  for (int key_index = 0; key_index < m_numScalings; ++key_index) {
+  for (size_t key_index = 0; key_index < m_numScalings; ++key_index) {
     aiVector3D scale = channel->mScalingKeys[key_index].mValue;
     float timestamp = channel->mScalingKeys[key_index].mTime;
 
@@ -53,8 +56,8 @@ void Bone::update(float animation_time) {
   m_localTransform = translation * rotation * scale;
 }
 
-int Bone::getPositionIndex(float animation_time) const {
-  for (int index = 0; index < m_numPositions - 1; ++index) {
+uint32_t Bone::getPositionIndex(float animation_time) const {
+  for (size_t index = 0; index < m_numPositions - 1; ++index) {
     if (animation_time < m_positions[index + 1].timeStamp) {
       return index;
     }
@@ -63,8 +66,8 @@ int Bone::getPositionIndex(float animation_time) const {
   return 0; // Fallback
 }
 
-int Bone::getRotationIndex(float animation_time) const {
-  for (int index = 0; index < m_numRotations - 1; ++index) {
+uint32_t Bone::getRotationIndex(float animation_time) const {
+  for (size_t index = 0; index < m_numRotations - 1; ++index) {
     if (animation_time < m_rotations[index + 1].timeStamp) {
       return index;
     }
@@ -73,8 +76,8 @@ int Bone::getRotationIndex(float animation_time) const {
   return 0; // Fallback
 }
 
-int Bone::getScaleIndex(float animation_time) const {
-  for (int index = 0; index < m_numScalings - 1; ++index) {
+uint32_t Bone::getScaleIndex(float animation_time) const {
+  for (size_t index = 0; index < m_numScalings - 1; ++index) {
     if (animation_time < m_scales[index + 1].timeStamp) {
       return index;
     }
@@ -83,7 +86,8 @@ int Bone::getScaleIndex(float animation_time) const {
   return 0; // Fallback
 }
 
-float Bone::_getScaleFactor(float last_timestamp, float next_timestamp, float animation_time) const {
+float Bone::_getScaleFactor(float last_timestamp, float next_timestamp,
+                            float animation_time) const {
   float midway_length = animation_time - last_timestamp;
   float frames_diff = next_timestamp - last_timestamp;
   return midway_length / frames_diff;
@@ -96,12 +100,12 @@ glm::mat4 Bone::_interpolatePosition(float animation_time) const {
 
   int p0_index = getPositionIndex(animation_time);
   int p1_index = p0_index + 1;
-  float scale_factor = _getScaleFactor(m_positions[p0_index].timeStamp,
-                                       m_positions[p1_index].timeStamp,
-                                       animation_time);
-  glm::vec3 final_position = glm::mix(m_positions[p0_index].position,
-                                      m_positions[p1_index].position,
-                                      scale_factor);
+  float scale_factor =
+      _getScaleFactor(m_positions[p0_index].timeStamp,
+                      m_positions[p1_index].timeStamp, animation_time);
+  glm::vec3 final_position =
+      glm::mix(m_positions[p0_index].position, m_positions[p1_index].position,
+               scale_factor);
   return glm::translate(glm::mat4(1.0f), final_position);
 }
 
@@ -113,12 +117,12 @@ glm::mat4 Bone::_interpolateRotation(float animation_time) const {
 
   int p0_index = getRotationIndex(animation_time);
   int p1_index = p0_index + 1;
-  float scale_factor = _getScaleFactor(m_rotations[p0_index].timeStamp,
-                                       m_rotations[p1_index].timeStamp,
-                                       animation_time);
-  glm::quat final_rotation = glm::slerp(m_rotations[p0_index].orientation,
-                                        m_rotations[p1_index].orientation,
-                                        scale_factor);
+  float scale_factor =
+      _getScaleFactor(m_rotations[p0_index].timeStamp,
+                      m_rotations[p1_index].timeStamp, animation_time);
+  glm::quat final_rotation =
+      glm::slerp(m_rotations[p0_index].orientation,
+                 m_rotations[p1_index].orientation, scale_factor);
   final_rotation = glm::normalize(final_rotation);
   return glm::toMat4(final_rotation);
 }
@@ -130,11 +134,10 @@ glm::mat4 Bone::_interpolateScaling(float animation_time) const {
 
   int p0_index = getScaleIndex(animation_time);
   int p1_index = p0_index + 1;
-  float scale_factor = _getScaleFactor(m_scales[p0_index].timeStamp,
-                                       m_scales[p1_index].timeStamp,
-                                       animation_time);
+  float scale_factor =
+      _getScaleFactor(m_scales[p0_index].timeStamp,
+                      m_scales[p1_index].timeStamp, animation_time);
   glm::vec3 final_scale = glm::mix(m_scales[p0_index].scale,
-                                   m_scales[p1_index].scale,
-                                   scale_factor);
+                                   m_scales[p1_index].scale, scale_factor);
   return glm::scale(glm::mat4(1.0f), final_scale);
 }

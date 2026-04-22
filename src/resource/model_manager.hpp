@@ -18,10 +18,9 @@ public:
 
   static std::shared_ptr<Model> load(ModelName name, const char *model_path,
                                      bool flip_vertical = false);
-  static Model &get(ModelName name);
-  static std::shared_ptr<Model> copy(ModelName name);
-  static Model *tryGet(ModelName name);
-
-  static bool exists(ModelName name);
+  [[nodiscard]] static Model &get(ModelName name);
+  [[nodiscard]] static std::shared_ptr<Model> copy(ModelName name);
+  [[nodiscard]] static Model *tryGet(ModelName name);
+  [[nodiscard]] static bool exists(ModelName name);
   static void clear();
 };

@@ -104,8 +104,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
 
   // 1. Diffuse/Albedo
   ctx.shader.setInt("u_DiffuseTex", counter);
-  if (material.getDiffuse()) {
-    glBindTextureUnit(counter, material.getDiffuse()->getTexID());
+  if (material.existsDiffuse()) {
+    glBindTextureUnit(counter, material.getDiffuse().getTexID());
   } else {
     glBindTextureUnit(counter,
                       TextureManager::get(STATIC_WHITE_TEXTURE).getTexID());
@@ -114,8 +114,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
 
   // 2. Normal
   ctx.shader.setInt("u_NormalTex", counter);
-  if (material.getNormal()) {
-    glBindTextureUnit(counter, material.getNormal()->getTexID());
+  if (material.existsNormal()) {
+    glBindTextureUnit(counter, material.getNormal().getTexID());
   } else {
     glBindTextureUnit(counter,
                       TextureManager::get(STATIC_NORMAL_TEXTURE).getTexID());
@@ -124,8 +124,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
 
   // 3. Height/Parallax
   ctx.shader.setInt("u_HeightTex", counter);
-  if (material.getHeight()) {
-    glBindTextureUnit(counter, material.getHeight()->getTexID());
+  if (material.existsHeight()) {
+    glBindTextureUnit(counter, material.getHeight().getTexID());
   } else {
     glBindTextureUnit(counter,
                       TextureManager::get(STATIC_BLACK_TEXTURE).getTexID());
@@ -134,8 +134,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
 
   // 4. Metallic
   ctx.shader.setInt("u_MetallicTex", counter);
-  if (material.getMetallic()) {
-    glBindTextureUnit(counter, material.getMetallic()->getTexID());
+  if (material.existsMetallic()) {
+    glBindTextureUnit(counter, material.getMetallic().getTexID());
   } else {
     // Default Metallic = 0.0 (Black)
     glBindTextureUnit(counter,
@@ -145,8 +145,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
 
   // 5. Roughness
   ctx.shader.setInt("u_RoughnessTex", counter);
-  if (material.getRoughness()) {
-    glBindTextureUnit(counter, material.getRoughness()->getTexID());
+  if (material.existsRoughness()) {
+    glBindTextureUnit(counter, material.getRoughness().getTexID());
   } else {
     // Default Roughness = 1.0 (White)
     glBindTextureUnit(counter,
@@ -156,8 +156,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
 
   // 6. AO
   ctx.shader.setInt("u_AOTex", counter);
-  if (material.getAO()) {
-    glBindTextureUnit(counter, material.getAO()->getTexID());
+  if (material.existsAO()) {
+    glBindTextureUnit(counter, material.getAO().getTexID());
   } else {
     glBindTextureUnit(counter,
                       TextureManager::get(STATIC_WHITE_TEXTURE).getTexID());
@@ -166,9 +166,8 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
 
   // Factors
   bool usePackedMR = false;
-  if (material.getMetallic() && material.getRoughness() &&
-      material.getMetallic()->getTexID() ==
-          material.getRoughness()->getTexID()) {
+  if (material.existsMetallic() && material.existsRoughness() &&
+      material.getMetallic().getTexID() == material.getRoughness().getTexID()) {
     usePackedMR = true;
   }
   ctx.shader.setBool("u_UsePackedMR", usePackedMR);

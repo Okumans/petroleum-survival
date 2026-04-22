@@ -46,17 +46,18 @@ public:
   void translate(const glm::vec3 &offset);
   void rotate(const glm::vec3 &degrees);
 
-  glm::vec3 getPosition() const { return m_position; }
-  glm::vec3 getRotation() const { return m_rotation; }
-  glm::vec3 getScale() const { return m_scale; }
+  [[nodiscard]] glm::vec3 getPosition() const { return m_position; }
+  [[nodiscard]] glm::vec3 getRotation() const { return m_rotation; }
+  [[nodiscard]] glm::vec3 getScale() const { return m_scale; }
 
-  std::shared_ptr<Model> getModel() const { return m_model; }
+  [[nodiscard]] const Model &getModel() const { return *m_model; }
+  [[nodiscard]] std::shared_ptr<Model> copyModel() const { return m_model; }
 
-  const AABB &getWorldAABB() const;
-  AABB getHitboxAABB() const; // Scaled for collisions
+  [[nodiscard]] const AABB &getWorldAABB() const;
+  [[nodiscard]] AABB getHitboxAABB() const; // Scaled for collisions
 
-  bool collidesWith(const GameObject &other) const;
-  bool collidesWith(const AABB &other_box) const;
+  [[nodiscard]] bool collidesWith(const GameObject &other) const;
+  [[nodiscard]] bool collidesWith(const AABB &other_box) const;
 
   void forceRecalculateAABB();
 

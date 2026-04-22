@@ -22,21 +22,14 @@ public:
   // Consistent API
   static void add(const Light &light);
   static void set(size_t index, const Light &light);
-  static const Light &get(size_t index);
-  static const Light *tryGet(size_t index);
-  static bool exists(size_t index);
-  static size_t count();
+  [[nodiscard]] static const Light &get(size_t index);
+  [[nodiscard]] static const Light *tryGet(size_t index);
+  [[nodiscard]] static bool exists(size_t index);
+  [[nodiscard]] static size_t count();
+  static void apply(Shader &shader);
   static void clear();
 
-  static void addLight(const Light &light);
-  static void setLight(size_t index, const Light &light);
-  static void clearLights();
-
-  // Apply all light uniforms to the given shader
-  static void apply(Shader &shader);
-
-  // Shadow utilities
   static glm::mat4 calculateLightSpaceMatrix(const glm::vec3 &targetPos);
-  static bool hasShadowCaster();
-  static Light getShadowCaster();
+  [[nodiscard]] static bool hasShadowCaster();
+  [[nodiscard]] static Light getShadowCaster();
 };
