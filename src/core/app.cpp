@@ -5,6 +5,7 @@
 
 #include "GLFW/glfw3.h"
 #include "glm/fwd.hpp"
+#include "resource/animation_manager.hpp"
 #include "resource/model_manager.hpp"
 #include "resource/shader_manager.hpp"
 #include "resource/texture_manager.hpp"
@@ -133,6 +134,14 @@ void App::_setupResources() {
     return [name, path]() { ModelManager::load(name, path.c_str(), false); };
   };
 
+  auto loadAnimation = [](AnimationName name, const std::string &path,
+                          ModelName model_name) {
+    return [name, path, model_name]() {
+      AnimationManager::load(name, path.c_str(),
+                             &ModelManager::get(model_name));
+    };
+  };
+
   // Shaders
 #ifndef EMBED_SHADER
   m_loadingTasks.push_back(
@@ -184,6 +193,37 @@ void App::_setupResources() {
   m_loadingTasks.push_back(
       {"Model: Kasane Teto", loadModel(ModelName::KASANE_TETO, ASSETS_PATH
                                        "/objects/kasane_teto/teto.dae")});
+
+  // Animations
+  m_loadingTasks.push_back({"Animation: Kasane Teto Idle",
+                            loadAnimation(AnimationName::KASANE_TETO_IDLE,
+                                          ASSETS_PATH "/objects/kasane_teto/"
+                                                      "teto_idle.dae",
+                                          ModelName::KASANE_TETO)});
+  m_loadingTasks.push_back({"Animation: Kasane Teto Walking",
+                            loadAnimation(AnimationName::KASANE_TETO_WALKING,
+                                          ASSETS_PATH "/objects/kasane_teto/"
+                                                      "teto_walking_normal.dae",
+                                          ModelName::KASANE_TETO)});
+
+  // Static texture generation
+  m_loadingTasks.push_back(
+      {"Generating Static Texture", []() {
+         if (!TextureManager::exists(STATIC_WHITE_TEXTURE))
+           TextureManager::manage(STATIC_WHITE_TEXTURE,
+                                  TextureManager::generateStaticWhiteTexture());
+         if (!TextureManager::exists(STATIC_BLACK_TEXTURE))
+           TextureManager::manage(STATIC_BLACK_TEXTURE,
+                                  TextureManager::generateStaticBlackTexture());
+         if (!TextureManager::exists(STATIC_NORMAL_TEXTURE))
+           TextureManager::manage(
+               STATIC_NORMAL_TEXTURE,
+               TextureManager::generateStaticNormalTexture());
+         if (!TextureManager::exists(STATIC_PBR_DEFAULT_TEXTURE))
+           TextureManager::manage(
+               STATIC_PBR_DEFAULT_TEXTURE,
+               TextureManager::generateStaticPBRDefaultTexture());
+       }});
 
   // Skybox
   m_loadingTasks.push_back(

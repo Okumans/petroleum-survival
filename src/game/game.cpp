@@ -4,6 +4,7 @@
 #include "graphics/ibl_generator.hpp"
 #include "graphics/idrawable.hpp"
 #include "graphics/shader.hpp"
+#include "resource/animation_manager.hpp"
 #include "resource/lighting_manager.hpp"
 #include "resource/model_manager.hpp"
 #include "resource/shader_manager.hpp"
@@ -30,6 +31,10 @@ Game::~Game() {
 }
 
 void Game::setup() {
+  ShaderManager::ensureInit();
+  ModelManager::ensureInit();
+  AnimationManager::ensureInit();
+
   // Setup shadow map FBO
   glGenFramebuffers(1, &m_shadowMapFBO);
   glGenTextures(1, &m_shadowMapTex);
@@ -50,20 +55,6 @@ void Game::setup() {
   glDrawBuffer(GL_NONE);
   glReadBuffer(GL_NONE);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  // Initialize static textures
-  if (!TextureManager::exists(STATIC_WHITE_TEXTURE))
-    TextureManager::manage(STATIC_WHITE_TEXTURE,
-                           TextureManager::generateStaticWhiteTexture());
-  if (!TextureManager::exists(STATIC_BLACK_TEXTURE))
-    TextureManager::manage(STATIC_BLACK_TEXTURE,
-                           TextureManager::generateStaticBlackTexture());
-  if (!TextureManager::exists(STATIC_NORMAL_TEXTURE))
-    TextureManager::manage(STATIC_NORMAL_TEXTURE,
-                           TextureManager::generateStaticNormalTexture());
-  if (!TextureManager::exists(STATIC_PBR_DEFAULT_TEXTURE))
-    TextureManager::manage(STATIC_PBR_DEFAULT_TEXTURE,
-                           TextureManager::generateStaticPBRDefaultTexture());
 
   // Generate Irradiance Map
   std::shared_ptr<Texture> skybox_tex =
@@ -95,15 +86,10 @@ void Game::setup() {
                         .position = glm::vec3(0.0f, -5.0f, 0.0f),
                         .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
 
-  m_testObject =
+  m_player =
       std::make_unique<Player>(ModelManager::copy(ModelName::KASANE_TETO));
-  m_testObject->setScale(20.0f);
-
-  m_testAnimation = std::make_unique<Animation>(
-      ASSETS_PATH "/objects/kasane_teto/teto_walking_normal.dae",
-      m_testObject->copyModel().get());
-
-  m_testAnimator = std::make_unique<Animator>(m_testAnimation.get());
+  m_player->setScale(20.0f);
+  m_player->setup();
 
   reset();
 }
@@ -136,14 +122,10 @@ void Game::update(double delta_time) {
 
   _updateCamera(delta_time);
   m_cameraController.update(static_cast<float>(delta_time));
-  m_testObject->update(delta_time);
-
-  if (m_testAnimator) {
-    m_testAnimator->updateAnimation(static_cast<float>(delta_time));
-  }
+  m_player->update(delta_time);
 }
 
-void Game::movePlayer(glm::vec3 vec) { m_testObject->moveWithAnimation(vec); }
+void Game::movePlayer(glm::vec3 vec) { m_player->moveWithAnimation(vec); }
 
 void Game::render(double delta_time) {
   glEnable(GL_DEPTH_TEST);
@@ -168,15 +150,8 @@ void Game::render(double delta_time) {
         .deltaTime = delta_time,
     };
 
-    if (m_testAnimator) {
-      shadow_shader.setBool("u_HasAnimation", true);
-      m_testAnimator->apply(shadow_shader);
-    } else {
-      shadow_shader.setBool("u_HasAnimation", false);
-    }
-
-    if (m_testObject)
-      m_testObject->draw(shadow_draw_ctx);
+    if (m_player)
+      m_player->draw(shadow_draw_ctx);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -233,34 +208,27 @@ void Game::render(double delta_time) {
   pbr_shader.setFloat("u_AOFactor", 1.0f);
   pbr_shader.setFloat("u_AmbientIntensity", 1.0f);
 
-  if (m_testObject) {
+  if (m_player) {
     pbr_shader.setVec3("u_BaseColor", glm::vec3(1.0f));
     pbr_shader.setVec2("u_UVOffset", glm::vec2(0.0f));
-
-    if (true && m_testAnimator) {
-      pbr_shader.setBool("u_HasAnimation", true);
-      m_testAnimator->apply(pbr_shader);
-    } else {
-      pbr_shader.setBool("u_HasAnimation", false);
-    }
 
     RenderContext ctx = {
         .shader = pbr_shader,
         .camera = m_camera,
         .deltaTime = delta_time,
     };
-    m_testObject->draw(ctx);
+    m_player->draw(ctx);
   }
 
-  if (m_debugAABB && m_testObject) {
+  if (m_debugAABB && m_player) {
     RenderContext debug_ctx = {
         .shader = pbr_shader,
         .camera = m_camera,
         .deltaTime = delta_time,
     };
-    DebugDrawer::drawAABB(debug_ctx, m_testObject->getHitboxAABB(),
+    DebugDrawer::drawAABB(debug_ctx, m_player->getHitboxAABB(),
                           {1.0f, 0.0f, 0.0f});
-    DebugDrawer::drawAABB(debug_ctx, m_testObject->getWorldAABB(),
+    DebugDrawer::drawAABB(debug_ctx, m_player->getWorldAABB(),
                           {1.0f, 1.0f, 0.0f});
   }
 
@@ -270,7 +238,7 @@ void Game::render(double delta_time) {
 
 void Game::_updateCamera(double delta_time) {
   (void)delta_time;
-  if (m_testObject) {
+  if (m_player) {
     // m_cameraController.follow(m_testObject->getPosition());
     m_cameraController.follow({0.0f, 0.0f, 0.0f});
   }

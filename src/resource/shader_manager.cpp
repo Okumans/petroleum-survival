@@ -29,3 +29,5 @@ Shader &ShaderManager::loadFromSource(ShaderType type,
 Shader &ShaderManager::get(ShaderType type) {
   return *s_shaders.ensureInitialized().at(type);
 }
+
+void ShaderManager::ensureInit() { (void)s_shaders.ensureInitialized(); }

@@ -22,5 +22,6 @@ public:
   [[nodiscard]] static std::shared_ptr<Model> copy(ModelName name);
   [[nodiscard]] static Model *tryGet(ModelName name);
   [[nodiscard]] static bool exists(ModelName name);
+  static void ensureInit();
   static void clear();
 };

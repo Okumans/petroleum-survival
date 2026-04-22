@@ -19,4 +19,5 @@ public:
   static Shader &loadFromSource(ShaderType type, const char *vertShaderSource,
                                 const char *fragShaderSource);
   [[nodiscard]] static Shader &get(ShaderType type);
+  static void ensureInit();
 };

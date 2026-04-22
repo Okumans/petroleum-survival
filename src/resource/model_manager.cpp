@@ -23,11 +23,15 @@ std::shared_ptr<Model> ModelManager::copy(ModelName name) {
 }
 
 Model *ModelManager::tryGet(ModelName name) {
-  return ModelManager::s_models.ensureInitialized()[name].get();
+  return ModelManager::s_models.getUnvalidated(name).get();
 }
 
 bool ModelManager::exists(ModelName name) {
   return ModelManager::s_models.ensureInitialized()[name] != nullptr;
+}
+
+void ModelManager::ensureInit() {
+  (void)ModelManager::s_models.ensureInitialized();
 }
 
 void ModelManager::clear() {

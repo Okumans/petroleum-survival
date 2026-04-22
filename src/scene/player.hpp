@@ -5,13 +5,17 @@
 #include "glm/geometric.hpp"
 #include "glm/trigonometric.hpp"
 #include "graphics/animation.hpp"
+#include "graphics/animator.hpp"
+#include "resource/animation_manager.hpp"
 #include "scene/game_object.hpp"
 #include "utility/enum_map.hpp"
 #include "utility/not_initialized.hpp"
 #include "utility/utility.hpp"
+#include <cassert>
 #include <concepts>
+#include <memory>
 
-enum class PlayerAnimation { WALKING };
+enum class PlayerAnimation { IDLE, WALKING };
 
 template <typename T, typename Counter = float>
   requires std::integral<Counter> || std::floating_point<Counter>
@@ -57,7 +61,11 @@ struct AnimationState {
 
 class Player : public GameObject {
 private:
-  SettableNotInitialized<EnumMap<PlayerAnimation, Animation>> m_animations;
+  SettableNotInitialized<EnumMap<PlayerAnimation, std::shared_ptr<Animation>>,
+                         "m_animations">
+      m_animations;
+  NotInitialized<Animator, "m_animator"> m_animator;
+  PlayerAnimation m_playingAnimation = PlayerAnimation::IDLE;
 
   AnimationState<float> m_rotateState;
   AnimationState<glm::vec3> m_positionState;
@@ -71,12 +79,30 @@ public:
     m_rotateState.duration.init(0.2f);
   }
 
+  void setup() {
+    AnimationManager::ensureInit();
+
+    m_animations.set(PlayerAnimation::IDLE,
+                     AnimationManager::copy(AnimationName::KASANE_TETO_IDLE));
+    m_animations.set(
+        PlayerAnimation::WALKING,
+        AnimationManager::copy(AnimationName::KASANE_TETO_WALKING));
+
+    assert(m_animations.isInitialized());
+
+    m_animator.init(m_animations.ensureInitialized()
+                        .get_checked(PlayerAnimation::IDLE)
+                        .get());
+  }
+
   void moveWithAnimation(glm::vec3 vec) {
     if (glm::length(vec) < 0.001f)
       return;
 
     glm::vec3 new_target_pos = m_position + vec;
     float target_yaw = glm::degrees(std::atan2(vec.x, vec.z));
+
+    _setAnimation(PlayerAnimation::WALKING);
 
     m_positionState.startAnimation(m_position, new_target_pos);
     m_rotateState.startAnimation(m_rotation.y, target_yaw);
@@ -96,9 +122,41 @@ public:
   virtual void update(double delta_time) override {
     _updateRotateAnimationState(delta_time);
     _updatePositionAnimationState(delta_time);
+
+    if (m_positionState.animationStarted == false &&
+        m_rotateState.animationStarted == false) {
+      _setAnimation(PlayerAnimation::IDLE);
+    }
+
+    _updateAnimation(delta_time);
+  }
+
+  void draw(const RenderContext &ctx) override {
+    if (!m_model)
+      return;
+
+    ctx.shader.setBool("u_HasAnimation", true);
+
+    _updateTransform();
+    ctx.shader.setMat4("u_Model", m_modelMatrix);
+    m_animator.ensureInitialized().apply(ctx.shader);
+
+    m_model->draw(ctx);
+
+    ctx.shader.setBool("u_HasAnimation", false);
   }
 
 private:
+  void _setAnimation(PlayerAnimation animation) {
+    if (animation != m_playingAnimation) {
+      m_playingAnimation = animation;
+      m_animator.ensureInitialized().playAnimation(
+          m_animations.ensureInitialized()
+              .get_checked(m_playingAnimation)
+              .get());
+    }
+  }
+
   void _updateRotateAnimationState(double delta_time) {
     if (!m_rotateState.animationStarted)
       return;
@@ -130,5 +188,10 @@ private:
         glm::mix(m_positionState.start, m_positionState.target, t);
 
     setPosition(current_pos);
+  }
+
+  void _updateAnimation(double delta_time) {
+    Animator &animator = m_animator.ensureInitialized();
+    animator.updateAnimation(delta_time);
   }
 };

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdint>
 #include <format>
+#include <ranges>
 
 Animator::Animator(Animation *animation)
     : m_finalBoneMatrices(100, glm::mat4(1.0f)), m_currentAnimation(animation),
@@ -31,9 +32,9 @@ void Animator::playAnimation(Animation *p_animation) {
 }
 
 void Animator::apply(Shader &shader) {
-  auto matrices = getFinalBoneMatrices();
-  for (size_t i = 0; i < matrices.size(); ++i) {
-    shader.setMat4(std::format("finalBonesMatrices[{}]", i), matrices[i]);
+  for (const auto &[idx, transform] :
+       std::ranges::views::enumerate(getFinalBoneMatrices())) {
+    shader.setMat4(std::format("finalBonesMatrices[{}]", idx), transform);
   }
 }
 
