@@ -196,6 +196,9 @@ void App::_setupResources() {
   m_loadingTasks.push_back(
       {"Model: Hatsune Miku", loadModel(ModelName::HATSUNE_MIKU, ASSETS_PATH
                                         "/objects/hatsune_miku/miku.dae")});
+  m_loadingTasks.push_back(
+      {"Model: Coin", loadModel(ModelName::COIN, ASSETS_PATH
+                                 "/objects/items/coin.glb")});
 
   // Animations
   m_loadingTasks.push_back({"Animation: Kasane Teto Idle",

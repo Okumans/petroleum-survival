@@ -41,3 +41,33 @@ This file serves as a reference for AI agents to maintain consistent coding styl
 ### Assets Loading Workflow
 - Follow the loading tasks queue paradigm established inside `App::_setupResources()` to safely load Models, Textures, and Shaders.
 - `ModelManager`, `TextureManager`, and `ShaderManager` should be utilized for fetching instantiated assets across the active GL Context block.
+
+## Adding New Assets (Required Workflow)
+
+When adding any new asset to the game, follow this checklist in order:
+
+1. Place files in the correct asset folder first.
+- Models and animation files: `assets/objects/<asset_name>/...`
+- Textures: `assets/textures/<category>/<asset_name>/...`
+
+2. Confirm the intended runtime path.
+- Runtime paths should use `ASSETS_PATH` and match the on-disk folder structure.
+
+3. Register model identifiers in the manager enum.
+- Add the new model key to `ModelName` in `model_manager.hpp`.
+- Load it through `ModelManager::load(...)` during resource setup.
+
+4. Register animation identifiers when needed.
+- Add the new animation key to `AnimationName` in `animation_manager.hpp`.
+- Load it through `AnimationManager::load(...)` during resource setup.
+
+5. Use the resource setup helper lambdas in `App::_setupResources()`.
+- Extend helper lambdas (like model/animation loader helpers) rather than inlining duplicated loading code.
+- Add a loading task entry so the asset is loaded via the queue.
+
+6. Consume assets only through managers.
+- Do not instantiate runtime model/animation objects ad-hoc in gameplay code.
+- Retrieve with manager APIs (`get`/`copy`) after setup is complete.
+
+7. Ensure manager initialization guarantees remain valid.
+- If using enum-based managers with `ensureInit()`, all enum entries must be loaded by setup tasks before gameplay starts.

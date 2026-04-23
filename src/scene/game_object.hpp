@@ -11,6 +11,8 @@ class GameObject : public IDrawable {
 protected:
   std::shared_ptr<Model> m_model;
 
+  bool m_removeRequested = false;
+
   AABB m_baseAABB;          // Raw un-transformed AABB from model
   mutable AABB m_worldAABB; // Transformed to world coordinates
 
@@ -35,6 +37,9 @@ public:
 
   virtual void update(double delta_time) { (void)delta_time; }
   virtual void draw(const RenderContext &ctx) override;
+
+  void requestRemoval() { m_removeRequested = true; }
+  [[nodiscard]] bool isRemovalRequested() const { return m_removeRequested; }
 
   void setHitboxScaleFactor(glm::vec3 factor);
   void setEnableHitboxScaling(bool is_enable);

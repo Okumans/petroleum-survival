@@ -3,7 +3,9 @@
 #include "graphics/camera.hpp"
 #include "graphics/camera_controller.hpp"
 #include "graphics/skybox.hpp"
+#include "scene/game_object_manager.hpp"
 #include "scene/enemy.hpp"
+#include "scene/item.hpp"
 #include "scene/player.hpp"
 
 #include <glad/gl.h>
@@ -27,8 +29,11 @@ private:
   Camera m_camera;
   CameraController m_cameraController;
   std::unique_ptr<Skybox> m_skybox;
-  std::unique_ptr<Player> m_player;
-  std::unique_ptr<Enemy> m_testEnemy;
+  GameObjectManager m_objects;
+
+  Player *m_player = nullptr;
+  Enemy *m_testEnemy = nullptr;
+  Item *m_testItem = nullptr;
 
   // Shadow mapping
   GLuint m_shadowMapFBO;

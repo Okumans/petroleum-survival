@@ -9,6 +9,7 @@
 #include "resource/model_manager.hpp"
 #include "resource/shader_manager.hpp"
 #include "resource/texture_manager.hpp"
+#include "scene/game_object.hpp"
 
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -34,6 +35,11 @@ void Game::setup() {
   ShaderManager::ensureInit();
   ModelManager::ensureInit();
   AnimationManager::ensureInit();
+
+  m_objects.clear();
+  m_player = nullptr;
+  m_testEnemy = nullptr;
+  m_testItem = nullptr;
 
   // Setup shadow map FBO
   glGenFramebuffers(1, &m_shadowMapFBO);
@@ -87,14 +93,19 @@ void Game::setup() {
                         .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
 
   m_player =
-      std::make_unique<Player>(ModelManager::copy(ModelName::KASANE_TETO));
+      &m_objects.emplace<Player>(ModelManager::copy(ModelName::KASANE_TETO));
   m_player->setScale(20.0f);
   m_player->setup();
 
   m_testEnemy =
-      std::make_unique<Enemy>(ModelManager::copy(ModelName::HATSUNE_MIKU));
+      &m_objects.emplace<Enemy>(ModelManager::copy(ModelName::HATSUNE_MIKU));
   m_testEnemy->setScale(60.0f);
   m_testEnemy->setup();
+
+  m_testItem = &m_objects.emplace<Item>(ModelManager::copy(ModelName::COIN));
+  m_testItem->setScale(5.0f);
+  m_testItem->setPosition({3.0f, 0.0f, 0.0f});
+  m_testItem->setSpinSpeed(120.0f);
 
   reset();
 }
@@ -127,13 +138,19 @@ void Game::update(double delta_time) {
 
   _updateCamera(delta_time);
   m_cameraController.update(static_cast<float>(delta_time));
-  m_player->update(delta_time);
 
   if (m_player && m_testEnemy) {
     m_testEnemy->setPlayerPosition(m_player->getPosition());
   }
 
-  m_testEnemy->update(delta_time);
+  m_objects.update(delta_time);
+
+  if (m_player && m_testItem && m_player->collidesWith(*m_testItem)) {
+    m_testItem->requestRemoval();
+    m_testItem = nullptr;
+  }
+
+  m_objects.collectGarbage();
 }
 
 void Game::movePlayer(glm::vec3 vec) { m_player->moveWithAnimation(vec); }
@@ -161,10 +178,7 @@ void Game::render(double delta_time) {
         .deltaTime = delta_time,
     };
 
-    if (m_player)
-      m_player->draw(shadow_draw_ctx);
-    if (m_testEnemy)
-      m_testEnemy->draw(shadow_draw_ctx);
+    m_objects.draw(shadow_draw_ctx);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -220,35 +234,28 @@ void Game::render(double delta_time) {
   pbr_shader.setFloat("u_HeightScale", 0.03f);
   pbr_shader.setFloat("u_AOFactor", 1.0f);
   pbr_shader.setFloat("u_AmbientIntensity", 1.0f);
+  pbr_shader.setVec3("u_BaseColor", glm::vec3(1.0f));
+  pbr_shader.setVec2("u_UVOffset", glm::vec2(0.0f));
 
-  if (m_player) {
-    pbr_shader.setVec3("u_BaseColor", glm::vec3(1.0f));
-    pbr_shader.setVec2("u_UVOffset", glm::vec2(0.0f));
+  RenderContext ctx = {
+      .shader = pbr_shader,
+      .camera = m_camera,
+      .deltaTime = delta_time,
+  };
 
-    RenderContext ctx = {
-        .shader = pbr_shader,
-        .camera = m_camera,
-        .deltaTime = delta_time,
-    };
-    m_player->draw(ctx);
-    m_testEnemy->draw(ctx);
-  }
+  m_objects.draw(ctx);
 
-  if (false && m_debugAABB && m_player) {
+  if (m_debugAABB) {
     RenderContext debug_ctx = {
         .shader = pbr_shader,
         .camera = m_camera,
         .deltaTime = delta_time,
     };
-    DebugDrawer::drawAABB(debug_ctx, m_player->getHitboxAABB(),
-                          {1.0f, 0.0f, 0.0f});
-    DebugDrawer::drawAABB(debug_ctx, m_player->getWorldAABB(),
-                          {1.0f, 1.0f, 0.0f});
 
-    DebugDrawer::drawAABB(debug_ctx, m_testEnemy->getHitboxAABB(),
-                          {1.0f, 0.0f, 0.0f});
-    DebugDrawer::drawAABB(debug_ctx, m_testEnemy->getWorldAABB(),
-                          {1.0f, 1.0f, 0.0f});
+    for (GameObject *object : m_objects.getObjects()) {
+      DebugDrawer::drawAABB(debug_ctx, object->getHitboxAABB(),
+                            {1.0f, 0.0f, 0.0f});
+    }
   }
 
   glDisable(GL_BLEND);
