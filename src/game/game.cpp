@@ -37,6 +37,10 @@ void Game::setup() {
   AnimationManager::ensureInit();
 
   m_objects.clear();
+  m_eventBus.clear();
+  _registerGameplayEventHandlers();
+
+  m_score = 0;
   m_player = nullptr;
   m_testEnemy = nullptr;
   m_testItem = nullptr;
@@ -144,13 +148,13 @@ void Game::update(double delta_time) {
   }
 
   m_objects.update(delta_time);
+  _runCollisionPass();
+  m_eventBus.flush();
+  m_objects.collectGarbage();
 
-  if (m_player && m_testItem && m_player->collidesWith(*m_testItem)) {
-    m_testItem->requestRemoval();
+  if (m_testItem && m_testItem->isRemovalRequested()) {
     m_testItem = nullptr;
   }
-
-  m_objects.collectGarbage();
 }
 
 void Game::movePlayer(glm::vec3 vec) { m_player->moveWithAnimation(vec); }
@@ -268,4 +272,42 @@ void Game::_updateCamera(double delta_time) {
     m_cameraController.follow(m_player->getPosition());
     // m_cameraController.follow({0.0f, 0.0f, 0.0f});
   }
+}
+
+void Game::_runCollisionPass() {
+  if (m_player && m_testItem && m_player->collidesWith(*m_testItem)) {
+    m_eventBus.emit(ItemCollectedEvent{
+        .player = m_player,
+        .item = m_testItem,
+        .value = 1,
+    });
+  }
+}
+
+void Game::_registerGameplayEventHandlers() {
+  m_eventBus.subscribe<ItemCollectedEvent>(
+      [this](const ItemCollectedEvent &evt) {
+        m_score += evt.value;
+        m_eventBus.emit(DespawnRequestedEvent{.object = evt.item});
+
+        if (evt.item) {
+          m_eventBus.emit(ParticleSpawnRequestedEvent{
+              .position = evt.item->getPosition(),
+              .effectId = 1,
+          });
+        }
+      });
+
+  m_eventBus.subscribe<DespawnRequestedEvent>(
+      [](const DespawnRequestedEvent &evt) {
+        if (evt.object) {
+          evt.object->requestRemoval();
+        }
+      });
+
+  m_eventBus.subscribe<ParticleSpawnRequestedEvent>(
+      [](const ParticleSpawnRequestedEvent &evt) {
+        (void)evt;
+        // TODO: Hook this event into particle or VFX rendering once available.
+      });
 }

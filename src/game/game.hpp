@@ -7,6 +7,7 @@
 #include "scene/enemy.hpp"
 #include "scene/item.hpp"
 #include "scene/player.hpp"
+#include "utility/event_bus.hpp"
 
 #include <glad/gl.h>
 #include <glm/glm.hpp>
@@ -26,10 +27,28 @@ enum class GameState { LOADING, START_MENU, PLAYING, GAME_OVER };
 
 class Game {
 private:
+  struct ItemCollectedEvent {
+    Player *player;
+    Item *item;
+    int value;
+  };
+
+  struct DespawnRequestedEvent {
+    GameObject *object;
+  };
+
+  struct ParticleSpawnRequestedEvent {
+    glm::vec3 position;
+    int effectId;
+  };
+
   Camera m_camera;
   CameraController m_cameraController;
   std::unique_ptr<Skybox> m_skybox;
   GameObjectManager m_objects;
+  EventBus m_eventBus;
+
+  int m_score = 0;
 
   Player *m_player = nullptr;
   Enemy *m_testEnemy = nullptr;
@@ -68,5 +87,7 @@ public:
   uint32_t getScore() const { return 0; }
 
 private:
+  void _registerGameplayEventHandlers();
+  void _runCollisionPass();
   void _updateCamera(double delta_time);
 };
