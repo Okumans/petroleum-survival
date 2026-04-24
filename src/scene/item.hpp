@@ -15,8 +15,12 @@ public:
        glm::vec3 scale = glm::vec3(1.0f),
        glm::vec3 rotation = glm::vec3(0.0f),
        float spin_speed_deg_per_sec = 90.0f)
-      : GameObject(model, pos, scale, rotation),
+      : GameObject(model, pos, scale, rotation, false),
         m_spinSpeedDegPerSec(spin_speed_deg_per_sec) {}
+
+  [[nodiscard]] GameObjectType getObjectType() const override {
+    return GameObjectType::ITEM;
+  }
 
   void update(double delta_time) override {
     if (!m_isActive) {

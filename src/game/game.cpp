@@ -9,7 +9,11 @@
 #include "resource/model_manager.hpp"
 #include "resource/shader_manager.hpp"
 #include "resource/texture_manager.hpp"
+#include "scene/enemy.hpp"
 #include "scene/game_object.hpp"
+#include "scene/item.hpp"
+#include "scene/player.hpp"
+#include "utility/random.hpp"
 
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -19,17 +23,14 @@
 Game::Game()
     : m_camera(glm::vec3(0.0f, 10.0f, 10.0f)),
       m_cameraController(m_camera, glm::vec3(0.0f, 12.0f, 10.0f)),
-      m_skybox(std::make_unique<Skybox>()), m_shadowMapFBO(0),
-      m_shadowMapTex(0), m_state(GameState::LOADING) {
+      m_skybox(std::make_unique<Skybox>()),
+      m_shadowMap(std::make_unique<ShadowMap>()), m_state(GameState::LOADING) {
   m_camera.setPitch(-45.0f);
   m_camera.setYaw(-90.0f);
   m_camera.zoom = 45.0f;
 }
 
-Game::~Game() {
-  glDeleteFramebuffers(1, &m_shadowMapFBO);
-  glDeleteTextures(1, &m_shadowMapTex);
-}
+Game::~Game() {}
 
 void Game::setup() {
   ShaderManager::ensureInit();
@@ -41,30 +42,27 @@ void Game::setup() {
   _registerGameplayEventHandlers();
 
   m_score = 0;
-  m_player = nullptr;
-  m_testEnemy = nullptr;
-  m_testItem = nullptr;
 
-  // Setup shadow map FBO
-  glGenFramebuffers(1, &m_shadowMapFBO);
-  glGenTextures(1, &m_shadowMapTex);
-  glBindTexture(GL_TEXTURE_2D, m_shadowMapTex);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH,
-               SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+  m_player.init(
+      &m_objects.emplace<Player>(ModelManager::copy(ModelName::KASANE_TETO)));
+  m_player.ensureInitialized()->setScale(20.0f);
+  m_player.ensureInitialized()->setup();
 
-  float border_color[] = {1.0, 1.0, 1.0, 1.0};
-  glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+  for (size_t i = 0; i < 2; ++i) {
+    Enemy &enemy =
+        m_objects.emplace<Enemy>(ModelManager::copy(ModelName::HATSUNE_MIKU));
+    enemy.setScale(60.0f);
+    enemy.move(
+        {Random::randFloat(2.1f, 5.0f), 0.0f, Random::randFloat(2.1f, 5.0f)});
+    enemy.setup();
+  }
 
-  glBindFramebuffer(GL_FRAMEBUFFER, m_shadowMapFBO);
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
-                         m_shadowMapTex, 0);
-  glDrawBuffer(GL_NONE);
-  glReadBuffer(GL_NONE);
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  for (size_t i = 0; i < 4; ++i) {
+    Item &coin = m_objects.emplace<Item>(ModelManager::copy(ModelName::COIN));
+    coin.setScale(4.0f);
+    coin.translate({Random::randFloat(-10.0f, 20.0f), 0.8f,
+                    Random::randFloat(-10.0f, 20.0f)});
+  }
 
   // Generate Irradiance Map
   std::shared_ptr<Texture> skybox_tex =
@@ -96,21 +94,6 @@ void Game::setup() {
                         .position = glm::vec3(0.0f, -5.0f, 0.0f),
                         .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
 
-  m_player =
-      &m_objects.emplace<Player>(ModelManager::copy(ModelName::KASANE_TETO));
-  m_player->setScale(20.0f);
-  m_player->setup();
-
-  m_testEnemy =
-      &m_objects.emplace<Enemy>(ModelManager::copy(ModelName::HATSUNE_MIKU));
-  m_testEnemy->setScale(60.0f);
-  m_testEnemy->setup();
-
-  m_testItem = &m_objects.emplace<Item>(ModelManager::copy(ModelName::COIN));
-  m_testItem->setScale(5.0f);
-  m_testItem->setPosition({3.0f, 0.0f, 0.0f});
-  m_testItem->setSpinSpeed(120.0f);
-
   reset();
 }
 
@@ -126,14 +109,17 @@ void Game::startGame() {
 }
 
 void Game::update(double delta_time) {
-  m_currentTime += static_cast<float>(delta_time);
 
   // --- PBR DEBUG: Rotate Sun ---
-  float sun_speed = 0.3f;
-  float sun_radius = 1.0f;
+  static float current_time = 0.0f;
+
+  current_time += static_cast<float>(delta_time);
+
+  const float sun_speed = 0.03f;
+  const float sun_radius = 1.0f;
   glm::vec3 sun_dir = glm::normalize(
-      glm::vec3(std::cos(m_currentTime * sun_speed) * sun_radius, -1.0f,
-                std::sin(m_currentTime * sun_speed) * sun_radius));
+      glm::vec3(std::cos(current_time * sun_speed) * sun_radius, -1.0f,
+                std::sin(current_time * sun_speed) * sun_radius));
 
   Light sun = LightingManager::getShadowCaster();
   sun.position = sun_dir;
@@ -143,36 +129,36 @@ void Game::update(double delta_time) {
   _updateCamera(delta_time);
   m_cameraController.update(static_cast<float>(delta_time));
 
-  if (m_player && m_testEnemy) {
-    m_testEnemy->setPlayerPosition(m_player->getPosition());
+  // Update Player position in enemy
+  for (GameObject *enemy :
+       m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
+    static_cast<Enemy *>(enemy)->setPlayerPosition(
+        m_player.ensureInitialized()->getPosition());
   }
 
   m_objects.update(delta_time);
   _runCollisionPass();
   m_eventBus.flush();
   m_objects.collectGarbage();
-
-  if (m_testItem && m_testItem->isRemovalRequested()) {
-    m_testItem = nullptr;
-  }
 }
 
-void Game::movePlayer(glm::vec3 vec) { m_player->moveWithAnimation(vec); }
+void Game::movePlayer(glm::vec3 vec) {
+  m_player.ensureInitialized()->moveWithAnimation(vec);
+}
 
 void Game::render(double delta_time) {
   glEnable(GL_DEPTH_TEST);
 
   // 1. Shadow Pass
-  m_lightSpaceMatrix =
-      LightingManager::calculateLightSpaceMatrix(glm::vec3(0.0f));
+  m_shadowMap->updateLightSpaceMatrix(
+      m_player.ensureInitialized()->getPosition());
 
   Shader &shadow_shader = ShaderManager::get(ShaderType::SHADOW);
   shadow_shader.use();
-  shadow_shader.setMat4("u_LightSpaceMatrix", m_lightSpaceMatrix);
+  shadow_shader.setMat4("u_LightSpaceMatrix",
+                        m_shadowMap->getLightSpaceMatrix());
 
-  glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-  glBindFramebuffer(GL_FRAMEBUFFER, m_shadowMapFBO);
-  glClear(GL_DEPTH_BUFFER_BIT);
+  m_shadowMap->bindForWriting();
   glDisable(GL_CULL_FACE);
 
   {
@@ -217,7 +203,7 @@ void Game::render(double delta_time) {
   pbr_shader.setMat4("u_Projection", projection);
   pbr_shader.setMat4("u_View", view);
   pbr_shader.setVec3("u_CameraPos", m_camera.position);
-  pbr_shader.setMat4("u_LightSpaceMatrix", m_lightSpaceMatrix);
+  pbr_shader.setMat4("u_LightSpaceMatrix", m_shadowMap->getLightSpaceMatrix());
 
   // Bind Skybox for reflections
   glBindTextureUnit(10, skyboxTex->getTexID());
@@ -229,7 +215,7 @@ void Game::render(double delta_time) {
   pbr_shader.setInt("u_IrradianceMap", 12);
 
   // Bind Shadow Map
-  glBindTextureUnit(11, m_shadowMapTex);
+  m_shadowMap->bindForReading(11);
   pbr_shader.setInt("u_ShadowMap", 11);
 
   // Lighting setup
@@ -249,7 +235,7 @@ void Game::render(double delta_time) {
 
   m_objects.draw(ctx);
 
-  if (m_debugAABB) {
+  if (false && m_debugAABB) {
     RenderContext debug_ctx = {
         .shader = pbr_shader,
         .camera = m_camera,
@@ -268,19 +254,24 @@ void Game::render(double delta_time) {
 
 void Game::_updateCamera(double delta_time) {
   (void)delta_time;
-  if (m_player) {
-    m_cameraController.follow(m_player->getPosition());
-    // m_cameraController.follow({0.0f, 0.0f, 0.0f});
-  }
+  m_cameraController.follow(m_player.ensureInitialized()->getPosition());
 }
 
 void Game::_runCollisionPass() {
-  if (m_player && m_testItem && m_player->collidesWith(*m_testItem)) {
-    m_eventBus.emit(ItemCollectedEvent{
-        .player = m_player,
-        .item = m_testItem,
-        .value = 1,
-    });
+  for (GameObject *item_obj :
+       m_objects.getObjectsWithType(GameObjectType::ITEM)) {
+    if (!item_obj || item_obj->isRemovalRequested()) {
+      continue;
+    }
+
+    Item *item = static_cast<Item *>(item_obj);
+    if (m_player.ensureInitialized()->collidesWith(*item)) {
+      m_eventBus.emit(ItemCollectedEvent{
+          .player = m_player.ensureInitialized(),
+          .item = item,
+          .value = 1,
+      });
+    }
   }
 }
 

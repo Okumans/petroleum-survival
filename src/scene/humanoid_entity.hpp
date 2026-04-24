@@ -31,8 +31,9 @@ protected:
 public:
   HumaniodEntity(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
                  glm::vec3 scale = glm::vec3(1.0f),
-                 glm::vec3 rotation = glm::vec3(0.0f))
-      : GameObject(model, pos, scale, rotation) {}
+                 glm::vec3 rotation = glm::vec3(0.0f),
+                 bool defer_aabb_calculation = false)
+      : GameObject(model, pos, scale, rotation, defer_aabb_calculation) {}
 
   virtual void setup() = 0;
   virtual void moveToWithAnimation(glm::vec3 target) {

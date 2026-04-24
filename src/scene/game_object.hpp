@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <memory>
 
+enum class GameObjectType { PLAYER, ENEMY, ITEM };
+
 class GameObject : public IDrawable {
 protected:
   std::shared_ptr<Model> m_model;
@@ -55,6 +57,10 @@ public:
   [[nodiscard]] glm::vec3 getPosition() const { return m_position; }
   [[nodiscard]] glm::vec3 getRotation() const { return m_rotation; }
   [[nodiscard]] glm::vec3 getScale() const { return m_scale; }
+  [[nodiscard]] virtual GameObjectType getObjectType() const = 0;
+  [[nodiscard]] bool isType(GameObjectType type) const {
+    return getObjectType() == type;
+  }
 
   [[nodiscard]] const Model &getModel() const { return *m_model; }
   [[nodiscard]] std::shared_ptr<Model> copyModel() const { return m_model; }

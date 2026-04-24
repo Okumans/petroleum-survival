@@ -129,6 +129,15 @@ public:
   constexpr auto end() const noexcept { return _data.end(); }
 
   /**
+   * @brief Returns a lazily evaluated view of keys.
+   * * @return A std::ranges view yielding keys.
+   */
+  constexpr auto keys() const {
+    return std::views::iota(size_t(0), Size) |
+           std::views::transform([](size_t i) { return static_cast<Key>(i); });
+  }
+
+  /**
    * @brief Returns a lazily evaluated view of key-value pairs.
    * * Allows iterating over the map similarly to `std::map`, yielding
    * `std::pair<Key, const Value &>` for each element.

@@ -36,6 +36,10 @@ public:
         glm::vec3 scale = glm::vec3(1.0f), glm::vec3 rotation = glm::vec3(0.0f))
       : HumaniodEntity<EnemyAnimation>(model, pos, scale, rotation) {}
 
+  [[nodiscard]] GameObjectType getObjectType() const override {
+    return GameObjectType::ENEMY;
+  }
+
   void setPlayerPosition(const glm::vec3 &player_position) {
     m_playerPosition = player_position;
     m_hasPlayerPosition = true;
@@ -138,6 +142,7 @@ private:
 
     glm::vec3 chase_step =
         glm::normalize(to_player) * std::min(distance, m_chaseStep);
+
     moveWithAnimation(chase_step);
   }
 
