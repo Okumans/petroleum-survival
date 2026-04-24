@@ -36,6 +36,7 @@ void Game::setup() {
   ShaderManager::ensureInit();
   ModelManager::ensureInit();
   AnimationManager::ensureInit();
+  m_mapManager.setup();
 
   m_objects.clear();
   m_eventBus.clear();
@@ -48,6 +49,14 @@ void Game::setup() {
   m_player.ensureInitialized()->setScale(20.0f);
   m_player.ensureInitialized()->setup();
 
+  auto snap_object_to_ground = [this](GameObject *object) {
+    const float base_offset = object->getPosition().y - object->getWorldAABB().min.y;
+    object->setPosition(
+        m_mapManager.snapToGround(object->getPosition(), base_offset));
+  };
+
+  snap_object_to_ground(m_player.ensureInitialized());
+
   for (size_t i = 0; i < 2; ++i) {
     Enemy &enemy =
         m_objects.emplace<Enemy>(ModelManager::copy(ModelName::HATSUNE_MIKU));
@@ -55,6 +64,7 @@ void Game::setup() {
     enemy.move(
         {Random::randFloat(2.1f, 5.0f), 0.0f, Random::randFloat(2.1f, 5.0f)});
     enemy.setup();
+    snap_object_to_ground(&enemy);
   }
 
   for (size_t i = 0; i < 4; ++i) {
@@ -62,6 +72,7 @@ void Game::setup() {
     coin.setScale(4.0f);
     coin.translate({Random::randFloat(-10.0f, 20.0f), 0.8f,
                     Random::randFloat(-10.0f, 20.0f)});
+    snap_object_to_ground(&coin);
   }
 
   // Generate Irradiance Map
@@ -129,6 +140,8 @@ void Game::update(double delta_time) {
   _updateCamera(delta_time);
   m_cameraController.update(static_cast<float>(delta_time));
 
+  m_mapManager.update(m_player.ensureInitialized()->getPosition());
+
   // Update Player position in enemy
   for (GameObject *enemy :
        m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
@@ -137,6 +150,17 @@ void Game::update(double delta_time) {
   }
 
   m_objects.update(delta_time);
+
+  for (GameObject *object : m_objects.getObjects()) {
+    if (!object) {
+      continue;
+    }
+
+    const float base_offset = object->getPosition().y - object->getWorldAABB().min.y;
+    object->setPosition(
+        m_mapManager.snapToGround(object->getPosition(), base_offset));
+  }
+
   _runCollisionPass();
   m_eventBus.flush();
   m_objects.collectGarbage();
@@ -144,6 +168,12 @@ void Game::update(double delta_time) {
 
 void Game::movePlayer(glm::vec3 vec) {
   m_player.ensureInitialized()->moveWithAnimation(vec);
+
+  GameObject *player_object = m_player.ensureInitialized();
+  const float base_offset = player_object->getPosition().y -
+                            player_object->getWorldAABB().min.y;
+  player_object->setPosition(
+      m_mapManager.snapToGround(player_object->getPosition(), base_offset));
 }
 
 void Game::render(double delta_time) {
@@ -168,6 +198,7 @@ void Game::render(double delta_time) {
         .deltaTime = delta_time,
     };
 
+    m_mapManager.draw(shadow_draw_ctx);
     m_objects.draw(shadow_draw_ctx);
   }
 
@@ -233,6 +264,7 @@ void Game::render(double delta_time) {
       .deltaTime = delta_time,
   };
 
+  m_mapManager.draw(ctx);
   m_objects.draw(ctx);
 
   if (false && m_debugAABB) {

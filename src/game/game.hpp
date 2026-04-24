@@ -4,6 +4,7 @@
 #include "graphics/camera_controller.hpp"
 #include "graphics/shadow_map.hpp"
 #include "graphics/skybox.hpp"
+#include "map_manager.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
 #include "scene/player.hpp"
@@ -45,6 +46,7 @@ private:
 
   Camera m_camera;
   CameraController m_cameraController;
+  MapManager m_mapManager;
   std::unique_ptr<Skybox> m_skybox;
   std::unique_ptr<ShadowMap> m_shadowMap;
   GameObjectManager m_objects;

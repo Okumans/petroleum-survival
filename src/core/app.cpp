@@ -255,6 +255,39 @@ void App::_setupResources() {
                TextureManager::generateStaticPBRDefaultTexture());
        }});
 
+  m_loadingTasks.push_back(
+      {"Terrain Textures", []() {
+         if (!TextureManager::exists(TextureName("terrain_grass_diffuse"))) {
+           TextureManager::load(TextureName("terrain_grass_diffuse"),
+                                TextureType::DIFFUSE,
+                                ASSETS_PATH "/textures/grass/1/diffuse.jpg");
+         }
+
+         if (!TextureManager::exists(TextureName("terrain_grass_normal"))) {
+           TextureManager::load(TextureName("terrain_grass_normal"),
+                                TextureType::NORMAL,
+                                ASSETS_PATH "/textures/grass/1/normal.jpg");
+         }
+
+         if (!TextureManager::exists(TextureName("terrain_grass_height"))) {
+           TextureManager::load(TextureName("terrain_grass_height"),
+                                TextureType::HEIGHT,
+                                ASSETS_PATH "/textures/grass/1/height.jpg");
+         }
+
+         if (!TextureManager::exists(TextureName("terrain_grass_roughness"))) {
+           TextureManager::load(TextureName("terrain_grass_roughness"),
+                                TextureType::ROUGHNESS,
+                                ASSETS_PATH "/textures/grass/1/roughness.jpg");
+         }
+
+         if (!TextureManager::exists(TextureName("terrain_grass_ao"))) {
+           TextureManager::load(TextureName("terrain_grass_ao"),
+                                TextureType::AO,
+                                ASSETS_PATH "/textures/grass/1/ao.jpg");
+         }
+       }});
+
   // Skybox
   m_loadingTasks.push_back(
       {"Skybox", []() {
