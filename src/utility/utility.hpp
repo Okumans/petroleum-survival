@@ -86,5 +86,14 @@ inline float lerpAngle(float start, float end, float t) {
   return start + diff * t;
 }
 
+inline uint32_t fnv1a(std::string_view str) {
+  uint32_t hash = 0x811c9dc5;
+  for (char c : str) {
+    hash ^= static_cast<uint8_t>(c);
+    hash *= 0x01000193;
+  }
+  return hash;
+}
+
 #include "enum_map.hpp" // IWYU pragma: keep
 #include "random.hpp"   // IWYU pragma: keep

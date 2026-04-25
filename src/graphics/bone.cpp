@@ -1,7 +1,9 @@
 #include "bone.hpp"
+#include "utility/utility.hpp"
 #include <cstdint>
 
-// Helpers mimicking `AssimpGLMHelpers` to keep things localized and isolated
+namespace {
+
 static glm::vec3 vec3FromAssimp(const aiVector3D &vec) {
   return glm::vec3(vec.x, vec.y, vec.z);
 }
@@ -9,10 +11,10 @@ static glm::vec3 vec3FromAssimp(const aiVector3D &vec) {
 static glm::quat quatFromAssimp(const aiQuaternion &quat) {
   return glm::quat(quat.w, quat.x, quat.y, quat.z);
 }
+} // namespace
 
 Bone::Bone(const std::string &name, uint32_t id, const aiNodeAnim *channel)
-    : m_localTransform(1.0f), m_name(name), m_id(id) {
-
+    : m_localTransform(1.0f), m_name(fnv1a(name)), m_id(id) {
   m_numPositions = channel->mNumPositionKeys;
   for (size_t position_index = 0; position_index < m_numPositions;
        ++position_index) {

@@ -1,7 +1,10 @@
 #include "animation.hpp"
 #include "assimp/anim.h"
 #include "graphics/animation_data.hpp"
+#include "graphics/bone.hpp"
+#include "utility/utility.hpp"
 
+#include <algorithm>
 #include <assimp/Importer.hpp>
 #include <cstdint>
 #include <glm/gtc/type_ptr.hpp>
@@ -14,9 +17,8 @@ static glm::mat4 mat4FromAssimp(const aiMatrix4x4 &from) {
 
 Animation::Animation(const std::string &animation_path, Model *model) {
   Assimp::Importer importer;
-  const aiScene *scene =
-      importer.ReadFile(animation_path,
-                        aiProcess_Triangulate | aiProcess_GlobalScale);
+  const aiScene *scene = importer.ReadFile(
+      animation_path, aiProcess_Triangulate | aiProcess_GlobalScale);
 
   assert(scene && scene->mRootNode);
 
@@ -34,10 +36,12 @@ Animation::Animation(const std::string &animation_path, Model *model) {
 Animation::~Animation() {}
 
 Bone *Animation::findBone(const std::string &name) {
-  auto iter = std::ranges::find_if(
-      m_bones, [&](const Bone &bone) { return bone.getBoneName() == name; });
+  const uint32_t hashed_name = fnv1a(name);
 
-  if (iter == m_bones.end()) {
+  auto iter =
+      std::ranges::lower_bound(m_bones, hashed_name, {}, &Bone::getBoneName);
+
+  if (iter == m_bones.end() || iter->getBoneName() != hashed_name) {
     return nullptr;
   }
 
@@ -62,6 +66,10 @@ void Animation::_readMissingBones(const aiAnimation *animation, Model &model) {
     m_bones.push_back(Bone(channel->mNodeName.data,
                            bone_info_map[channel->mNodeName.data].id, channel));
   }
+
+  std::ranges::sort(m_bones, [](const Bone &bone_1, const Bone &bone_2) {
+    return bone_1.getBoneName() < bone_2.getBoneName();
+  });
 
   m_boneInfoMap = bone_info_map;
 }

@@ -159,7 +159,7 @@ void Game::_setupPlayer() {
 void Game::_spawnInitialEnemies() {
   GameObjectFactory<Enemy> enemy_factory = createEnemyFactory();
 
-  for (size_t i = 0; i < 100; ++i) {
+  for (size_t i = 0; i < 1000; ++i) {
     Enemy enemy_clone = enemy_factory.create([this](Enemy &enemy) {
       enemy.move({Random::randFloat(-20.0f, 20.0f), 0.0f,
                   Random::randFloat(-20.0f, 20.0f)});

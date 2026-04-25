@@ -1,6 +1,5 @@
 #pragma once
 
-#include "graphics/animation_state.hpp"
 #include "graphics/shader.hpp"
 
 #include <glm/glm.hpp>

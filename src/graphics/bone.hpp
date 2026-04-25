@@ -1,6 +1,7 @@
 #pragma once
 
 #include <assimp/scene.h>
+#include <cstdint>
 #include <glm/glm.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -36,7 +37,7 @@ private:
   uint32_t m_numScalings;
 
   glm::mat4 m_localTransform;
-  std::string m_name;
+  uint32_t m_name;
   uint32_t m_id;
 
 public:
@@ -45,7 +46,7 @@ public:
   void update(float animation_time);
 
   [[nodiscard]] glm::mat4 getLocalTransform() const { return m_localTransform; }
-  [[nodiscard]] std::string getBoneName() const { return m_name; }
+  [[nodiscard]] uint32_t getBoneName() const { return m_name; }
   [[nodiscard]] uint32_t getBoneID() const { return m_id; }
 
   [[nodiscard]] uint32_t getPositionIndex(float animation_time) const;
