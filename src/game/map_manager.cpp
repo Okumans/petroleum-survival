@@ -205,7 +205,7 @@ void MapManager::updateObjectChunk(const ObjectHandle &handle,
 }
 
 void MapManager::collectLoadedChunkHandles(
-    std::vector<ObjectHandle> &out_handles) const {
+    std::vector<ObjectHandle> &out_handles, ObjectFilter filter) const {
   out_handles.clear();
 
   for (const auto &[chunk_key, _] : m_chunks) {
@@ -214,10 +214,22 @@ void MapManager::collectLoadedChunkHandles(
       continue;
 
     const ChunkObjectSet &chunk_set = chunk_object_it->second;
-    out_handles.insert(out_handles.end(), chunk_set.static_objects.begin(),
-                       chunk_set.static_objects.end());
-    out_handles.insert(out_handles.end(), chunk_set.dynamic_objects.begin(),
-                       chunk_set.dynamic_objects.end());
+
+    bool include_static = static_cast<uint8_t>(filter) &
+                          static_cast<uint8_t>(ObjectFilter::Static);
+
+    bool include_dynamic = static_cast<uint8_t>(filter) &
+                           static_cast<uint8_t>(ObjectFilter::Dynamic);
+
+    if (include_static) {
+      out_handles.insert(out_handles.end(), chunk_set.static_objects.begin(),
+                         chunk_set.static_objects.end());
+    }
+
+    if (include_dynamic) {
+      out_handles.insert(out_handles.end(), chunk_set.dynamic_objects.begin(),
+                         chunk_set.dynamic_objects.end());
+    }
   }
 }
 

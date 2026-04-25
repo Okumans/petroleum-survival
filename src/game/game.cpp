@@ -1,5 +1,6 @@
 #include "game.hpp"
 
+#include "game/map_manager.hpp"
 #include "graphics/debug_drawer.hpp"
 #include "graphics/ibl_generator.hpp"
 #include "graphics/idrawable.hpp"
@@ -19,7 +20,72 @@
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <algorithm>
 #include <memory>
+#include <utility>
+
+namespace {
+void snapObjectToGround(MapManager &map_manager, GameObject &object) {
+  const float base_offset =
+      object.getPosition().y - object.getWorldAABB().min.y;
+  object.setPosition(
+      map_manager.snapToGround(object.getPosition(), base_offset));
+}
+
+bool isDynamicBlockingObject(const GameObject &object) {
+  return object.getObjectType() != GameObjectType::ITEM;
+}
+
+bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
+                           GameObject &rhs) {
+  const AABB lhs_box = lhs.getHitboxAABB();
+  const AABB rhs_box = rhs.getHitboxAABB();
+
+  if (!lhs_box.intersects(rhs_box)) {
+    return false;
+  }
+
+  const float overlap_x = std::min(lhs_box.max.x, rhs_box.max.x) -
+                          std::max(lhs_box.min.x, rhs_box.min.x);
+  const float overlap_z = std::min(lhs_box.max.z, rhs_box.max.z) -
+                          std::max(lhs_box.min.z, rhs_box.min.z);
+
+  if (overlap_x <= 0.0f || overlap_z <= 0.0f) {
+    return false;
+  }
+
+  const glm::vec3 lhs_center = lhs_box.getCenter();
+  const glm::vec3 rhs_center = rhs_box.getCenter();
+  constexpr float k_separation_epsilon = 0.001f;
+
+  if (overlap_x < overlap_z) {
+    const float shift = overlap_x * 0.5f + k_separation_epsilon;
+
+    if (lhs_center.x <= rhs_center.x) {
+      lhs.translate({-shift, 0.0f, 0.0f});
+      rhs.translate({shift, 0.0f, 0.0f});
+    } else {
+      lhs.translate({shift, 0.0f, 0.0f});
+      rhs.translate({-shift, 0.0f, 0.0f});
+    }
+  } else {
+    const float shift = overlap_z * 0.5f + k_separation_epsilon;
+
+    if (lhs_center.z <= rhs_center.z) {
+      lhs.translate({0.0f, 0.0f, -shift});
+      rhs.translate({0.0f, 0.0f, shift});
+    } else {
+      lhs.translate({0.0f, 0.0f, shift});
+      rhs.translate({0.0f, 0.0f, -shift});
+    }
+  }
+
+  snapObjectToGround(map_manager, lhs);
+  snapObjectToGround(map_manager, rhs);
+
+  return true;
+}
+} // namespace
 
 Game::Game()
     : m_camera(glm::vec3(0.0f, 10.0f, 10.0f)),
@@ -54,10 +120,7 @@ void Game::setup() {
   m_player.ensureInitialized()->setup();
 
   auto snap_object_to_ground = [this](GameObject *object) {
-    const float base_offset =
-        object->getPosition().y - object->getWorldAABB().min.y;
-    object->setPosition(
-        m_mapManager.snapToGround(object->getPosition(), base_offset));
+    snapObjectToGround(m_mapManager, *object);
   };
 
   snap_object_to_ground(m_player.ensureInitialized());
@@ -170,10 +233,11 @@ void Game::movePlayer(glm::vec3 vec) {
   m_player.ensureInitialized()->moveWithAnimation(vec);
 
   GameObject *player_object = m_player.ensureInitialized();
-  const float base_offset =
-      player_object->getPosition().y - player_object->getWorldAABB().min.y;
-  player_object->setPosition(
-      m_mapManager.snapToGround(player_object->getPosition(), base_offset));
+  snapObjectToGround(m_mapManager, *player_object);
+
+  if (auto handle = m_objects.getHandle(*player_object); handle.has_value()) {
+    m_mapManager.updateObjectChunk(*handle, player_object->getPosition());
+  }
 }
 
 void Game::render(double delta_time) {
@@ -267,7 +331,7 @@ void Game::render(double delta_time) {
   _drawLoadedObjects(ctx);
   m_mapManager.draw(ctx);
 
-  if (false && m_debugAABB) {
+  if (m_debugAABB) {
     RenderContext debug_ctx = {
         .shader = pbr_shader,
         .camera = m_camera,
@@ -308,6 +372,56 @@ void Game::_runCollisionPass() {
       });
     }
   }
+
+  std::vector<std::pair<ObjectHandle, GameObject *>> dynamic_object_entries;
+  dynamic_object_entries.reserve(100);
+
+  // Collect dynamic_objects, more effcient than collectLoadedChunkHandles
+  m_mapManager.foreachLoadedChunkHandles(
+      [this, &dynamic_object_entries](const ObjectHandle &handle) {
+        if (!handle.isValid())
+          return;
+
+        GameObject *object = m_objects.get(handle);
+
+        if (!object || object->isRemovalRequested() ||
+            !isDynamicBlockingObject(*object))
+          return;
+
+        dynamic_object_entries.emplace_back(handle, object);
+      },
+      MapManager::ObjectFilter::Dynamic);
+
+  constexpr uint8_t k_resolve_iterations = 4;
+
+  // All dynamic_objects below should be
+  // * valid pointer
+  // * not requested removal
+  for (uint8_t iteration = 0; iteration < k_resolve_iterations; ++iteration) {
+    bool resolved_any = false;
+
+    for (size_t i = 0; i < dynamic_object_entries.size(); ++i) {
+      auto &[lhs_handle, lhs] = dynamic_object_entries[i];
+
+      for (size_t j = i + 1; j < dynamic_object_entries.size(); ++j) {
+        auto &[rhs_handle, rhs] = dynamic_object_entries[j];
+
+        if (!lhs->collidesWith(*rhs))
+          continue;
+
+        if (!resolveDynamicOverlap(m_mapManager, *lhs, *rhs))
+          continue;
+
+        resolved_any = true;
+
+        m_mapManager.updateObjectChunk(lhs_handle, lhs->getPosition());
+        m_mapManager.updateObjectChunk(rhs_handle, rhs->getPosition());
+      }
+    }
+
+    if (!resolved_any)
+      break;
+  }
 }
 
 void Game::_updateEnemies() {
@@ -326,10 +440,7 @@ void Game::_syncObjectsToTerrain() {
     assert(object);
 
     if (!object->isRemovalRequested()) {
-      const float base_offset =
-          object->getPosition().y - object->getWorldAABB().min.y;
-      object->setPosition(
-          m_mapManager.snapToGround(object->getPosition(), base_offset));
+      snapObjectToGround(m_mapManager, *object);
 
       if (auto handle = m_objects.getHandle(*object); handle.has_value()) {
         m_mapManager.updateObjectChunk(*handle, object->getPosition());

@@ -72,11 +72,21 @@ public:
    * object. */
   void updateObjectChunk(const ObjectHandle &handle,
                          const glm::vec3 &new_position);
+
+  enum class ObjectFilter : uint8_t {
+    None = 0,
+    Static = 1 << 0,
+    Dynamic = 1 << 1,
+    All = Static | Dynamic
+  };
+
   /** @brief Collects every object attached to loaded chunks */
-  void collectLoadedChunkHandles(std::vector<ObjectHandle> &out_handles) const;
+  void collectLoadedChunkHandles(std::vector<ObjectHandle> &out_handles,
+                                 ObjectFilter filter = ObjectFilter::All) const;
+
   /** @brief Iterates every object attached to loaded chunks */
-  void
-  foreachLoadedChunkHandles(std::invocable<ObjectHandle> auto &&pred) const;
+  void foreachLoadedChunkHandles(std::invocable<ObjectHandle> auto &&pred,
+                                 ObjectFilter filter = ObjectFilter::All) const;
   void clearObjectTracking();
 
 private:
@@ -101,7 +111,7 @@ private:
 // Implementations
 
 void MapManager::foreachLoadedChunkHandles(
-    std::invocable<ObjectHandle> auto &&pred) const {
+    std::invocable<ObjectHandle> auto &&pred, ObjectFilter filter) const {
   for (const auto &[chunk_key, _] : m_chunks) {
     auto chunk_object_it = m_chunk_objects.find(chunk_key);
 
@@ -110,10 +120,20 @@ void MapManager::foreachLoadedChunkHandles(
 
     const ChunkObjectSet &chunk_set = chunk_object_it->second;
 
-    for (const auto &h : chunk_set.static_objects)
-      pred(h);
+    bool include_static = static_cast<uint8_t>(filter) &
+                          static_cast<uint8_t>(ObjectFilter::Static);
 
-    for (const auto &h : chunk_set.dynamic_objects)
-      pred(h);
+    bool include_dynamic = static_cast<uint8_t>(filter) &
+                           static_cast<uint8_t>(ObjectFilter::Dynamic);
+
+    if (include_static) {
+      for (const auto &h : chunk_set.static_objects)
+        pred(h);
+    }
+
+    if (include_dynamic) {
+      for (const auto &h : chunk_set.dynamic_objects)
+        pred(h);
+    }
   }
 }
