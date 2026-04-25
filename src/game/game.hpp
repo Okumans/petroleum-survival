@@ -86,6 +86,13 @@ public:
   }
 
 private:
+  void _initializeManagers();
+  void _resetGameplayState();
+  void _setupPlayer();
+  void _spawnInitialEnemies();
+  void _spawnInitialCoins();
+  void _setupEnvironment();
+
   void _registerGameplayEventHandlers();
   void _updateCamera(double delta_time);
   inline void _runCollisionPass();

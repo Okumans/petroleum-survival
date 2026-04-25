@@ -12,10 +12,10 @@
 #include "resource/texture_manager.hpp"
 #include "scene/enemy.hpp"
 #include "scene/game_object.hpp"
+#include "scene/game_object_factory.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
 #include "scene/player.hpp"
-#include "utility/random.hpp"
 
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -85,6 +85,23 @@ bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
 
   return true;
 }
+
+GameObjectFactory<Enemy> createEnemyFactory() {
+  return GameObjectFactory<Enemy>::create_factory([]() {
+    Enemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
+    enemy.setScale(60.0f);
+    enemy.setup();
+    return enemy;
+  });
+}
+
+GameObjectFactory<Item> createCoinFactory() {
+  return GameObjectFactory<Item>::create_factory([]() {
+    Item coin(ModelManager::copy(ModelName::COIN));
+    coin.setScale(4.0f);
+    return coin;
+  });
+}
 } // namespace
 
 Game::Game()
@@ -100,10 +117,23 @@ Game::Game()
 Game::~Game() {}
 
 void Game::setup() {
+  _initializeManagers();
+  _resetGameplayState();
+  _setupPlayer();
+  _spawnInitialEnemies();
+  _spawnInitialCoins();
+  _setupEnvironment();
+  reset();
+}
+
+void Game::_initializeManagers() {
   ShaderManager::ensureInit();
   ModelManager::ensureInit();
   AnimationManager::ensureInit();
   m_mapManager.setup();
+}
+
+void Game::_resetGameplayState() {
   m_mapManager.clearObjectTracking();
 
   m_objects.clear();
@@ -111,7 +141,9 @@ void Game::setup() {
   _registerGameplayEventHandlers();
 
   m_score = 0;
+}
 
+void Game::_setupPlayer() {
   auto [player_object, player_handle] = m_objects.emplaceWithHandle<Player>(
       ModelManager::copy(ModelName::KASANE_TETO));
 
@@ -119,35 +151,45 @@ void Game::setup() {
   m_player.ensureInitialized()->setScale(20.0f);
   m_player.ensureInitialized()->setup();
 
-  auto snap_object_to_ground = [this](GameObject *object) {
-    snapObjectToGround(m_mapManager, *object);
-  };
-
-  snap_object_to_ground(m_player.ensureInitialized());
+  snapObjectToGround(m_mapManager, *m_player.ensureInitialized());
   m_mapManager.registerObject(
       player_handle, m_player.ensureInitialized()->getPosition(), false);
+}
 
-  for (size_t i = 0; i < 2; ++i) {
-    auto [enemy, enemy_handle] = m_objects.emplaceWithHandle<Enemy>(
-        ModelManager::copy(ModelName::HATSUNE_MIKU));
-    enemy.setScale(60.0f);
-    enemy.move(
-        {Random::randFloat(2.1f, 5.0f), 0.0f, Random::randFloat(2.1f, 5.0f)});
-    enemy.setup();
-    snap_object_to_ground(&enemy);
+void Game::_spawnInitialEnemies() {
+  GameObjectFactory<Enemy> enemy_factory = createEnemyFactory();
+
+  for (size_t i = 0; i < 100; ++i) {
+    Enemy enemy_clone = enemy_factory.create([this](Enemy &enemy) {
+      enemy.move({Random::randFloat(-20.0f, 20.0f), 0.0f,
+                  Random::randFloat(-20.0f, 20.0f)});
+      snapObjectToGround(m_mapManager, enemy);
+    });
+
+    auto [enemy, enemy_handle] =
+        m_objects.emplaceWithHandle<Enemy>(std::move(enemy_clone));
+
     m_mapManager.registerObject(enemy_handle, enemy.getPosition(), false);
   }
+}
+
+void Game::_spawnInitialCoins() {
+  GameObjectFactory<Item> coin_factory = createCoinFactory();
 
   for (size_t i = 0; i < 4; ++i) {
-    auto [coin, coin_handle] =
-        m_objects.emplaceWithHandle<Item>(ModelManager::copy(ModelName::COIN));
-    coin.setScale(4.0f);
-    coin.translate({Random::randFloat(-10.0f, 20.0f), 0.8f,
-                    Random::randFloat(-10.0f, 20.0f)});
-    snap_object_to_ground(&coin);
+    Item coin_clone = coin_factory.create([this](Item &coin) {
+      coin.translate({Random::randFloat(-10.0f, 20.0f), 0.8f,
+                      Random::randFloat(-10.0f, 20.0f)});
+      snapObjectToGround(m_mapManager, coin);
+    });
+
+    auto [coin, coin_handle] = m_objects.emplaceWithHandle<Item>(coin_clone);
+
     m_mapManager.registerObject(coin_handle, coin.getPosition(), true);
   }
+}
 
+void Game::_setupEnvironment() {
   // Generate Irradiance Map
   std::shared_ptr<Texture> skybox_tex =
       TextureManager::copy(TextureName("skybox"));
@@ -177,8 +219,6 @@ void Game::setup() {
   LightingManager::add({.type = LightType::POINT,
                         .position = glm::vec3(0.0f, -5.0f, 0.0f),
                         .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
-
-  reset();
 }
 
 void Game::reset() {
@@ -331,7 +371,7 @@ void Game::render(double delta_time) {
   _drawLoadedObjects(ctx);
   m_mapManager.draw(ctx);
 
-  if (m_debugAABB) {
+  if (false && m_debugAABB) {
     RenderContext debug_ctx = {
         .shader = pbr_shader,
         .camera = m_camera,
@@ -490,6 +530,7 @@ void Game::_registerGameplayEventHandlers() {
   m_eventBus.subscribe<ParticleSpawnRequestedEvent>(
       [](const ParticleSpawnRequestedEvent &evt) {
         (void)evt;
-        // TODO: Hook this event into particle or VFX rendering once available.
+        // TODO: Hook this event into particle or VFX rendering once
+        // available.
       });
 }
