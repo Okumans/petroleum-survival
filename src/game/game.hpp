@@ -87,6 +87,9 @@ public:
 
 private:
   void _registerGameplayEventHandlers();
-  void _runCollisionPass();
   void _updateCamera(double delta_time);
+  inline void _runCollisionPass();
+  inline void _updateEnemies();
+  inline void _syncObjectsToTerrain();
+  inline void _drawLoadedObjects(const RenderContext &ctx);
 };

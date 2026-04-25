@@ -11,6 +11,7 @@
 #include "resource/texture_manager.hpp"
 #include "scene/enemy.hpp"
 #include "scene/game_object.hpp"
+#include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
 #include "scene/player.hpp"
 #include "utility/random.hpp"
@@ -37,6 +38,7 @@ void Game::setup() {
   ModelManager::ensureInit();
   AnimationManager::ensureInit();
   m_mapManager.setup();
+  m_mapManager.clearObjectTracking();
 
   m_objects.clear();
   m_eventBus.clear();
@@ -44,35 +46,43 @@ void Game::setup() {
 
   m_score = 0;
 
-  m_player.init(
-      &m_objects.emplace<Player>(ModelManager::copy(ModelName::KASANE_TETO)));
+  auto [player_object, player_handle] = m_objects.emplaceWithHandle<Player>(
+      ModelManager::copy(ModelName::KASANE_TETO));
+
+  m_player.init(&player_object);
   m_player.ensureInitialized()->setScale(20.0f);
   m_player.ensureInitialized()->setup();
 
   auto snap_object_to_ground = [this](GameObject *object) {
-    const float base_offset = object->getPosition().y - object->getWorldAABB().min.y;
+    const float base_offset =
+        object->getPosition().y - object->getWorldAABB().min.y;
     object->setPosition(
         m_mapManager.snapToGround(object->getPosition(), base_offset));
   };
 
   snap_object_to_ground(m_player.ensureInitialized());
+  m_mapManager.registerObject(
+      player_handle, m_player.ensureInitialized()->getPosition(), false);
 
   for (size_t i = 0; i < 2; ++i) {
-    Enemy &enemy =
-        m_objects.emplace<Enemy>(ModelManager::copy(ModelName::HATSUNE_MIKU));
+    auto [enemy, enemy_handle] = m_objects.emplaceWithHandle<Enemy>(
+        ModelManager::copy(ModelName::HATSUNE_MIKU));
     enemy.setScale(60.0f);
     enemy.move(
         {Random::randFloat(2.1f, 5.0f), 0.0f, Random::randFloat(2.1f, 5.0f)});
     enemy.setup();
     snap_object_to_ground(&enemy);
+    m_mapManager.registerObject(enemy_handle, enemy.getPosition(), false);
   }
 
   for (size_t i = 0; i < 4; ++i) {
-    Item &coin = m_objects.emplace<Item>(ModelManager::copy(ModelName::COIN));
+    auto [coin, coin_handle] =
+        m_objects.emplaceWithHandle<Item>(ModelManager::copy(ModelName::COIN));
     coin.setScale(4.0f);
     coin.translate({Random::randFloat(-10.0f, 20.0f), 0.8f,
                     Random::randFloat(-10.0f, 20.0f)});
     snap_object_to_ground(&coin);
+    m_mapManager.registerObject(coin_handle, coin.getPosition(), true);
   }
 
   // Generate Irradiance Map
@@ -142,24 +152,14 @@ void Game::update(double delta_time) {
 
   m_mapManager.update(m_player.ensureInitialized()->getPosition());
 
-  // Update Player position in enemy
-  for (GameObject *enemy :
-       m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
-    static_cast<Enemy *>(enemy)->setPlayerPosition(
-        m_player.ensureInitialized()->getPosition());
-  }
+  _updateEnemies();
 
-  m_objects.update(delta_time);
+  // Update can be expensive
+  m_objects.updateWhere(delta_time, [this](const GameObject &object) {
+    return m_mapManager.isPositionInLoadedChunk(object.getPosition());
+  });
 
-  for (GameObject *object : m_objects.getObjects()) {
-    if (!object) {
-      continue;
-    }
-
-    const float base_offset = object->getPosition().y - object->getWorldAABB().min.y;
-    object->setPosition(
-        m_mapManager.snapToGround(object->getPosition(), base_offset));
-  }
+  _syncObjectsToTerrain();
 
   _runCollisionPass();
   m_eventBus.flush();
@@ -170,8 +170,8 @@ void Game::movePlayer(glm::vec3 vec) {
   m_player.ensureInitialized()->moveWithAnimation(vec);
 
   GameObject *player_object = m_player.ensureInitialized();
-  const float base_offset = player_object->getPosition().y -
-                            player_object->getWorldAABB().min.y;
+  const float base_offset =
+      player_object->getPosition().y - player_object->getWorldAABB().min.y;
   player_object->setPosition(
       m_mapManager.snapToGround(player_object->getPosition(), base_offset));
 }
@@ -198,8 +198,8 @@ void Game::render(double delta_time) {
         .deltaTime = delta_time,
     };
 
+    _drawLoadedObjects(shadow_draw_ctx);
     m_mapManager.draw(shadow_draw_ctx);
-    m_objects.draw(shadow_draw_ctx);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -264,8 +264,8 @@ void Game::render(double delta_time) {
       .deltaTime = delta_time,
   };
 
+  _drawLoadedObjects(ctx);
   m_mapManager.draw(ctx);
-  m_objects.draw(ctx);
 
   if (false && m_debugAABB) {
     RenderContext debug_ctx = {
@@ -274,10 +274,14 @@ void Game::render(double delta_time) {
         .deltaTime = delta_time,
     };
 
-    for (GameObject *object : m_objects.getObjects()) {
-      DebugDrawer::drawAABB(debug_ctx, object->getHitboxAABB(),
-                            {1.0f, 0.0f, 0.0f});
-    }
+    m_mapManager.foreachLoadedChunkHandles(
+        [this, &debug_ctx](const ObjectHandle &handle) {
+          GameObject *object = m_objects.get(handle);
+          if (!object || object->isRemovalRequested())
+            return;
+          DebugDrawer::drawAABB(debug_ctx, object->getHitboxAABB(),
+                                {1.0f, 0.0f, 0.0f});
+        });
   }
 
   glDisable(GL_BLEND);
@@ -292,9 +296,8 @@ void Game::_updateCamera(double delta_time) {
 void Game::_runCollisionPass() {
   for (GameObject *item_obj :
        m_objects.getObjectsWithType(GameObjectType::ITEM)) {
-    if (!item_obj || item_obj->isRemovalRequested()) {
+    if (!item_obj || item_obj->isRemovalRequested())
       continue;
-    }
 
     Item *item = static_cast<Item *>(item_obj);
     if (m_player.ensureInitialized()->collidesWith(*item)) {
@@ -305,6 +308,51 @@ void Game::_runCollisionPass() {
       });
     }
   }
+}
+
+void Game::_updateEnemies() {
+  const glm::vec3 player_position = m_player.ensureInitialized()->getPosition();
+
+  for (GameObject *enemy :
+       m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
+    assert(enemy);
+
+    static_cast<Enemy *>(enemy)->setPlayerPosition(player_position);
+  }
+}
+
+void Game::_syncObjectsToTerrain() {
+  for (GameObject *object : m_objects.getObjects()) {
+    assert(object);
+
+    if (!object->isRemovalRequested()) {
+      const float base_offset =
+          object->getPosition().y - object->getWorldAABB().min.y;
+      object->setPosition(
+          m_mapManager.snapToGround(object->getPosition(), base_offset));
+
+      if (auto handle = m_objects.getHandle(*object); handle.has_value()) {
+        m_mapManager.updateObjectChunk(*handle, object->getPosition());
+      }
+
+      continue;
+    }
+
+    if (auto handle = m_objects.getHandle(*object); handle.has_value()) {
+      m_mapManager.unregisterObject(*handle);
+    }
+  }
+}
+
+void Game::_drawLoadedObjects(const RenderContext &ctx) {
+  m_mapManager.foreachLoadedChunkHandles(
+      [this, &ctx](const ObjectHandle &handle) {
+        GameObject *object = m_objects.get(handle);
+        if (!object || object->isRemovalRequested())
+          return;
+
+        object->draw(ctx);
+      });
 }
 
 void Game::_registerGameplayEventHandlers() {

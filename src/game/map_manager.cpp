@@ -1,10 +1,13 @@
 #include "map_manager.hpp"
 
+#include "graphics/mesh.hpp"
 #include "resource/texture_manager.hpp"
+#include "scene/game_object_manager.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <ranges>
 
 namespace {
 const TextureName TERRAIN_DIFFUSE_TEXTURE("terrain_grass_diffuse");
@@ -60,11 +63,15 @@ void MapManager::update(const glm::vec3 &focus_position) {
     return;
   }
 
-  int center_chunk_x = static_cast<int>(std::floor(focus_position.x / s_chunkWorldSize));
-  int center_chunk_z = static_cast<int>(std::floor(focus_position.z / s_chunkWorldSize));
+  int center_chunk_x =
+      static_cast<int>(std::floor(focus_position.x / s_chunkWorldSize));
+  int center_chunk_z =
+      static_cast<int>(std::floor(focus_position.z / s_chunkWorldSize));
 
-  for (int z = -s_visibleRadius; z <= s_visibleRadius; ++z) {
-    for (int x = -s_visibleRadius; x <= s_visibleRadius; ++x) {
+  const int32_t visible_radius = static_cast<int32_t>(s_visibleRadius);
+
+  for (int32_t z = -visible_radius; z <= visible_radius; ++z) {
+    for (int32_t x = -visible_radius; x <= visible_radius; ++x) {
       _ensureChunk(center_chunk_x + x, center_chunk_z + z);
     }
   }
@@ -79,8 +86,7 @@ void MapManager::draw(const RenderContext &ctx) {
 
   ctx.shader.setMat4("u_Model", glm::mat4(1.0f));
 
-  for (auto &[key, chunk] : m_chunks) {
-    (void)key;
+  for (auto &[_, chunk] : m_chunks) {
     chunk.mesh.draw(ctx);
   }
 }
@@ -110,25 +116,137 @@ glm::vec3 MapManager::snapToGround(const glm::vec3 &position,
   return snapped;
 }
 
+bool MapManager::isPositionInLoadedChunk(const glm::vec3 &position) const {
+  int chunk_x = static_cast<int>(std::floor(position.x / s_chunkWorldSize));
+  int chunk_z = static_cast<int>(std::floor(position.z / s_chunkWorldSize));
+  int64_t key = _encodeKey(chunk_x, chunk_z);
+
+  return m_chunks.contains(key);
+}
+
+void MapManager::registerObject(const ObjectHandle &handle,
+                                const glm::vec3 &position, bool is_static) {
+  if (!handle.isValid()) {
+    return;
+  }
+
+  int chunk_x = static_cast<int>(std::floor(position.x / s_chunkWorldSize));
+  int chunk_z = static_cast<int>(std::floor(position.z / s_chunkWorldSize));
+  int64_t chunk_key = _encodeKey(chunk_x, chunk_z);
+
+  ChunkObjectSet &chunk_set = m_chunk_objects[chunk_key];
+  std::vector<ObjectHandle> &target_vector =
+      is_static ? chunk_set.static_objects : chunk_set.dynamic_objects;
+  target_vector.push_back(handle);
+
+  m_tracked_objects[_encodeHandleKey(handle)] =
+      TrackedObjectState{.chunk_key = chunk_key, .is_static = is_static};
+}
+
+void MapManager::unregisterObject(const ObjectHandle &handle) {
+  if (!handle.isValid())
+    return;
+
+  auto tracked_it = m_tracked_objects.find(_encodeHandleKey(handle));
+  if (tracked_it == m_tracked_objects.end())
+    return;
+
+  int64_t chunk_key = tracked_it->second.chunk_key;
+  bool is_static = tracked_it->second.is_static;
+
+  if (auto chunk_it = m_chunk_objects.find(chunk_key);
+      chunk_it != m_chunk_objects.end()) {
+
+    std::vector<ObjectHandle> &target_vector =
+        is_static ? chunk_it->second.static_objects
+                  : chunk_it->second.dynamic_objects;
+
+    std::erase(target_vector, handle);
+
+    if (chunk_it->second.static_objects.empty() &&
+        chunk_it->second.dynamic_objects.empty()) {
+      m_chunk_objects.erase(chunk_it);
+    }
+  }
+
+  m_tracked_objects.erase(tracked_it);
+}
+
+void MapManager::updateObjectChunk(const ObjectHandle &handle,
+                                   const glm::vec3 &new_position) {
+  if (!handle.isValid())
+    return;
+
+  auto tracked_it = m_tracked_objects.find(_encodeHandleKey(handle));
+  if (tracked_it == m_tracked_objects.end() || tracked_it->second.is_static)
+    return;
+
+  int chunk_x = static_cast<int>(std::floor(new_position.x / s_chunkWorldSize));
+  int chunk_z = static_cast<int>(std::floor(new_position.z / s_chunkWorldSize));
+  int64_t next_chunk_key = _encodeKey(chunk_x, chunk_z);
+
+  if (tracked_it->second.chunk_key == next_chunk_key)
+    return;
+
+  int64_t prev_chunk_key = tracked_it->second.chunk_key;
+  if (auto prev_chunk_it = m_chunk_objects.find(prev_chunk_key);
+      prev_chunk_it != m_chunk_objects.end()) {
+
+    std::erase(prev_chunk_it->second.dynamic_objects, handle);
+
+    if (prev_chunk_it->second.static_objects.empty() &&
+        prev_chunk_it->second.dynamic_objects.empty()) {
+      m_chunk_objects.erase(prev_chunk_it);
+    }
+  }
+
+  m_chunk_objects[next_chunk_key].dynamic_objects.push_back(handle);
+  tracked_it->second.chunk_key = next_chunk_key;
+}
+
+void MapManager::collectLoadedChunkHandles(
+    std::vector<ObjectHandle> &out_handles) const {
+  out_handles.clear();
+
+  for (const auto &[chunk_key, _] : m_chunks) {
+    auto chunk_object_it = m_chunk_objects.find(chunk_key);
+    if (chunk_object_it == m_chunk_objects.end())
+      continue;
+
+    const ChunkObjectSet &chunk_set = chunk_object_it->second;
+    out_handles.insert(out_handles.end(), chunk_set.static_objects.begin(),
+                       chunk_set.static_objects.end());
+    out_handles.insert(out_handles.end(), chunk_set.dynamic_objects.begin(),
+                       chunk_set.dynamic_objects.end());
+  }
+}
+
+void MapManager::clearObjectTracking() {
+  m_chunk_objects.clear();
+  m_tracked_objects.clear();
+}
+
 int64_t MapManager::_encodeKey(int chunk_x, int chunk_z) {
   return (static_cast<int64_t>(chunk_x) << 32) |
          static_cast<int64_t>(static_cast<uint32_t>(chunk_z));
 }
 
-float MapManager::_lerp(float a, float b, float t) {
-  return a + (b - a) * t;
+uint64_t MapManager::_encodeHandleKey(const ObjectHandle &handle) {
+  return (static_cast<uint64_t>(handle.id) << 32) |
+         static_cast<uint64_t>(handle.generation);
 }
 
-float MapManager::_smoothStep(float t) {
-  return t * t * (3.0f - 2.0f * t);
-}
+float MapManager::_lerp(float a, float b, float t) { return a + (b - a) * t; }
+
+float MapManager::_smoothStep(float t) { return t * t * (3.0f - 2.0f * t); }
 
 float MapManager::_hashNoise(int x, int z) {
   uint32_t seed = static_cast<uint32_t>(x) * 374761393u +
                   static_cast<uint32_t>(z) * 668265263u + 0x9E3779B9u;
   seed = (seed ^ (seed >> 13u)) * 1274126177u;
   seed ^= seed >> 16u;
-  return static_cast<float>(seed & 0x00FFFFFFu) / static_cast<float>(0x01000000u);
+  return static_cast<float>(seed & 0x00FFFFFFu) /
+         static_cast<float>(0x01000000u);
 }
 
 float MapManager::_valueNoise(float x, float z) const {
@@ -195,7 +313,8 @@ glm::vec2 MapManager::_chunkOrigin(int chunk_x, int chunk_z) const {
 }
 
 bool MapManager::_isInsideWorld(float world_x, float world_z) const {
-  return std::abs(world_x) <= s_worldHalfSize && std::abs(world_z) <= s_worldHalfSize;
+  return std::abs(world_x) <= s_worldHalfSize &&
+         std::abs(world_z) <= s_worldHalfSize;
 }
 
 void MapManager::_ensureChunk(int chunk_x, int chunk_z) {
@@ -205,46 +324,41 @@ void MapManager::_ensureChunk(int chunk_x, int chunk_z) {
   }
 
   int64_t key = _encodeKey(chunk_x, chunk_z);
-  if (m_chunks.find(key) != m_chunks.end()) {
+  if (m_chunks.contains(key))
     return;
-  }
 
-  m_chunks.emplace(key, TerrainChunk{.coord = {chunk_x, chunk_z},
-                                     .mesh = _buildChunkMesh(chunk_x, chunk_z)});
+  m_chunks.emplace(key,
+                   TerrainChunk{.coord = {chunk_x, chunk_z},
+                                .mesh = _buildChunkMesh(chunk_x, chunk_z)});
 }
 
 void MapManager::_pruneChunks(int center_chunk_x, int center_chunk_z) {
-  for (auto it = m_chunks.begin(); it != m_chunks.end();) {
-    const glm::ivec2 coord = it->second.coord;
+  std::erase_if(m_chunks, [center_chunk_x, center_chunk_z](const auto &pair) {
+    glm::ivec2 coord = pair.second.coord;
+
     int dx = std::abs(coord.x - center_chunk_x);
     int dz = std::abs(coord.y - center_chunk_z);
 
-    if (dx > s_visibleRadius + 1 || dz > s_visibleRadius + 1) {
-      it = m_chunks.erase(it);
-    } else {
-      ++it;
-    }
-  }
+    return (dx > s_visibleRadius + 1 || dz > s_visibleRadius + 1);
+  });
 }
 
 Mesh MapManager::_buildChunkMesh(int chunk_x, int chunk_z) const {
+  const size_t vertices_per_side = static_cast<size_t>(s_chunkResolution) + 1;
+  const size_t vertex_count = vertices_per_side * vertices_per_side;
+  const size_t index_count = s_chunkResolution * s_chunkResolution * 6;
+
   std::vector<Vertex> vertices;
   std::vector<uint32_t> indices;
 
-  const int verticesPerSide = s_chunkResolution + 1;
-  const size_t vertexCount = static_cast<size_t>(verticesPerSide) *
-                             static_cast<size_t>(verticesPerSide);
-  const size_t indexCount = static_cast<size_t>(s_chunkResolution) *
-                            static_cast<size_t>(s_chunkResolution) * 6;
-
-  vertices.reserve(vertexCount);
-  indices.reserve(indexCount);
+  vertices.reserve(vertex_count);
+  indices.reserve(index_count);
 
   glm::vec2 chunk_origin = _chunkOrigin(chunk_x, chunk_z);
   const float step = s_chunkWorldSize / static_cast<float>(s_chunkResolution);
 
-  for (int z = 0; z < verticesPerSide; ++z) {
-    for (int x = 0; x < verticesPerSide; ++x) {
+  for (size_t z = 0; z < vertices_per_side; ++z) {
+    for (size_t x = 0; x < vertices_per_side; ++x) {
       float world_x = chunk_origin.x + static_cast<float>(x) * step;
       float world_z = chunk_origin.y + static_cast<float>(z) * step;
       float height = _terrainHeight(world_x, world_z);
@@ -260,11 +374,12 @@ Mesh MapManager::_buildChunkMesh(int chunk_x, int chunk_z) const {
     }
   }
 
-  for (int z = 0; z < s_chunkResolution; ++z) {
-    for (int x = 0; x < s_chunkResolution; ++x) {
-      uint32_t topLeft = static_cast<uint32_t>(z * verticesPerSide + x);
+  for (size_t z = 0; z < s_chunkResolution; ++z) {
+    for (size_t x = 0; x < s_chunkResolution; ++x) {
+      uint32_t topLeft = static_cast<uint32_t>(z * vertices_per_side + x);
       uint32_t topRight = topLeft + 1;
-      uint32_t bottomLeft = static_cast<uint32_t>((z + 1) * verticesPerSide + x);
+      uint32_t bottomLeft =
+          static_cast<uint32_t>((z + 1) * vertices_per_side + x);
       uint32_t bottomRight = bottomLeft + 1;
 
       indices.push_back(topLeft);
