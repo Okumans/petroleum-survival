@@ -8,6 +8,7 @@
 #include "map_manager.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
+#include "scene/exp.hpp"
 #include "scene/player.hpp"
 #include "utility/event_bus.hpp"
 #include "utility/not_initialized.hpp"
@@ -34,6 +35,12 @@ private:
     Player *player;
     Item *item;
     int value;
+  };
+
+  struct ExpCollectedEvent {
+    Player *player;
+    Exp *exp;
+    float amount;
   };
 
   struct DespawnRequestedEvent {

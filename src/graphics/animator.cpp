@@ -8,7 +8,6 @@
 #include "utility/name_hash.hpp"
 
 #include <algorithm>
-#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -115,8 +114,6 @@ void Animator::playAnimation(Animation *p_animation, float blend_duration) {
   m_blendTime = 0.0f;
   m_isBlending = true;
 }
-
-
 
 void Animator::_calculateBoneTransform(const AssimpNodeData *node,
                                        glm::mat4 parent_transform,

@@ -34,7 +34,9 @@ private:
 public:
   Enemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
         glm::vec3 scale = glm::vec3(1.0f), glm::vec3 rotation = glm::vec3(0.0f))
-      : HumaniodEntity<EnemyAnimation>(model, pos, scale, rotation) {}
+      : HumaniodEntity<EnemyAnimation>(model, pos, scale, rotation) {
+    m_iFrameState.duration.init(0.0f);
+  }
 
   [[nodiscard]] GameObjectType getObjectType() const override {
     return GameObjectType::ENEMY;

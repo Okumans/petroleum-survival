@@ -56,6 +56,8 @@ public:
   }
 
   virtual void update(double delta_time) override {
+    Entity::update(delta_time);
+
     _updateRotateAnimationState(delta_time);
     _updatePositionAnimationState(delta_time);
 
@@ -66,14 +68,12 @@ public:
     _updateAnimation(delta_time);
   }
 
-  [[nodiscard]] const Animator* getAnimator() const override {
+  [[nodiscard]] const Animator *getAnimator() const override {
     if (m_animator.isInitialized()) {
       return &m_animator.ensureInitialized();
     }
     return nullptr;
   }
-
-
 
 protected:
   virtual void _setAnimation(AnimationTypes animation) {

@@ -18,7 +18,9 @@ public:
   Player(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
          glm::vec3 scale = glm::vec3(1.0f),
          glm::vec3 rotation = glm::vec3(0.0f))
-      : HumaniodEntity<PlayerAnimation>(model, pos, scale, rotation) {}
+      : HumaniodEntity<PlayerAnimation>(model, pos, scale, rotation) {
+    m_iFrameState.duration.init(0.2f);
+  }
 
   [[nodiscard]] GameObjectType getObjectType() const override {
     return GameObjectType::PLAYER;
@@ -51,6 +53,8 @@ public:
   }
 
   void update(double delta_time) override {
+    Entity::update(delta_time);
+
     _updateRotateAnimationState(delta_time);
     _updatePositionAnimationState(delta_time);
 

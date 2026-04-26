@@ -32,7 +32,7 @@ void snapObjectToGround(MapManager &map_manager, GameObject &object) {
 }
 
 bool isDynamicBlockingObject(const GameObject &object) {
-  return object.getObjectType() != GameObjectType::ITEM;
+  return object.getObjectType() == GameObjectType::ENEMY;
 }
 
 bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
@@ -427,6 +427,32 @@ void Game::_runCollisionPass() {
     }
   }
 
+  for (GameObject *exp_obj :
+       m_objects.getObjectsWithType(GameObjectType::EXP)) {
+    if (!exp_obj || exp_obj->isRemovalRequested())
+      continue;
+
+    Exp *exp = static_cast<Exp *>(exp_obj);
+    if (m_player.ensureInitialized()->collidesWith(*exp)) {
+      m_eventBus.emit(ExpCollectedEvent{
+          .player = m_player.ensureInitialized(),
+          .exp = exp,
+          .amount = exp->getAmount(),
+      });
+    }
+  }
+
+  for (GameObject *enemy_obj :
+       m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
+    if (!enemy_obj || enemy_obj->isRemovalRequested())
+      continue;
+
+    Enemy *enemy = static_cast<Enemy *>(enemy_obj);
+    if (enemy->collidesWith(*m_player.ensureInitialized())) {
+      m_player.ensureInitialized()->takeDamage(enemy->getBaseDamage(), false);
+    }
+  }
+
   std::vector<std::pair<ObjectHandle, GameObject *>> dynamic_object_entries;
   dynamic_object_entries.reserve(100);
 
@@ -522,6 +548,19 @@ void Game::_registerGameplayEventHandlers() {
           });
         }
       });
+
+  m_eventBus.subscribe<ExpCollectedEvent>([this](const ExpCollectedEvent &evt) {
+    // TODO: Actually add to XP pool instead of score
+    m_score += static_cast<int>(evt.amount);
+    m_eventBus.emit(DespawnRequestedEvent{.object = evt.exp});
+
+    if (evt.exp) {
+      m_eventBus.emit(ParticleSpawnRequestedEvent{
+          .position = evt.exp->getPosition(),
+          .effectId = 1,
+      });
+    }
+  });
 
   m_eventBus.subscribe<DespawnRequestedEvent>(
       [](const DespawnRequestedEvent &evt) {
