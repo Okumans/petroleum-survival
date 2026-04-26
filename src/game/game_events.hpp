@@ -29,9 +29,17 @@ struct DespawnRequestedEvent {
   GameObject *object;
 };
 
+enum class ParticleEffectType {
+  EXP_COLLECT,
+  ITEM_COLLECT,
+  ENEMY_DEATH,
+  PLAYER_BLOOD,
+  MAGIC_HIT
+};
+
 struct ParticleSpawnRequestedEvent {
   glm::vec3 position;
-  int effectId;
+  ParticleEffectType effectId;
 };
 struct ProjectileSpawnRequestedEvent {
   Projectile projectile;

@@ -480,6 +480,10 @@ void Game::_runCollisionPass() {
     ::Enemy *enemy = static_cast<::Enemy *>(enemy_obj);
     if (enemy->collidesWith(*m_player.ensureInitialized())) {
       m_player.ensureInitialized()->takeDamage(enemy->getBaseDamage(), false);
+      m_eventBus.emit(ParticleSpawnRequestedEvent{
+          .position = m_player.ensureInitialized()->getPosition() + glm::vec3(0.0f, 1.0f, 0.0f),
+          .effectId = ParticleEffectType::PLAYER_BLOOD
+      });
     }
   }
 
@@ -500,6 +504,10 @@ void Game::_runCollisionPass() {
         bool wasDead = enemy->isDead();
         enemy->takeDamage(proj->getDamage(), false,
                           glm::normalize(proj->getVelocity()), 2.0f);
+        m_eventBus.emit(ParticleSpawnRequestedEvent{
+            .position = enemy->getPosition() + glm::vec3(0.0f, 1.0f, 0.0f),
+            .effectId = ParticleEffectType::MAGIC_HIT
+        });
 
         if (!wasDead && enemy->isDead()) {
           m_eventBus.emit(EnemyKilledEvent{
@@ -633,7 +641,7 @@ void Game::_registerGameplayEventHandlers() {
         if (evt.item) {
           m_eventBus.emit(ParticleSpawnRequestedEvent{
               .position = evt.item->getPosition(),
-              .effectId = 1,
+              .effectId = ParticleEffectType::ITEM_COLLECT,
           });
         }
       });
@@ -646,7 +654,7 @@ void Game::_registerGameplayEventHandlers() {
     if (evt.exp) {
       m_eventBus.emit(ParticleSpawnRequestedEvent{
           .position = evt.exp->getPosition(),
-          .effectId = 1,
+          .effectId = ParticleEffectType::EXP_COLLECT,
       });
     }
   });
@@ -667,25 +675,85 @@ void Game::_registerGameplayEventHandlers() {
 
   m_eventBus.subscribe<ParticleSpawnRequestedEvent>(
       [this](const ParticleSpawnRequestedEvent &evt) {
-        // Emit a small burst of particles for collection
-        for (int i = 0; i < 20; ++i) {
-          m_particleSystem.emit(ParticleProps{
-              .position = evt.position,
-              .velocity = glm::vec3(0.0f, 5.0f, 0.0f),
-              .velocityVariation = glm::vec3(5.0f, 5.0f, 5.0f),
-              .colorBegin = glm::vec4(1.0f, 0.8f, 0.2f, 1.0f), // Gold-ish
-              .colorEnd = glm::vec4(1.0f, 0.4f, 0.0f, 0.0f),
-              .sizeBegin = 0.5f,
-              .sizeEnd = 0.1f,
-              .sizeVariation = 0.2f,
-              .lifeTime = 0.5f});
+        switch (evt.effectId) {
+          case ParticleEffectType::EXP_COLLECT:
+          case ParticleEffectType::ITEM_COLLECT: {
+            // Rainbow burst for EXP
+            for (int i = 0; i < 20; ++i) {
+              glm::vec3 randColor(
+                  static_cast<float>(rand() % 100) / 100.0f,
+                  static_cast<float>(rand() % 100) / 100.0f,
+                  static_cast<float>(rand() % 100) / 100.0f
+              );
+              randColor = glm::normalize(randColor + glm::vec3(0.2f)); // Ensure bright colors
+              m_particleSystem.emit(ParticleProps{
+                  .position = evt.position,
+                  .velocity = glm::vec3(0.0f, 5.0f, 0.0f),
+                  .velocityVariation = glm::vec3(5.0f, 5.0f, 5.0f),
+                  .colorBegin = glm::vec4(randColor, 1.0f),
+                  .colorEnd = glm::vec4(randColor * 0.5f, 0.0f),
+                  .sizeBegin = 0.5f,
+                  .sizeEnd = 0.1f,
+                  .sizeVariation = 0.2f,
+                  .lifeTime = 0.5f});
+            }
+            break;
+          }
+          case ParticleEffectType::ENEMY_DEATH: {
+            // Dark purple/red burst for enemy death
+            for (int i = 0; i < 30; ++i) {
+              m_particleSystem.emit(ParticleProps{
+                  .position = evt.position + glm::vec3(0.0f, 1.0f, 0.0f),
+                  .velocity = glm::vec3(0.0f, 2.0f, 0.0f),
+                  .velocityVariation = glm::vec3(4.0f, 4.0f, 4.0f),
+                  .colorBegin = glm::vec4(0.5f, 0.0f, 0.8f, 1.0f),
+                  .colorEnd = glm::vec4(0.1f, 0.0f, 0.2f, 0.0f),
+                  .sizeBegin = 0.6f,
+                  .sizeEnd = 0.0f,
+                  .sizeVariation = 0.3f,
+                  .lifeTime = 0.6f});
+            }
+            break;
+          }
+          case ParticleEffectType::PLAYER_BLOOD: {
+            // Dark red blood splatter that splashes outwards
+            for (int i = 0; i < 20; ++i) {
+              m_particleSystem.emit(ParticleProps{
+                  .position = evt.position + glm::vec3(0.0f, 1.0f, 0.0f),
+                  .velocity = glm::vec3(0.0f, 2.0f, 0.0f),
+                  .velocityVariation = glm::vec3(8.0f, 6.0f, 8.0f), // Wide splash
+                  .colorBegin = glm::vec4(0.4f, 0.0f, 0.0f, 0.8f), // Darker red, less glow
+                  .colorEnd = glm::vec4(0.1f, 0.0f, 0.0f, 0.0f),
+                  .sizeBegin = 0.3f,
+                  .sizeEnd = 0.05f,
+                  .sizeVariation = 0.15f,
+                  .lifeTime = 0.3f}); // Shorter lifetime for a quick splash
+            }
+            break;
+          }
+          case ParticleEffectType::MAGIC_HIT: {
+            // Bright blue flash
+            for (int i = 0; i < 10; ++i) {
+              m_particleSystem.emit(ParticleProps{
+                  .position = evt.position,
+                  .velocity = glm::vec3(0.0f, 0.0f, 0.0f),
+                  .velocityVariation = glm::vec3(6.0f, 6.0f, 6.0f),
+                  .colorBegin = glm::vec4(0.2f, 0.6f, 1.0f, 1.0f),
+                  .colorEnd = glm::vec4(0.0f, 0.2f, 0.8f, 0.0f),
+                  .sizeBegin = 0.3f,
+                  .sizeEnd = 0.0f,
+                  .sizeVariation = 0.1f,
+                  .lifeTime = 0.2f});
+            }
+            break;
+          }
         }
       });
 
   m_eventBus.subscribe<EnemyKilledEvent>([this](const EnemyKilledEvent &evt) {
     ::Enemy *enemy = static_cast<::Enemy *>(evt.enemy);
     m_eventBus.emit(ParticleSpawnRequestedEvent{
-        .position = enemy->getPosition(), .effectId = 2});
+        .position = enemy->getPosition(), .effectId = ParticleEffectType::ENEMY_DEATH});
 
     glm::vec3 spawnPos = enemy->getHitboxAABB().getCenter();
     spawnPos += glm::vec3(Random::randFloat(-0.5f, 0.5f),
