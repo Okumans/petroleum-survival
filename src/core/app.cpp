@@ -137,6 +137,12 @@ void App::_setupResources() {
   m_loadingTasks.push_back(
       {"Model: Coin",
        loadModel(ModelName::COIN, ASSETS_PATH "/objects/items/coin.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Exp Gem 1",
+       loadModel(ModelName::EXP_GEM_1, ASSETS_PATH "/objects/gems/1/chaos_emerald.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Exp Gem 2",
+       loadModel(ModelName::EXP_GEM_2, ASSETS_PATH "/objects/gems/2/enchanted_crystal_02.glb")});
 
   // Animations
   m_loadingTasks.push_back({"Animation: Kasane Teto Idle",

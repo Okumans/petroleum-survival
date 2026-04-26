@@ -94,11 +94,16 @@ GameObjectFactory<Enemy> createEnemyFactory() {
   });
 }
 
-GameObjectFactory<Item> createCoinFactory() {
-  return GameObjectFactory<Item>::create_factory([]() {
-    Item coin(ModelManager::copy(ModelName::COIN));
-    coin.setScale(4.0f);
-    return coin;
+GameObjectFactory<Exp> createExpFactory(ModelName modelName) {
+  return GameObjectFactory<Exp>::create_factory([modelName]() {
+    Exp exp(ModelManager::copy(modelName));
+
+    if (modelName == ModelName::EXP_GEM_1)
+      exp.setScale(1.0f);
+    else if (modelName == ModelName::EXP_GEM_2)
+      exp.setScale(50.0f);
+
+    return exp;
   });
 }
 } // namespace
@@ -123,7 +128,7 @@ void Game::setup() {
   _resetGameplayState();
   _setupPlayer();
   _spawnInitialEnemies();
-  _spawnInitialCoins();
+  _spawnInitialExp();
   _setupEnvironment();
   reset();
 }
@@ -176,19 +181,21 @@ void Game::_spawnInitialEnemies() {
   }
 }
 
-void Game::_spawnInitialCoins() {
-  GameObjectFactory<Item> coin_factory = createCoinFactory();
+void Game::_spawnInitialExp() {
+  GameObjectFactory<Exp> gem1_factory = createExpFactory(ModelName::EXP_GEM_1);
+  GameObjectFactory<Exp> gem2_factory = createExpFactory(ModelName::EXP_GEM_2);
 
   for (size_t i = 0; i < 4; ++i) {
-    Item coin_clone = coin_factory.create([this](Item &coin) {
-      coin.translate({Random::randFloat(-10.0f, 20.0f), 0.8f,
-                      Random::randFloat(-10.0f, 20.0f)});
-      snapObjectToGround(m_mapManager, coin);
+    auto &factory = (i % 2 == 0) ? gem1_factory : gem2_factory;
+    Exp exp_clone = factory.create([](Exp &exp) {
+      exp.translate({Random::randFloat(-10.0f, 20.0f), 10.0f, // Start high
+                     Random::randFloat(-10.0f, 20.0f)});
+      // Let the update loop handle falling
     });
 
-    auto [coin, coin_handle] = m_objects.emplaceWithHandle<Item>(coin_clone);
+    auto [exp, exp_handle] = m_objects.emplaceWithHandle<Exp>(exp_clone);
 
-    m_mapManager.registerObject(coin_handle, coin.getPosition(), true);
+    m_mapManager.registerObject(exp_handle, exp.getPosition(), true);
   }
 }
 
@@ -520,7 +527,16 @@ void Game::_syncObjectsToTerrain() {
     assert(object);
 
     if (!object->isRemovalRequested()) {
-      snapObjectToGround(m_mapManager, *object);
+      if (object->getObjectType() == GameObjectType::EXP) {
+        Exp *exp = static_cast<Exp *>(object);
+        const float base_offset =
+            exp->getPosition().y - exp->getWorldAABB().min.y;
+        glm::vec3 snapped =
+            m_mapManager.snapToGround(exp->getPosition(), base_offset);
+        exp->setGroundY(snapped.y);
+      } else {
+        snapObjectToGround(m_mapManager, *object);
+      }
 
       if (auto handle = m_objects.getHandle(*object); handle.has_value()) {
         m_mapManager.updateObjectChunk(*handle, object->getPosition());

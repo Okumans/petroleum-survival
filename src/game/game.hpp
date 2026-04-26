@@ -100,7 +100,7 @@ private:
   void _resetGameplayState();
   void _setupPlayer();
   void _spawnInitialEnemies();
-  void _spawnInitialCoins();
+  void _spawnInitialExp();
   void _setupEnvironment();
 
   void _registerGameplayEventHandlers();
