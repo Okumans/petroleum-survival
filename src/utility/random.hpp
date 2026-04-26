@@ -1,5 +1,6 @@
 #pragma once
 
+#include <glm/glm.hpp>
 #include <random>
 
 class Random {
@@ -45,6 +46,10 @@ public:
    */
   static bool randChance(std::floating_point auto prob) {
     return randFloat<decltype(prob)>(0, 1) < prob;
+  }
+
+  static glm::vec3 randVec3(float min, float max) {
+    return {randFloat(min, max), randFloat(min, max), randFloat(min, max)};
   }
 
   static void setSeed(unsigned int seed) { s_engine.seed(seed); }

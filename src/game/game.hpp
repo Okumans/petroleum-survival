@@ -12,6 +12,7 @@
 #include "scene/exp.hpp"
 #include "scene/player.hpp"
 #include "graphics/particle_system.hpp"
+#include "game/vfx_handler.hpp"
 #include "utility/event_bus.hpp"
 #include "utility/not_initialized.hpp"
 
@@ -44,6 +45,7 @@ private:
   EventBus m_eventBus;
 
   ParticleSystem m_particleSystem;
+  VFXHandler m_vfxHandler;
 
   int m_score = 0;
 
