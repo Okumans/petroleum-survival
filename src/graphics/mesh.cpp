@@ -30,11 +30,12 @@ Mesh::Mesh(Mesh &&other) noexcept
     : m_vertices(std::move(other.m_vertices)),
       m_indices(std::move(other.m_indices)),
       m_material(std::move(other.m_material)), m_baseColor(other.m_baseColor),
-      m_opacity(other.m_opacity), m_vao(other.m_vao), m_vbo(other.m_vbo),
-      m_ebo(other.m_ebo) {
+      m_emissionColor(other.m_emissionColor), m_opacity(other.m_opacity),
+      m_vao(other.m_vao), m_vbo(other.m_vbo), m_ebo(other.m_ebo) {
   other.m_vertices.clear();
   other.m_indices.clear();
   other.m_baseColor = glm::vec3(0.0f);
+  other.m_emissionColor = glm::vec3(0.0f);
   other.m_opacity = 1.0f;
   other.m_vao = 0;
   other.m_vbo = 0;
@@ -182,6 +183,7 @@ void Mesh::drawInstanced(const RenderContext &ctx, const Material &material,
   ctx.shader.setBool("u_UsePackedMR", usePackedMR);
 
   ctx.shader.setVec3("u_BaseColor", m_baseColor);
+  ctx.shader.setVec3("u_EmissionColor", m_emissionColor);
   ctx.shader.setFloat("u_Opacity", m_opacity);
   ctx.shader.setFloat("u_MetallicFactor", material.getMetallicFactor());
   ctx.shader.setFloat("u_RoughnessFactor", material.getRoughnessFactor());

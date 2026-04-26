@@ -7,7 +7,14 @@
 #include <memory>
 
 // Define model names here
-enum class ModelName { KASANE_TETO, HATSUNE_MIKU, COIN, EXP_GEM_1, EXP_GEM_2 };
+enum class ModelName {
+  KASANE_TETO,
+  HATSUNE_MIKU,
+  COIN,
+  EXP_GEM_1,
+  EXP_GEM_2,
+  SPHERE
+};
 
 class ModelManager {
 public:

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "graphics/render_context.hpp"
 #include "graphics/model.hpp"
+#include "graphics/render_context.hpp"
 #include "utility/aabb.hpp"
 
 #include <glm/glm.hpp>
 #include <memory>
 
-enum class GameObjectType { PLAYER, ENEMY, ITEM, EXP };
+enum class GameObjectType { PLAYER, ENEMY, ITEM, EXP, PLAYER_PROJECTILE };
 
 class GameObject {
 protected:
@@ -38,7 +38,7 @@ public:
   virtual ~GameObject() = default;
 
   virtual void update(double delta_time) { (void)delta_time; }
-  virtual void draw(const RenderContext &ctx) ;
+  virtual void draw(const RenderContext &ctx);
 
   void requestRemoval() { m_removeRequested = true; }
   [[nodiscard]] bool isRemovalRequested() const { return m_removeRequested; }
@@ -64,11 +64,15 @@ public:
 
   [[nodiscard]] const Model &getModel() const { return *m_model; }
   [[nodiscard]] std::shared_ptr<Model> copyModel() const { return m_model; }
-  
+
   void ensureTransformUpdated() const { _updateTransform(); }
-  [[nodiscard]] const glm::mat4& getModelMatrix() const { return m_modelMatrix; }
-  
-  [[nodiscard]] virtual const class Animator* getAnimator() const { return nullptr; }
+  [[nodiscard]] const glm::mat4 &getModelMatrix() const {
+    return m_modelMatrix;
+  }
+
+  [[nodiscard]] virtual const class Animator *getAnimator() const {
+    return nullptr;
+  }
 
   [[nodiscard]] const AABB &getWorldAABB() const;
   [[nodiscard]] AABB getHitboxAABB() const; // Scaled for collisions

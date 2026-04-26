@@ -138,11 +138,15 @@ void App::_setupResources() {
       {"Model: Coin",
        loadModel(ModelName::COIN, ASSETS_PATH "/objects/items/coin.glb")});
   m_loadingTasks.push_back(
-      {"Model: Exp Gem 1",
-       loadModel(ModelName::EXP_GEM_1, ASSETS_PATH "/objects/gems/1/chaos_emerald.glb")});
+      {"Model: Exp Gem 1", loadModel(ModelName::EXP_GEM_1, ASSETS_PATH
+                                     "/objects/gems/1/chaos_emerald.glb")});
   m_loadingTasks.push_back(
       {"Model: Exp Gem 2",
-       loadModel(ModelName::EXP_GEM_2, ASSETS_PATH "/objects/gems/2/enchanted_crystal_02.glb")});
+       loadModel(ModelName::EXP_GEM_2,
+                 ASSETS_PATH "/objects/gems/2/enchanted_crystal_02.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Sphere",
+       loadModel(ModelName::SPHERE, ASSETS_PATH "/objects/sphere.obj")});
 
   // Animations
   m_loadingTasks.push_back({"Animation: Kasane Teto Idle",
@@ -433,6 +437,7 @@ void App::_setupShaders() {
          pbr_shader.define("u_CameraPos");
          pbr_shader.define("u_BaseInstance");
          pbr_shader.define("u_AnimationTex");
+         pbr_shader.define("u_EmissionColor");
 
          constexpr auto lightUniforms = ShaderUniforms::generateLightUniforms();
          for (const auto &u : lightUniforms) {
@@ -459,6 +464,7 @@ void App::_setupShaders() {
          shadow_shader.define("u_LightSpaceMatrix");
          shadow_shader.define("u_HasAnimation");
          shadow_shader.define("u_BaseInstance");
+         shadow_shader.define("u_EmissionColor");
 
          Shader &skybox_shader = ShaderManager::get(ShaderType::SKYBOX);
          skybox_shader.use();

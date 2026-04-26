@@ -27,6 +27,7 @@ uniform float u_AOFactor;
 uniform float u_HeightScale;
 uniform float u_AmbientIntensity;
 uniform bool u_UsePackedMR;
+uniform vec3 u_EmissionColor;
 
 // Lights
 struct Light {
@@ -206,7 +207,7 @@ void main()
   vec3 ambient_specular = prefilteredColor * kS_ambient;
 
   vec3 ambient = (ambient_diffuse + ambient_specular) * ao * u_AmbientIntensity;
-  vec3 color = ambient + Lo;
+  vec3 color = ambient + Lo + u_EmissionColor;
 
   // Tone Mapping & Gamma Correction
   color = color / (color + vec3(1.0));

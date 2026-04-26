@@ -30,6 +30,7 @@ private:
   Material m_material;
 
   glm::vec3 m_baseColor;
+  glm::vec3 m_emissionColor = glm::vec3(0.0f);
   float m_opacity;
 
   // render data
@@ -51,6 +52,7 @@ public:
   const glm::vec3 &getBaseColor() const { return m_baseColor; }
   float getOpacity() const { return m_opacity; }
   void setBaseColor(const glm::vec3 &color) { m_baseColor = color; }
+  void setEmissionColor(const glm::vec3 &color) { m_emissionColor = color; }
   void setOpacity(float opacity) { m_opacity = opacity; }
   void setMaterial(const Material &material) { m_material = material; }
 

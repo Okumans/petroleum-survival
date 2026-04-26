@@ -16,12 +16,17 @@
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
 #include "scene/player.hpp"
+#include "scene/projectile.hpp"
+#include "scene/weapon.hpp"
 
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/norm.hpp>
 
 #include <algorithm>
 #include <memory>
+
+using namespace GameEvents;
 
 namespace {
 void snapObjectToGround(MapManager &map_manager, GameObject &object) {
@@ -162,6 +167,17 @@ void Game::_setupPlayer() {
   snapObjectToGround(m_mapManager, *m_player.ensureInitialized());
   m_mapManager.registerObject(
       player_handle, m_player.ensureInitialized()->getPosition(), false);
+
+  auto magic_wand = std::make_shared<MagicWand>();
+  magic_wand->setContext(
+      [this](glm::vec3 pos, float range) {
+        return getClosestEnemy(pos, range);
+      },
+      [this](const GameEvents::ProjectileSpawnRequestedEvent &evt) {
+        m_eventBus.emit(evt);
+      });
+
+  m_player.ensureInitialized()->addWeapon(magic_wand);
 }
 
 void Game::_spawnInitialEnemies() {
@@ -460,6 +476,44 @@ void Game::_runCollisionPass() {
     }
   }
 
+  for (GameObject *proj_obj :
+       m_objects.getObjectsWithType(GameObjectType::PLAYER_PROJECTILE)) {
+    if (!proj_obj || proj_obj->isRemovalRequested())
+      continue;
+
+    Projectile *proj = static_cast<Projectile *>(proj_obj);
+
+    for (GameObject *enemy_obj :
+         m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
+      if (!enemy_obj || enemy_obj->isRemovalRequested())
+        continue;
+
+      Enemy *enemy = static_cast<Enemy *>(enemy_obj);
+      if (proj->collidesWith(*enemy)) {
+        bool wasDead = enemy->isDead();
+        enemy->takeDamage(proj->getDamage(), false,
+                          glm::normalize(proj->getVelocity()), 2.0f);
+
+        if (!wasDead && enemy->isDead()) {
+          m_eventBus.emit(ParticleSpawnRequestedEvent{
+              .position = enemy->getPosition(), .effectId = 2});
+
+          ModelName gemModel = (Random::randFloat(0.0f, 1.0f) > 0.5f)
+                                   ? ModelName::EXP_GEM_1
+                                   : ModelName::EXP_GEM_2;
+          Exp exp_clone(ModelManager::copy(gemModel), enemy->getExpDropAmount(),
+                        enemy->getPosition());
+          exp_clone.setScale(4.0f);
+          auto [exp, exp_handle] = m_objects.emplaceWithHandle<Exp>(exp_clone);
+          m_mapManager.registerObject(exp_handle, exp.getPosition(), true);
+        }
+
+        proj->requestRemoval();
+        break;
+      }
+    }
+  }
+
   std::vector<std::pair<ObjectHandle, GameObject *>> dynamic_object_entries;
   dynamic_object_entries.reserve(100);
 
@@ -509,6 +563,26 @@ void Game::_runCollisionPass() {
     if (!resolved_any)
       break;
   }
+}
+
+Enemy *Game::getClosestEnemy(glm::vec3 position, float radius) {
+  Enemy *closest = nullptr;
+  float min_dist_sq = radius * radius;
+  for (GameObject *enemy_obj :
+       m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
+    if (!enemy_obj || enemy_obj->isRemovalRequested())
+      continue;
+    Enemy *enemy = static_cast<Enemy *>(enemy_obj);
+    if (enemy->isDead())
+      continue;
+
+    float dist_sq = glm::distance2(position, enemy->getPosition());
+    if (dist_sq < min_dist_sq) {
+      min_dist_sq = dist_sq;
+      closest = enemy;
+    }
+  }
+  return closest;
 }
 
 void Game::_updateEnemies() {
@@ -583,6 +657,21 @@ void Game::_registerGameplayEventHandlers() {
         if (evt.object) {
           evt.object->requestRemoval();
         }
+      });
+
+  m_eventBus.subscribe<ProjectileSpawnRequestedEvent>(
+      [this](const ProjectileSpawnRequestedEvent &evt) {
+        auto model = ModelManager::copy(evt.modelName);
+        model->setEmissionColor(glm::vec3(2 - .0f, 20.0f, 40.0f) *
+                                .5f); // Bright blue-ish glow
+
+        auto [object, handle] = m_objects.emplaceWithHandle<Projectile>(
+            model, evt.position, evt.velocity, evt.damage, evt.lifetime,
+            evt.behaviorCallback);
+
+        object.setScale(evt.scale);
+
+        m_mapManager.registerObject(handle, object.getPosition(), false);
       });
 
   m_eventBus.subscribe<ParticleSpawnRequestedEvent>(

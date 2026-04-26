@@ -81,7 +81,6 @@ public:
       float actualKnockback = knockbackForce * (1.0f - m_knockbackResist);
       translate(knockbackDir * actualKnockback);
     }
-
     // TODO: Emit damage number event for UI
 
     if (m_health <= 0.0f) {
@@ -98,9 +97,6 @@ public:
 
   virtual void onDeath() {
     m_isDead = true;
-    std::println("you are pretty much dead");
-    // Basic default behavior, the Game loop should listen for this and handle
-    // drops
-    // requestRemoval(); -> will broke the game, game need player to exists.
+    requestRemoval();
   }
 };

@@ -35,6 +35,12 @@ public:
   void drawInstanced(const RenderContext &ctx, uint32_t count);
   [[nodiscard]] const std::vector<Mesh> &getMeshes() const { return m_meshes; }
 
+  void setEmissionColor(const glm::vec3 &color) {
+    for (auto &mesh : m_meshes) {
+      mesh.setEmissionColor(color);
+    }
+  }
+
   [[nodiscard]] std::map<NameHash, BoneInfo> &getBoneInfoMap() {
     return m_boneInfoMap;
   }

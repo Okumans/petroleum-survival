@@ -5,6 +5,7 @@
 #include "graphics/renderer.hpp"
 #include "graphics/shadow_map.hpp"
 #include "graphics/skybox.hpp"
+#include "game/game_events.hpp"
 #include "map_manager.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
@@ -31,26 +32,7 @@ enum class GameState { LOADING, START_MENU, PLAYING, GAME_OVER };
 
 class Game {
 private:
-  struct ItemCollectedEvent {
-    Player *player;
-    Item *item;
-    int value;
-  };
-
-  struct ExpCollectedEvent {
-    Player *player;
-    Exp *exp;
-    float amount;
-  };
-
-  struct DespawnRequestedEvent {
-    GameObject *object;
-  };
-
-  struct ParticleSpawnRequestedEvent {
-    glm::vec3 position;
-    int effectId;
-  };
+  // Events are now in GameEvents namespace
 
   Camera m_camera;
   CameraController m_cameraController;
@@ -82,6 +64,7 @@ public:
   void startGame();
 
   void movePlayer(glm::vec3 vec);
+  Enemy* getClosestEnemy(glm::vec3 position, float radius);
 
   void setDebugAABB(bool state) { m_debugAABB = state; }
 
