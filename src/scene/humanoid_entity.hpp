@@ -5,7 +5,7 @@
 #include "glm/geometric.hpp"
 #include "graphics/animation.hpp"
 #include "graphics/animator.hpp"
-#include "scene/game_object.hpp"
+#include "scene/entity.hpp"
 #include "scene/humanoid_locomotion_state.hpp"
 #include "utility/not_initialized.hpp"
 #include "utility/utility.hpp"
@@ -18,7 +18,7 @@ template <typename AnimationTypes>
     AnimationTypes::IDLE;
     AnimationTypes::WALKING;
   }
-class HumaniodEntity : public GameObject {
+class HumaniodEntity : public Entity {
 protected:
   SettableNotInitialized<
       EnumMap<AnimationTypes, std::shared_ptr<Animation>>, "m_animations",
@@ -33,7 +33,7 @@ public:
                  glm::vec3 scale = glm::vec3(1.0f),
                  glm::vec3 rotation = glm::vec3(0.0f),
                  bool defer_aabb_calculation = false)
-      : GameObject(model, pos, scale, rotation, defer_aabb_calculation) {}
+      : Entity(model, pos, scale, rotation, defer_aabb_calculation) {}
 
   virtual void setup() = 0;
   virtual void moveToWithAnimation(glm::vec3 target) {

@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 
-enum class GameObjectType { PLAYER, ENEMY, ITEM };
+enum class GameObjectType { PLAYER, ENEMY, ITEM, EXP };
 
 class GameObject {
 protected:
