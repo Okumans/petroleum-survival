@@ -78,23 +78,19 @@ public:
 
     glm::vec3 velocity = glm::normalize(toTarget) * m_projectileSpeed;
 
-    m_spawnProjectile(GameEvents::ProjectileSpawnRequestedEvent{
-        .position = spawnPos,
-        .velocity = velocity,
-        .damage = m_damage,
-        .lifetime = m_projectileLifetime,
-        .modelName = ModelName::SPHERE,
-        .scale = glm::vec3(0.5f),
-        .behaviorCallback = [](Projectile &proj, double dt) {
-          // Straight line movement, with a slight vertical bobbing effect
-          proj.translate(proj.getVelocity() * static_cast<float>(dt));
+    auto model = ModelManager::copy(ModelName::SPHERE);
+    model->setEmissionColor(glm::vec3(2.0f, 20.0f, 40.0f) * 0.5f); // Bright blue-ish glow
 
-          // Example of advanced path calculation:
-          // Add a small sine wave offset to the Y coordinate to make it look
-          // like a flying orb float timeAlive = 2.0f - proj.m_lifetime; //
-          // pseudo time We can just use the straightforward translation for
-          // now, but behaviorCallback is available!
-        }});
+    Projectile proj(model, spawnPos, velocity, m_damage, m_projectileLifetime,
+                    [](Projectile &p, double dt) {
+                      // Straight line movement, with a slight vertical bobbing effect
+                      p.translate(p.getVelocity() * static_cast<float>(dt));
+                    });
+    proj.setScale(glm::vec3(0.5f));
+
+    m_spawnProjectile(GameEvents::ProjectileSpawnRequestedEvent{
+        .projectile = proj
+    });
 
     return true;
   }

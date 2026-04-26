@@ -14,7 +14,6 @@ enum class PlayerAnimation { IDLE, WALKING, RUNNING };
 
 class Player : public HumaniodEntity<PlayerAnimation> {
 private:
-  bool m_isDancing = false;
   std::vector<std::shared_ptr<Weapon>> m_weapons;
 
 public:
@@ -55,7 +54,6 @@ public:
   }
 
   void moveWithAnimation(glm::vec3 vec) override {
-    m_isDancing = false;
     HumaniodEntity<PlayerAnimation>::moveWithAnimation(vec);
   }
 
@@ -64,7 +62,8 @@ public:
 
     for (auto &w : m_weapons) {
       AABB box = getHitboxAABB();
-      glm::vec3 spawnPos = m_position + glm::vec3(0.0f, (box.max.y - box.min.y) * 0.5f, 0.0f);
+      glm::vec3 spawnPos =
+          m_position + glm::vec3(0.0f, (box.max.y - box.min.y) * 0.5f, 0.0f);
       w->update(delta_time, spawnPos);
     }
 

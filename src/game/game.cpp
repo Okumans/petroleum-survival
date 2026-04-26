@@ -661,16 +661,8 @@ void Game::_registerGameplayEventHandlers() {
 
   m_eventBus.subscribe<ProjectileSpawnRequestedEvent>(
       [this](const ProjectileSpawnRequestedEvent &evt) {
-        auto model = ModelManager::copy(evt.modelName);
-        model->setEmissionColor(glm::vec3(2 - .0f, 20.0f, 40.0f) *
-                                .5f); // Bright blue-ish glow
-
-        auto [object, handle] = m_objects.emplaceWithHandle<Projectile>(
-            model, evt.position, evt.velocity, evt.damage, evt.lifetime,
-            evt.behaviorCallback);
-
-        object.setScale(evt.scale);
-
+        auto [object, handle] =
+            m_objects.emplaceWithHandle<Projectile>(evt.projectile);
         m_mapManager.registerObject(handle, object.getPosition(), false);
       });
 

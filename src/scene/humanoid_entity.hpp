@@ -27,6 +27,7 @@ protected:
   NotInitialized<Animator, "m_animator"> m_animator;
   AnimationTypes m_playingAnimation = AnimationTypes::IDLE;
   HumanoidLocomotionState m_locomotion;
+  glm::vec3 m_knockbackVelocity = glm::vec3(0.0f);
 
 public:
   HumaniodEntity(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
@@ -55,13 +56,44 @@ public:
     translate(vec);
   }
 
+  virtual void takeDamage(float amount, bool isCritical,
+                          glm::vec3 knockbackDir = glm::vec3(0.0f),
+                          float knockbackForce = 0.0f) override {
+    // Call base takeDamage but prevent it from translating automatically
+    Entity::takeDamage(amount, isCritical, glm::vec3(0.0f), 0.0f);
+
+    if (m_isDead || m_removeRequested)
+      return;
+
+    if (knockbackForce > 0.0f && m_knockbackResist < 1.0f) {
+      float actualKnockback = knockbackForce * (1.0f - m_knockbackResist);
+
+      // Interrupt current movement to prevent setPosition overwriting knockback
+      m_locomotion.reset();
+
+      // Set initial high velocity for knockback (e.g. force * scalar)
+      m_knockbackVelocity += knockbackDir * (actualKnockback * 10.0f);
+    }
+  }
+
   virtual void update(double delta_time) override {
     Entity::update(delta_time);
 
     _updateRotateAnimationState(delta_time);
     _updatePositionAnimationState(delta_time);
 
-    if (!m_locomotion.isMoving()) {
+    // Apply knockback with deceleration (lerp)
+    if (glm::length(m_knockbackVelocity) > 0.01f) {
+      translate(m_knockbackVelocity * static_cast<float>(delta_time));
+
+      // Decelerate: higher velocity at start, slower at stop
+      m_knockbackVelocity =
+          glm::mix(m_knockbackVelocity, glm::vec3(0.0f), 10.0f * delta_time);
+    } else {
+      m_knockbackVelocity = glm::vec3(0.0f);
+    }
+
+    if (!m_locomotion.isMoving() && glm::length(m_knockbackVelocity) < 0.5f) {
       _setAnimation(AnimationTypes::IDLE);
     }
 

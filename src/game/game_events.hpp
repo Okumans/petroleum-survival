@@ -8,7 +8,7 @@ class Player;
 class Item;
 class Exp;
 class GameObject;
-class Projectile;
+#include "scene/projectile.hpp"
 
 namespace GameEvents {
 
@@ -32,15 +32,8 @@ struct ParticleSpawnRequestedEvent {
   glm::vec3 position;
   int effectId;
 };
-
 struct ProjectileSpawnRequestedEvent {
-  glm::vec3 position;
-  glm::vec3 velocity;
-  float damage;
-  float lifetime;
-  ModelName modelName;
-  glm::vec3 scale = glm::vec3(1.0f);
-  std::function<void(Projectile &, double)> behaviorCallback = nullptr;
+  Projectile projectile;
 };
 
 } // namespace GameEvents
