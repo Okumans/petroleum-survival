@@ -34,15 +34,17 @@ layout(std430, binding = 1) readonly buffer BoneBuffer {
 };
 
 uniform bool u_HasAnimation;
+uniform int u_BaseInstance;
 
 void main()
 {
   TexCoords = (aTexCoords * u_UVScale) + u_UVOffset;
 
-  mat4 u_Model = modelMatrices[gl_InstanceID];
+  int instanceIndex = u_BaseInstance + gl_InstanceID;
+  mat4 u_Model = modelMatrices[instanceIndex];
   mat4 boneTransform = mat4(0.0f);
   if (u_HasAnimation) {
-    int boneOffset = gl_InstanceID * MAX_BONES;
+    int boneOffset = instanceIndex * MAX_BONES;
     for (int i = 0; i < MAX_BONE_INFLUENCE; i++) {
       if (boneIds[i] >= 0) {
         boneTransform += boneMatrices[boneOffset + boneIds[i]] * weights[i];

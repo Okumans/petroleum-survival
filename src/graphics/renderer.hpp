@@ -12,12 +12,16 @@ class Animator;
 
 class Renderer {
 public:
-  static constexpr size_t MAX_INSTANCES = 10000;
+  static constexpr size_t MAX_INSTANCES = 50000;
   static constexpr size_t MAX_BONES = 200;
 
 private:
   GLuint m_instanceSSBO = 0;
   GLuint m_boneSSBO = 0;
+  glm::mat4 *m_instanceMapped = nullptr;
+  glm::mat4 *m_boneMapped = nullptr;
+  GLsync m_fence = nullptr;
+  size_t m_instanceOffset = 0;
 
   struct ModelDrawCommand {
     const Model *model;

@@ -330,7 +330,7 @@ void Game::render(double delta_time) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Bind and draw Skybox first (as background)
-  auto skyboxTex = TextureManager::copy(TextureName("skybox"));
+  auto &skyboxTex = TextureManager::get(TextureName("skybox"));
   Shader &skybox_shader = ShaderManager::get(ShaderType::SKYBOX);
   glDepthMask(GL_FALSE);
 
@@ -356,12 +356,12 @@ void Game::render(double delta_time) {
   pbr_shader.setMat4("u_LightSpaceMatrix", m_shadowMap->getLightSpaceMatrix());
 
   // Bind Skybox for reflections
-  glBindTextureUnit(10, skyboxTex->getTexID());
+  glBindTextureUnit(10, skyboxTex.getTexID());
   pbr_shader.setInt("u_SpecularEnvMap", 10);
 
   // Bind Irradiance Map for diffuse IBL
-  auto irradiance_map = TextureManager::copy(TextureName("irradiance_map"));
-  glBindTextureUnit(12, irradiance_map->getTexID());
+  auto &irradiance_map = TextureManager::get(TextureName("irradiance_map"));
+  glBindTextureUnit(12, irradiance_map.getTexID());
   pbr_shader.setInt("u_IrradianceMap", 12);
 
   // Bind Shadow Map

@@ -11,7 +11,6 @@
 #include "resource/shader_manager.hpp"
 #include "resource/texture_manager.hpp"
 #include "ui/ui_manager.hpp"
-#include <print>
 
 #ifdef EMBED_SHADER
 #include "debug.frag.glsl.h"
@@ -426,6 +425,8 @@ void App::_setupShaders() {
          pbr_shader.define("u_Lights");
          pbr_shader.define("u_NumLights");
          pbr_shader.define("u_CameraPos");
+         pbr_shader.define("u_BaseInstance");
+         pbr_shader.define("u_AnimationTex");
 
          constexpr auto lightUniforms = ShaderUniforms::generateLightUniforms();
          for (const auto &u : lightUniforms) {
@@ -451,6 +452,7 @@ void App::_setupShaders() {
          shadow_shader.define("u_UsePackedMR");
          shadow_shader.define("u_LightSpaceMatrix");
          shadow_shader.define("u_HasAnimation");
+         shadow_shader.define("u_BaseInstance");
 
          Shader &skybox_shader = ShaderManager::get(ShaderType::SKYBOX);
          skybox_shader.use();

@@ -1,5 +1,5 @@
 #include <cstddef>
-#include <exception>
+// #include <exception>
 #define _USE_MATH_DEFINES
 #include <stdbool.h>
 #include <stddef.h>

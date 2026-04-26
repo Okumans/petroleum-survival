@@ -5,6 +5,15 @@
 Renderer::Renderer() {}
 
 Renderer::~Renderer() {
+  if (m_fence) {
+    glDeleteSync(m_fence);
+  }
+  if (m_instanceMapped) {
+    glUnmapNamedBuffer(m_instanceSSBO);
+  }
+  if (m_boneMapped) {
+    glUnmapNamedBuffer(m_boneSSBO);
+  }
   if (m_instanceSSBO)
     glDeleteBuffers(1, &m_instanceSSBO);
   if (m_boneSSBO)
@@ -12,20 +21,31 @@ Renderer::~Renderer() {
 }
 
 void Renderer::setup() {
+  GLbitfield flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
   if (!m_instanceSSBO) {
     glCreateBuffers(1, &m_instanceSSBO);
     glNamedBufferStorage(m_instanceSSBO, MAX_INSTANCES * sizeof(glm::mat4),
-                         nullptr, GL_MAP_WRITE_BIT | GL_DYNAMIC_STORAGE_BIT);
+                         nullptr, flags);
+    m_instanceMapped = (glm::mat4 *)glMapNamedBufferRange(
+        m_instanceSSBO, 0, MAX_INSTANCES * sizeof(glm::mat4), flags);
   }
   if (!m_boneSSBO) {
     glCreateBuffers(1, &m_boneSSBO);
     glNamedBufferStorage(m_boneSSBO,
                          MAX_INSTANCES * MAX_BONES * sizeof(glm::mat4), nullptr,
-                         GL_MAP_WRITE_BIT | GL_DYNAMIC_STORAGE_BIT);
+                         flags);
+    m_boneMapped = (glm::mat4 *)glMapNamedBufferRange(
+        m_boneSSBO, 0, MAX_INSTANCES * MAX_BONES * sizeof(glm::mat4), flags);
   }
 }
 
 void Renderer::beginFrame() {
+  if (m_fence) {
+    glClientWaitSync(m_fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+    glDeleteSync(m_fence);
+    m_fence = nullptr;
+  }
+  m_instanceOffset = 0;
   m_modelQueue.clear();
   m_meshQueue.clear();
 }
@@ -49,33 +69,22 @@ void Renderer::flush(const RenderContext &ctx) {
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_instanceSSBO);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_boneSSBO);
 
-  std::vector<glm::mat4> instanceData;
-  std::vector<glm::mat4> boneData;
-  instanceData.reserve(MAX_INSTANCES);
-  boneData.reserve(MAX_INSTANCES * MAX_BONES);
-
   const Model *currentModel = nullptr;
   bool hasAnimation = false;
+  size_t batchCount = 0;
+  size_t batchStartOffset = m_instanceOffset;
 
   auto flushModelBatch = [&]() {
-    if (instanceData.empty() || !currentModel)
+    if (batchCount == 0 || !currentModel)
       return;
 
-    glNamedBufferSubData(m_instanceSSBO, 0,
-                         instanceData.size() * sizeof(glm::mat4),
-                         instanceData.data());
-
-    if (hasAnimation) {
-      glNamedBufferSubData(m_boneSSBO, 0, boneData.size() * sizeof(glm::mat4),
-                           boneData.data());
-    }
-
     ctx.shader.setBool("u_HasAnimation", hasAnimation);
-    const_cast<Model *>(currentModel)->drawInstanced(ctx, instanceData.size());
+    ctx.shader.setInt("u_BaseInstance", batchStartOffset);
+    const_cast<Model *>(currentModel)->drawInstanced(ctx, batchCount);
 
-    instanceData.clear();
-    boneData.clear();
     hasAnimation = false;
+    batchCount = 0;
+    batchStartOffset = m_instanceOffset;
   };
 
   for (const auto &cmd : m_modelQueue) {
@@ -84,27 +93,32 @@ void Renderer::flush(const RenderContext &ctx) {
       currentModel = cmd.model;
     }
 
-    if (instanceData.size() >= MAX_INSTANCES) {
-      flushModelBatch();
+    if (m_instanceOffset >= MAX_INSTANCES) {
+      break;
     }
 
-    instanceData.push_back(cmd.transform);
+    m_instanceMapped[m_instanceOffset] = cmd.transform;
 
     if (cmd.animator) {
       hasAnimation = true;
       const auto &bones = cmd.animator->getFinalBoneMatrices();
       size_t boneCount = std::min(bones.size(), MAX_BONES);
+      size_t boneStart = m_instanceOffset * MAX_BONES;
       for (size_t i = 0; i < boneCount; ++i) {
-        boneData.push_back(bones[i]);
+        m_boneMapped[boneStart + i] = bones[i];
       }
       for (size_t i = boneCount; i < MAX_BONES; ++i) {
-        boneData.push_back(glm::mat4(1.0f));
+        m_boneMapped[boneStart + i] = glm::mat4(1.0f);
       }
     } else if (hasAnimation) { // Pad with identity if batch is mixed
+      size_t boneStart = m_instanceOffset * MAX_BONES;
       for (size_t i = 0; i < MAX_BONES; ++i) {
-        boneData.push_back(glm::mat4(1.0f));
+        m_boneMapped[boneStart + i] = glm::mat4(1.0f);
       }
     }
+
+    m_instanceOffset++;
+    batchCount++;
   }
   flushModelBatch();
 
@@ -115,19 +129,19 @@ void Renderer::flush(const RenderContext &ctx) {
             });
 
   const Mesh *currentMesh = nullptr;
+  batchCount = 0;
+  batchStartOffset = m_instanceOffset;
 
   auto flushMeshBatch = [&]() {
-    if (instanceData.empty() || !currentMesh)
+    if (batchCount == 0 || !currentMesh)
       return;
 
-    glNamedBufferSubData(m_instanceSSBO, 0,
-                         instanceData.size() * sizeof(glm::mat4),
-                         instanceData.data());
-
     ctx.shader.setBool("u_HasAnimation", false);
-    const_cast<Mesh *>(currentMesh)->drawInstanced(ctx, instanceData.size());
+    ctx.shader.setInt("u_BaseInstance", batchStartOffset);
+    const_cast<Mesh *>(currentMesh)->drawInstanced(ctx, batchCount);
 
-    instanceData.clear();
+    batchCount = 0;
+    batchStartOffset = m_instanceOffset;
   };
 
   for (const auto &cmd : m_meshQueue) {
@@ -136,11 +150,15 @@ void Renderer::flush(const RenderContext &ctx) {
       currentMesh = cmd.mesh;
     }
 
-    if (instanceData.size() >= MAX_INSTANCES) {
-      flushMeshBatch();
+    if (m_instanceOffset >= MAX_INSTANCES) {
+      break;
     }
 
-    instanceData.push_back(cmd.transform);
+    m_instanceMapped[m_instanceOffset] = cmd.transform;
+    m_instanceOffset++;
+    batchCount++;
   }
   flushMeshBatch();
+
+  m_fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 }
