@@ -90,9 +90,9 @@ bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
   return true;
 }
 
-GameObjectFactory<Enemy> createEnemyFactory() {
-  return GameObjectFactory<Enemy>::create_factory([]() {
-    Enemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
+GameObjectFactory<::Enemy> createEnemyFactory() {
+  return GameObjectFactory<::Enemy>::create_factory([]() {
+    ::Enemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
     enemy.setScale(60.0f);
     enemy.setup();
     return enemy;
@@ -181,17 +181,17 @@ void Game::_setupPlayer() {
 }
 
 void Game::_spawnInitialEnemies() {
-  GameObjectFactory<Enemy> enemy_factory = createEnemyFactory();
+  GameObjectFactory<::Enemy> enemy_factory = createEnemyFactory();
 
-  for (size_t i = 0; i < 10; ++i) {
-    Enemy enemy_clone = enemy_factory.create([this](Enemy &enemy) {
+  for (size_t i = 0; i < 100; ++i) {
+    ::Enemy enemy_clone = enemy_factory.create([this](::Enemy &enemy) {
       enemy.move({Random::randFloat(-20.0f, 20.0f), 0.0f,
                   Random::randFloat(-20.0f, 20.0f)});
       snapObjectToGround(m_mapManager, enemy);
     });
 
     auto [enemy, enemy_handle] =
-        m_objects.emplaceWithHandle<Enemy>(std::move(enemy_clone));
+        m_objects.emplaceWithHandle<::Enemy>(std::move(enemy_clone));
 
     m_mapManager.registerObject(enemy_handle, enemy.getPosition(), false);
   }
@@ -317,7 +317,7 @@ void Game::render(double delta_time) {
       return;
     object->ensureTransformUpdated();
     m_renderer.submit(&object->getModel(), object->getModelMatrix(),
-                      object->getAnimator());
+                      object->getAnimator(), object->getEmissionColor());
   });
 
   m_mapManager.submitToRenderer(m_renderer);
@@ -470,7 +470,7 @@ void Game::_runCollisionPass() {
     if (!enemy_obj || enemy_obj->isRemovalRequested())
       continue;
 
-    Enemy *enemy = static_cast<Enemy *>(enemy_obj);
+    ::Enemy *enemy = static_cast<::Enemy *>(enemy_obj);
     if (enemy->collidesWith(*m_player.ensureInitialized())) {
       m_player.ensureInitialized()->takeDamage(enemy->getBaseDamage(), false);
     }
@@ -488,24 +488,16 @@ void Game::_runCollisionPass() {
       if (!enemy_obj || enemy_obj->isRemovalRequested())
         continue;
 
-      Enemy *enemy = static_cast<Enemy *>(enemy_obj);
+      ::Enemy *enemy = static_cast<::Enemy *>(enemy_obj);
       if (proj->collidesWith(*enemy)) {
         bool wasDead = enemy->isDead();
         enemy->takeDamage(proj->getDamage(), false,
                           glm::normalize(proj->getVelocity()), 2.0f);
 
         if (!wasDead && enemy->isDead()) {
-          m_eventBus.emit(ParticleSpawnRequestedEvent{
-              .position = enemy->getPosition(), .effectId = 2});
-
-          ModelName gemModel = (Random::randFloat(0.0f, 1.0f) > 0.5f)
-                                   ? ModelName::EXP_GEM_1
-                                   : ModelName::EXP_GEM_2;
-          Exp exp_clone(ModelManager::copy(gemModel), enemy->getExpDropAmount(),
-                        enemy->getPosition());
-          exp_clone.setScale(4.0f);
-          auto [exp, exp_handle] = m_objects.emplaceWithHandle<Exp>(exp_clone);
-          m_mapManager.registerObject(exp_handle, exp.getPosition(), true);
+          m_eventBus.emit(EnemyKilledEvent{
+              .enemy = enemy,
+              .killerPosition = m_player.ensureInitialized()->getPosition()});
         }
 
         proj->requestRemoval();
@@ -565,14 +557,14 @@ void Game::_runCollisionPass() {
   }
 }
 
-Enemy *Game::getClosestEnemy(glm::vec3 position, float radius) {
-  Enemy *closest = nullptr;
+::Enemy *Game::getClosestEnemy(glm::vec3 position, float radius) {
+  ::Enemy *closest = nullptr;
   float min_dist_sq = radius * radius;
   for (GameObject *enemy_obj :
        m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
     if (!enemy_obj || enemy_obj->isRemovalRequested())
       continue;
-    Enemy *enemy = static_cast<Enemy *>(enemy_obj);
+    ::Enemy *enemy = static_cast<::Enemy *>(enemy_obj);
     if (enemy->isDead())
       continue;
 
@@ -592,7 +584,7 @@ void Game::_updateEnemies() {
        m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
     assert(enemy);
 
-    static_cast<Enemy *>(enemy)->setPlayerPosition(player_position);
+    static_cast<::Enemy *>(enemy)->setPlayerPosition(player_position);
   }
 }
 
@@ -608,7 +600,7 @@ void Game::_syncObjectsToTerrain() {
         glm::vec3 snapped =
             m_mapManager.snapToGround(exp->getPosition(), base_offset);
         exp->setGroundY(snapped.y);
-      } else {
+      } else if (object->getObjectType() != GameObjectType::PLAYER_PROJECTILE) {
         snapObjectToGround(m_mapManager, *object);
       }
 
@@ -672,4 +664,23 @@ void Game::_registerGameplayEventHandlers() {
         // TODO: Hook this event into particle or VFX rendering once
         // available.
       });
+
+  m_eventBus.subscribe<EnemyKilledEvent>([this](const EnemyKilledEvent &evt) {
+    ::Enemy *enemy = static_cast<::Enemy *>(evt.enemy);
+    m_eventBus.emit(ParticleSpawnRequestedEvent{
+        .position = enemy->getPosition(), .effectId = 2});
+
+    glm::vec3 spawnPos = enemy->getHitboxAABB().getCenter();
+    spawnPos += glm::vec3(Random::randFloat(-0.5f, 0.5f),
+                          Random::randFloat(-0.5f, 0.5f),
+                          Random::randFloat(-0.5f, 0.5f));
+
+    Exp exp_clone(ModelManager::copy(ModelName::EXP_GEM_2),
+                  enemy->getExpDropAmount(), spawnPos);
+    exp_clone.setScale(50.0f);
+    exp_clone.setEmissionColor(glm::vec3({0.0, 0.2, 0.3f}));
+
+    auto [exp, exp_handle] = m_objects.emplaceWithHandle<Exp>(exp_clone);
+    m_mapManager.registerObject(exp_handle, exp.getPosition(), true);
+  });
 }

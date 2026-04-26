@@ -6,6 +6,7 @@ in vec3 WorldPos;
 in vec3 Normal;
 in mat3 TBN;
 in vec4 FragPosLightSpace;
+in vec3 Emission;
 
 // PBR Texture Samplers
 uniform sampler2D u_DiffuseTex;
@@ -207,7 +208,7 @@ void main()
   vec3 ambient_specular = prefilteredColor * kS_ambient;
 
   vec3 ambient = (ambient_diffuse + ambient_specular) * ao * u_AmbientIntensity;
-  vec3 color = ambient + Lo + u_EmissionColor;
+  vec3 color = ambient + Lo + u_EmissionColor + Emission;
 
   // Tone Mapping & Gamma Correction
   color = color / (color + vec3(1.0));

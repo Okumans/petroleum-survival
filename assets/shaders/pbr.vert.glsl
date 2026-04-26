@@ -14,9 +14,15 @@ out vec3 WorldPos;
 out vec3 Normal;
 out mat3 TBN;
 out vec4 FragPosLightSpace;
+out vec3 Emission;
+
+struct InstanceData {
+  mat4 model;
+  vec4 emission;
+};
 
 layout(std430, binding = 0) readonly buffer InstanceBuffer {
-  mat4 modelMatrices[];
+  InstanceData instances[];
 };
 
 uniform mat4 u_View;
@@ -41,7 +47,8 @@ void main()
   TexCoords = (aTexCoords * u_UVScale) + u_UVOffset;
 
   int instanceIndex = u_BaseInstance + gl_InstanceID;
-  mat4 u_Model = modelMatrices[instanceIndex];
+  mat4 u_Model = instances[instanceIndex].model;
+  Emission = instances[instanceIndex].emission.rgb;
   mat4 boneTransform = mat4(0.0f);
   if (u_HasAnimation) {
     int boneOffset = instanceIndex * MAX_BONES;

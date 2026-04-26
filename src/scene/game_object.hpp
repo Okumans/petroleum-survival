@@ -25,6 +25,7 @@ protected:
   glm::vec3 m_position{0.0f};
   glm::vec3 m_rotation{0.0f}; // Pitch, Yaw, Roll in degrees
   glm::vec3 m_scale{1.0f};
+  glm::vec3 m_emissionColor{0.0f};
 
   mutable glm::mat4 m_modelMatrix{1.0f};
   mutable bool m_isTransformDirty = true;
@@ -50,6 +51,7 @@ public:
   void setRotation(const glm::vec3 &degrees);
   void setScale(const glm::vec3 &scale);
   void setScale(float scale);
+  void setEmissionColor(const glm::vec3 &color) { m_emissionColor = color; }
 
   void translate(const glm::vec3 &offset);
   void rotate(const glm::vec3 &degrees);
@@ -57,6 +59,9 @@ public:
   [[nodiscard]] glm::vec3 getPosition() const { return m_position; }
   [[nodiscard]] glm::vec3 getRotation() const { return m_rotation; }
   [[nodiscard]] glm::vec3 getScale() const { return m_scale; }
+  [[nodiscard]] virtual glm::vec3 getEmissionColor() const {
+    return m_emissionColor;
+  }
   [[nodiscard]] virtual GameObjectType getObjectType() const = 0;
   [[nodiscard]] bool isType(GameObjectType type) const {
     return getObjectType() == type;

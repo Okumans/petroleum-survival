@@ -9,8 +9,13 @@ layout(location = 6) in vec4 weights;
 out vec2 TexCoords;
 
 uniform mat4 u_LightSpaceMatrix;
+struct InstanceData {
+  mat4 model;
+  vec4 emission;
+};
+
 layout(std430, binding = 0) readonly buffer InstanceBuffer {
-  mat4 modelMatrices[];
+  InstanceData instances[];
 };
 
 // Animation uniforms
@@ -27,7 +32,7 @@ void main()
   TexCoords = aTexCoords;
 
   int instanceIndex = u_BaseInstance + gl_InstanceID;
-  mat4 u_Model = modelMatrices[instanceIndex];
+  mat4 u_Model = instances[instanceIndex].model;
   mat4 boneTransform = mat4(0.0f);
   if (u_HasAnimation) {
       int boneOffset = instanceIndex * MAX_BONES;

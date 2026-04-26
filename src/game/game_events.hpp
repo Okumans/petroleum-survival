@@ -8,6 +8,7 @@ class Player;
 class Item;
 class Exp;
 class GameObject;
+class Enemy;
 #include "scene/projectile.hpp"
 
 namespace GameEvents {
@@ -34,6 +35,11 @@ struct ParticleSpawnRequestedEvent {
 };
 struct ProjectileSpawnRequestedEvent {
   Projectile projectile;
+};
+
+struct EnemyKilledEvent {
+  ::Enemy *enemy;
+  glm::vec3 killerPosition;
 };
 
 } // namespace GameEvents

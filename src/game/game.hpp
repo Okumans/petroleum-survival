@@ -64,7 +64,7 @@ public:
   void startGame();
 
   void movePlayer(glm::vec3 vec);
-  Enemy* getClosestEnemy(glm::vec3 position, float radius);
+  ::Enemy* getClosestEnemy(glm::vec3 position, float radius);
 
   void setDebugAABB(bool state) { m_debugAABB = state; }
 

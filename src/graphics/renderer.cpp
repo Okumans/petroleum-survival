@@ -24,10 +24,10 @@ void Renderer::setup() {
   GLbitfield flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
   if (!m_instanceSSBO) {
     glCreateBuffers(1, &m_instanceSSBO);
-    glNamedBufferStorage(m_instanceSSBO, MAX_INSTANCES * sizeof(glm::mat4),
+    glNamedBufferStorage(m_instanceSSBO, MAX_INSTANCES * sizeof(InstanceData),
                          nullptr, flags);
-    m_instanceMapped = (glm::mat4 *)glMapNamedBufferRange(
-        m_instanceSSBO, 0, MAX_INSTANCES * sizeof(glm::mat4), flags);
+    m_instanceMapped = (InstanceData *)glMapNamedBufferRange(
+        m_instanceSSBO, 0, MAX_INSTANCES * sizeof(InstanceData), flags);
   }
   if (!m_boneSSBO) {
     glCreateBuffers(1, &m_boneSSBO);
@@ -51,12 +51,13 @@ void Renderer::beginFrame() {
 }
 
 void Renderer::submit(const Model *model, const glm::mat4 &transform,
-                      const Animator *animator) {
-  m_modelQueue.push_back({model, transform, animator});
+                      const Animator *animator, const glm::vec3 &emission) {
+  m_modelQueue.push_back({model, transform, animator, emission});
 }
 
-void Renderer::submit(const Mesh *mesh, const glm::mat4 &transform) {
-  m_meshQueue.push_back({mesh, transform});
+void Renderer::submit(const Mesh *mesh, const glm::mat4 &transform,
+                      const glm::vec3 &emission) {
+  m_meshQueue.push_back({mesh, transform, emission});
 }
 
 void Renderer::flush(const RenderContext &ctx) {
@@ -97,7 +98,8 @@ void Renderer::flush(const RenderContext &ctx) {
       break;
     }
 
-    m_instanceMapped[m_instanceOffset] = cmd.transform;
+    m_instanceMapped[m_instanceOffset].model = cmd.transform;
+    m_instanceMapped[m_instanceOffset].emission = glm::vec4(cmd.emission, 0.0f);
 
     if (cmd.animator) {
       hasAnimation = true;
@@ -154,7 +156,8 @@ void Renderer::flush(const RenderContext &ctx) {
       break;
     }
 
-    m_instanceMapped[m_instanceOffset] = cmd.transform;
+    m_instanceMapped[m_instanceOffset].model = cmd.transform;
+    m_instanceMapped[m_instanceOffset].emission = glm::vec4(cmd.emission, 0.0f);
     m_instanceOffset++;
     batchCount++;
   }

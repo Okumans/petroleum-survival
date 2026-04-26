@@ -28,13 +28,16 @@ protected:
   bool m_isDead = false;
 
   AnimationState<void> m_iFrameState;
+  AnimationState<float> m_damageFlashState;
 
 public:
   Entity(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
          glm::vec3 scale = glm::vec3(1.0f),
          glm::vec3 rotation = glm::vec3(0.0f),
          bool defer_aabb_calculation = false)
-      : GameObject(model, pos, scale, rotation, defer_aabb_calculation) {}
+      : GameObject(model, pos, scale, rotation, defer_aabb_calculation) {
+    m_damageFlashState.duration.init(0.2f);
+  }
 
   virtual ~Entity() = default;
 
@@ -43,6 +46,18 @@ public:
 
   virtual void update(double delta_time) override {
     m_iFrameState.updateTimer(static_cast<float>(delta_time));
+    m_damageFlashState.updateTimer(static_cast<float>(delta_time));
+  }
+
+  [[nodiscard]] glm::vec3 getEmissionColor() const override {
+    glm::vec3 base = m_emissionColor;
+    if (m_damageFlashState.isFinished())
+      return base;
+
+    float p = m_damageFlashState.getProgress();
+    // Inverse exponential-like decay: (1-p)^4
+    float intensity = std::pow(1.0f - p, 4.0f) * 100.0f;
+    return base + glm::vec3(intensity);
   }
 
   [[nodiscard]] float getMaxHealth() const { return m_maxHealth; }
@@ -75,6 +90,7 @@ public:
 
     m_health -= amount;
     m_iFrameState.reset();
+    m_damageFlashState.startAnimation(0.0f, 1.0f);
 
     // Apply knockback
     if (knockbackForce > 0.0f && m_knockbackResist < 1.0f) {

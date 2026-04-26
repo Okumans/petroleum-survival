@@ -71,6 +71,7 @@ public:
     glm::vec3 targetPos =
         target->getPosition() +
         glm::vec3(0.0f, (targetBox.max.y - targetBox.min.y) * 0.5f, 0.0f);
+
     glm::vec3 toTarget = targetPos - spawnPos;
 
     if (glm::length(toTarget) < 0.001f)
@@ -79,18 +80,17 @@ public:
     glm::vec3 velocity = glm::normalize(toTarget) * m_projectileSpeed;
 
     auto model = ModelManager::copy(ModelName::SPHERE);
-    model->setEmissionColor(glm::vec3(2.0f, 20.0f, 40.0f) * 0.5f); // Bright blue-ish glow
+    model->setEmissionColor(glm::vec3(2.0f, 20.0f, 40.0f) *
+                            0.5f); // Bright blue-ish glow
 
     Projectile proj(model, spawnPos, velocity, m_damage, m_projectileLifetime,
                     [](Projectile &p, double dt) {
-                      // Straight line movement, with a slight vertical bobbing effect
                       p.translate(p.getVelocity() * static_cast<float>(dt));
                     });
-    proj.setScale(glm::vec3(0.5f));
+    proj.setScale(glm::vec3(0.2f));
 
-    m_spawnProjectile(GameEvents::ProjectileSpawnRequestedEvent{
-        .projectile = proj
-    });
+    m_spawnProjectile(
+        GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});
 
     return true;
   }
