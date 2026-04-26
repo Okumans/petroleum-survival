@@ -11,6 +11,7 @@
 #include "scene/item.hpp"
 #include "scene/exp.hpp"
 #include "scene/player.hpp"
+#include "graphics/particle_system.hpp"
 #include "utility/event_bus.hpp"
 #include "utility/not_initialized.hpp"
 
@@ -41,6 +42,8 @@ private:
   std::unique_ptr<ShadowMap> m_shadowMap;
   GameObjectManager m_objects;
   EventBus m_eventBus;
+
+  ParticleSystem m_particleSystem;
 
   int m_score = 0;
 

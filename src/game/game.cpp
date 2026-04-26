@@ -129,6 +129,7 @@ void Game::setup() {
   _initializeManagers();
 
   m_renderer.setup();
+  m_particleSystem.setup();
 
   _resetGameplayState();
   _setupPlayer();
@@ -204,7 +205,8 @@ void Game::_spawnInitialExp() {
   for (size_t i = 0; i < 4; ++i) {
     auto &factory = (i % 2 == 0) ? gem1_factory : gem2_factory;
     Exp exp_clone = factory.create([](Exp &exp) {
-      exp.translate({Random::randFloat(-10.0f, 20.0f), 10.0f, // Start high
+      exp.translate({Random::randFloat(-10.0f, 20.0f),
+                     10.0f, // Start high
                      Random::randFloat(-10.0f, 20.0f)});
       // Let the update loop handle falling
     });
@@ -311,6 +313,8 @@ void Game::render(double delta_time) {
 
   m_renderer.beginFrame();
 
+  m_particleSystem.update(delta_time);
+
   m_mapManager.foreachLoadedChunkHandles([this](const ObjectHandle &handle) {
     GameObject *object = m_objects.get(handle);
     if (!object || object->isRemovalRequested())
@@ -400,13 +404,16 @@ void Game::render(double delta_time) {
   pbr_shader.setVec3("u_BaseColor", glm::vec3(1.0f));
   pbr_shader.setVec2("u_UVOffset", glm::vec2(0.0f));
 
-  RenderContext ctx = {
+  RenderContext forwardCtx = {
       .shader = pbr_shader,
       .camera = m_camera,
       .deltaTime = delta_time,
   };
 
-  m_renderer.flush(ctx);
+  m_renderer.flush(forwardCtx);
+
+  // Render particles on top of forward pass models
+  m_particleSystem.render(forwardCtx);
 
   if (false && m_debugAABB) {
     RenderContext debug_ctx = {
@@ -659,10 +666,20 @@ void Game::_registerGameplayEventHandlers() {
       });
 
   m_eventBus.subscribe<ParticleSpawnRequestedEvent>(
-      [](const ParticleSpawnRequestedEvent &evt) {
-        (void)evt;
-        // TODO: Hook this event into particle or VFX rendering once
-        // available.
+      [this](const ParticleSpawnRequestedEvent &evt) {
+        // Emit a small burst of particles for collection
+        for (int i = 0; i < 20; ++i) {
+          m_particleSystem.emit(ParticleProps{
+              .position = evt.position,
+              .velocity = glm::vec3(0.0f, 5.0f, 0.0f),
+              .velocityVariation = glm::vec3(5.0f, 5.0f, 5.0f),
+              .colorBegin = glm::vec4(1.0f, 0.8f, 0.2f, 1.0f), // Gold-ish
+              .colorEnd = glm::vec4(1.0f, 0.4f, 0.0f, 0.0f),
+              .sizeBegin = 0.5f,
+              .sizeEnd = 0.1f,
+              .sizeVariation = 0.2f,
+              .lifeTime = 0.5f});
+        }
       });
 
   m_eventBus.subscribe<EnemyKilledEvent>([this](const EnemyKilledEvent &evt) {

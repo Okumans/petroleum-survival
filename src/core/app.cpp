@@ -491,6 +491,14 @@ void App::_setupShaders() {
          irradiance_shader.define("u_View");
          irradiance_shader.define("u_Projection");
 
+         // Shader &debug_shader = ShaderManager::get(ShaderType::DEBUG);
+         // debug_shader.use();
+         //
+         // debug_shader.define("u_Model");
+         // debug_shader.define("u_View");
+         // debug_shader.define("u_Projection");
+         // debug_shader.define("u_Color");
+
          Shader &debug_shader = ShaderManager::get(ShaderType::DEBUG);
          debug_shader.use();
 
