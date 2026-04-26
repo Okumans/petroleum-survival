@@ -59,6 +59,11 @@ private:
   bool m_debugAABB = true;
   GameState m_state = GameState::START_MENU;
 
+  GLuint m_instanceSSBO = 0;
+  GLuint m_boneSSBO = 0;
+  static constexpr size_t MAX_INSTANCES = 10000;
+  static constexpr size_t MAX_BONES = 200;
+
 public:
   Game();
   ~Game();

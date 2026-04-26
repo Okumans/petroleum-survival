@@ -15,7 +15,10 @@ out vec3 Normal;
 out mat3 TBN;
 out vec4 FragPosLightSpace;
 
-uniform mat4 u_Model;
+layout(std430, binding = 0) readonly buffer InstanceBuffer {
+  mat4 modelMatrices[];
+};
+
 uniform mat4 u_View;
 uniform mat4 u_Projection;
 uniform mat4 u_LightSpaceMatrix;
@@ -25,18 +28,24 @@ uniform vec2 u_UVScale = vec2(1.0, 1.0);
 // Animation uniforms
 const int MAX_BONES = 200;
 const int MAX_BONE_INFLUENCE = 4;
-uniform mat4 finalBonesMatrices[MAX_BONES];
+
+layout(std430, binding = 1) readonly buffer BoneBuffer {
+  mat4 boneMatrices[];
+};
+
 uniform bool u_HasAnimation;
 
 void main()
 {
   TexCoords = (aTexCoords * u_UVScale) + u_UVOffset;
 
+  mat4 u_Model = modelMatrices[gl_InstanceID];
   mat4 boneTransform = mat4(0.0f);
   if (u_HasAnimation) {
+    int boneOffset = gl_InstanceID * MAX_BONES;
     for (int i = 0; i < MAX_BONE_INFLUENCE; i++) {
       if (boneIds[i] >= 0) {
-        boneTransform += finalBonesMatrices[boneIds[i]] * weights[i];
+        boneTransform += boneMatrices[boneOffset + boneIds[i]] * weights[i];
       }
     }
   } else {

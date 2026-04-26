@@ -64,6 +64,11 @@ public:
 
   [[nodiscard]] const Model &getModel() const { return *m_model; }
   [[nodiscard]] std::shared_ptr<Model> copyModel() const { return m_model; }
+  
+  void ensureTransformUpdated() const { _updateTransform(); }
+  [[nodiscard]] const glm::mat4& getModelMatrix() const { return m_modelMatrix; }
+  
+  [[nodiscard]] virtual const class Animator* getAnimator() const { return nullptr; }
 
   [[nodiscard]] const AABB &getWorldAABB() const;
   [[nodiscard]] AABB getHitboxAABB() const; // Scaled for collisions

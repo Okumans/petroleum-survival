@@ -56,6 +56,8 @@ public:
 
   virtual void draw(const RenderContext &ctx) override;
   void draw(const RenderContext &ctx, const Material &material);
+  void drawInstanced(const RenderContext &ctx, uint32_t count);
+  void drawInstanced(const RenderContext &ctx, const Material &material, uint32_t count);
 
 private:
   void _setupMesh();

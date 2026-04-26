@@ -39,7 +39,21 @@ Bone *Animation::findBone(const std::string &name) {
   const uint32_t hashed_name = fnv1a(name);
 
   auto iter =
-      std::ranges::lower_bound(m_bones, hashed_name, {}, &Bone::getBoneName);
+      std::ranges::lower_bound(m_bones, hashed_name, {}, [](const Bone &bone) {
+        return bone.getBoneName().hash;
+      });
+
+  if (iter == m_bones.end() || iter->getBoneName().hash != hashed_name) {
+    return nullptr;
+  }
+
+  return &(*iter);
+}
+
+Bone *Animation::findBone(Bone::BoneNameHash hashed_name) {
+  auto iter = std::ranges::lower_bound(
+      m_bones, hashed_name.hash, {},
+      [](const Bone &bone) { return bone.getBoneName().hash; });
 
   if (iter == m_bones.end() || iter->getBoneName() != hashed_name) {
     return nullptr;
@@ -51,20 +65,20 @@ Bone *Animation::findBone(const std::string &name) {
 void Animation::_readMissingBones(const aiAnimation *animation, Model &model) {
   size_t size = animation->mNumChannels;
 
-  std::map<std::string, BoneInfo> &bone_info_map = model.getBoneInfoMap();
+  std::map<Bone::BoneNameHash, BoneInfo> &bone_info_map =
+      model.getBoneInfoMap();
   uint32_t &bone_count = model.getBoneCount();
 
   for (size_t i = 0; i < size; ++i) {
     auto channel = animation->mChannels[i];
-    std::string bone_name = channel->mNodeName.data;
+    Bone::BoneNameHash bone_name(channel->mNodeName.data);
 
     if (!bone_info_map.contains(bone_name)) {
       bone_info_map[bone_name].id = bone_count;
       bone_count++;
     }
 
-    m_bones.push_back(Bone(channel->mNodeName.data,
-                           bone_info_map[channel->mNodeName.data].id, channel));
+    m_bones.push_back(Bone(bone_name, bone_info_map[bone_name].id, channel));
   }
 
   std::ranges::sort(m_bones, [](const Bone &bone_1, const Bone &bone_2) {
@@ -77,7 +91,7 @@ void Animation::_readMissingBones(const aiAnimation *animation, Model &model) {
 void Animation::_readHierarchyData(AssimpNodeData &dest, const aiNode *src) {
   assert(src);
 
-  dest.name = src->mName.data;
+  dest.name = Bone::BoneNameHash(src->mName.data);
   dest.transformation = mat4FromAssimp(src->mTransformation);
   dest.childrenCount = src->mNumChildren;
 

@@ -84,8 +84,6 @@ void MapManager::draw(const RenderContext &ctx) {
     return;
   }
 
-  ctx.shader.setMat4("u_Model", glm::mat4(1.0f));
-
   for (auto &[_, chunk] : m_chunks) {
     chunk.mesh.draw(ctx);
   }

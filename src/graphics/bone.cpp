@@ -1,6 +1,6 @@
 #include "bone.hpp"
-#include "utility/utility.hpp"
 #include <cstdint>
+#include <ctime>
 
 namespace {
 
@@ -14,7 +14,7 @@ static glm::quat quatFromAssimp(const aiQuaternion &quat) {
 } // namespace
 
 Bone::Bone(const std::string &name, uint32_t id, const aiNodeAnim *channel)
-    : m_localTransform(1.0f), m_name(fnv1a(name)), m_id(id) {
+    : m_localTransform(1.0f), m_name(name), m_id(id) {
   m_numPositions = channel->mNumPositionKeys;
   for (size_t position_index = 0; position_index < m_numPositions;
        ++position_index) {
@@ -48,6 +48,46 @@ Bone::Bone(const std::string &name, uint32_t id, const aiNodeAnim *channel)
     data.scale = vec3FromAssimp(scale);
     data.timeStamp = timestamp;
     m_scales.push_back(data);
+  }
+}
+
+Bone::Bone(BoneNameHash name, uint32_t id, const aiNodeAnim *channel)
+    : m_localTransform(1.0f), m_name(name), m_id(id) {
+
+  m_numPositions = channel->mNumPositionKeys;
+  for (size_t position_index = 0; position_index < m_numPositions;
+       ++position_index) {
+
+    aiVector3D ai_position = channel->mPositionKeys[position_index].mValue;
+    float timestamp = channel->mPositionKeys[position_index].mTime;
+
+    m_positions.push_back(KeyPosition{
+        .position = vec3FromAssimp(ai_position),
+        .timeStamp = timestamp,
+    });
+  }
+
+  m_numRotations = channel->mNumRotationKeys;
+  for (size_t rotation_index = 0; rotation_index < m_numRotations;
+       ++rotation_index) {
+    aiQuaternion ai_orientation = channel->mRotationKeys[rotation_index].mValue;
+    float timestamp = channel->mRotationKeys[rotation_index].mTime;
+
+    m_rotations.push_back(KeyRotation{
+        .orientation = quatFromAssimp(ai_orientation),
+        .timeStamp = timestamp,
+    });
+  }
+
+  m_numScalings = channel->mNumScalingKeys;
+  for (size_t key_index = 0; key_index < m_numScalings; ++key_index) {
+    aiVector3D scale = channel->mScalingKeys[key_index].mValue;
+    float timestamp = channel->mScalingKeys[key_index].mTime;
+
+    m_scales.push_back(KeyScale{
+        .scale = vec3FromAssimp(scale),
+        .timeStamp = timestamp,
+    });
   }
 }
 

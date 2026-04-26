@@ -199,9 +199,7 @@ void App::_setupResources() {
   m_loadingTasks.push_back(
       {"Model: Coin",
        loadModel(ModelName::COIN, ASSETS_PATH "/objects/items/coin.glb")});
-  m_loadingTasks.push_back(
-      {"Model: City",
-       loadModel(ModelName::CITY, ASSETS_PATH "/objects/map/city.glb")});
+
 
   // Animations
   m_loadingTasks.push_back({"Animation: Kasane Teto Idle",

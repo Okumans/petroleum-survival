@@ -45,6 +45,8 @@ GLFWwindow *initialize_window(int width, int height, const char *title) {
   }
   glfwMakeContextCurrent(window);
 
+  // glfwSwapInterval(0)
+
   if (!gladLoadGL((GLADloadfunc)glfwGetProcAddress)) {
     fprintf(stderr, "Failed to initialize GLAD\n");
     exit(EXIT_FAILURE);

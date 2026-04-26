@@ -97,9 +97,18 @@ void Mesh::_setupMesh() {
   glVertexArrayAttribBinding(m_vao, 6, 0);
 }
 
-void Mesh::draw(const RenderContext &ctx) { draw(ctx, m_material); }
+void Mesh::draw(const RenderContext &ctx) { drawInstanced(ctx, 1); }
 
 void Mesh::draw(const RenderContext &ctx, const Material &material) {
+  drawInstanced(ctx, material, 1);
+}
+
+void Mesh::drawInstanced(const RenderContext &ctx, uint32_t count) {
+  drawInstanced(ctx, m_material, count);
+}
+
+void Mesh::drawInstanced(const RenderContext &ctx, const Material &material,
+                         uint32_t count) {
   int counter = 0;
 
   // 1. Diffuse/Albedo
@@ -179,5 +188,6 @@ void Mesh::draw(const RenderContext &ctx, const Material &material) {
   ctx.shader.setFloat("u_AOFactor", material.getAOFactor());
 
   glBindVertexArray(m_vao);
-  glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
+  glDrawElementsInstanced(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0,
+                          count);
 }

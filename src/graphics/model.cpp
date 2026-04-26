@@ -40,6 +40,12 @@ void Model::draw(const RenderContext &ctx) {
   }
 }
 
+void Model::drawInstanced(const RenderContext &ctx, uint32_t count) {
+  for (Mesh &mesh : m_meshes) {
+    mesh.drawInstanced(ctx, count);
+  }
+}
+
 void Model::_loadModel(const char *path, bool flip_vertical) {
   Assimp::Importer import;
   const aiScene *scene = import.ReadFile(
@@ -358,9 +364,10 @@ void Model::_extractBoneWeightForVertices(std::vector<Vertex> &vertices,
 
   for (size_t bone_index = 0; bone_index < mesh->mNumBones; ++bone_index) {
     std::optional<uint32_t> bone_id;
-    std::string bone_name = mesh->mBones[bone_index]->mName.C_Str();
+    Bone::BoneNameHash bone_name(mesh->mBones[bone_index]->mName.C_Str());
 
-    if (m_boneInfoMap.find(bone_name) == m_boneInfoMap.end()) {
+    if (!m_boneInfoMap.contains(bone_name)) {
+
       BoneInfo new_bone_info;
       new_bone_info.id = m_boneCount;
 

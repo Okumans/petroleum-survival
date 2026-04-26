@@ -66,6 +66,13 @@ public:
     _updateAnimation(delta_time);
   }
 
+  [[nodiscard]] const Animator* getAnimator() const override {
+    if (m_animator.isInitialized()) {
+      return &m_animator.ensureInitialized();
+    }
+    return nullptr;
+  }
+
   virtual void draw(const RenderContext &ctx) override {
     if (!m_model)
       return;

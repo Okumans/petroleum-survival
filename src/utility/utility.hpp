@@ -79,14 +79,14 @@ constexpr T withBase(T base, F modifier) {
   return base;
 }
 
-inline float lerpAngle(float start, float end, float t) {
+inline constexpr float lerpAngle(float start, float end, float t) {
   float diff = std::fmod(end - start + 180.0f, 360.0f) - 180.0f;
   if (diff < -180.0f)
     diff += 360.0f;
   return start + diff * t;
 }
 
-inline uint32_t fnv1a(std::string_view str) {
+inline constexpr uint32_t fnv1a(std::string_view str) {
   uint32_t hash = 0x811c9dc5;
   for (char c : str) {
     hash ^= static_cast<uint8_t>(c);

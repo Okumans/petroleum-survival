@@ -9,23 +9,29 @@ layout(location = 6) in vec4 weights;
 out vec2 TexCoords;
 
 uniform mat4 u_LightSpaceMatrix;
-uniform mat4 u_Model;
+layout(std430, binding = 0) readonly buffer InstanceBuffer {
+  mat4 modelMatrices[];
+};
 
 // Animation uniforms
 const int MAX_BONES = 200;
 const int MAX_BONE_INFLUENCE = 4;
-uniform mat4 finalBonesMatrices[MAX_BONES];
+layout(std430, binding = 1) readonly buffer BoneBuffer {
+  mat4 boneMatrices[];
+};
 uniform bool u_HasAnimation;
 
 void main()
 {
   TexCoords = aTexCoords;
 
+  mat4 u_Model = modelMatrices[gl_InstanceID];
   mat4 boneTransform = mat4(0.0f);
   if (u_HasAnimation) {
+      int boneOffset = gl_InstanceID * MAX_BONES;
       for(int i = 0 ; i < MAX_BONE_INFLUENCE ; i++) {
           if(boneIds[i] >= 0) {
-              boneTransform += finalBonesMatrices[boneIds[i]] * weights[i];
+              boneTransform += boneMatrices[boneOffset + boneIds[i]] * weights[i];
           }
       }
   } else {

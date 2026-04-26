@@ -1,5 +1,6 @@
 #include "game.hpp"
 
+#include "external/magic_enum.hpp"
 #include "game/map_manager.hpp"
 #include "graphics/debug_drawer.hpp"
 #include "graphics/ibl_generator.hpp"
@@ -22,6 +23,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <unordered_map>
 #include <utility>
 
 namespace {
@@ -114,10 +116,32 @@ Game::Game()
   m_camera.zoom = 45.0f;
 }
 
-Game::~Game() {}
+Game::~Game() {
+  if (m_instanceSSBO)
+    glDeleteBuffers(1, &m_instanceSSBO);
+  if (m_boneSSBO)
+    glDeleteBuffers(1, &m_boneSSBO);
+}
 
 void Game::setup() {
   _initializeManagers();
+
+  // GL_MAP_WRITE_BIT: Buffer memory will be mapped for writing by the CPU
+  // GL_DYNAMIC_STORAGE_BIT: Buffer contents can be directly updated using
+  //  glBufferSubData
+
+  if (!m_instanceSSBO) {
+    glCreateBuffers(1, &m_instanceSSBO);
+    glNamedBufferStorage(m_instanceSSBO, MAX_INSTANCES * sizeof(glm::mat4),
+                         nullptr, GL_MAP_WRITE_BIT | GL_DYNAMIC_STORAGE_BIT);
+  }
+  if (!m_boneSSBO) {
+    glCreateBuffers(1, &m_boneSSBO);
+    glNamedBufferStorage(m_boneSSBO,
+                         MAX_INSTANCES * MAX_BONES * sizeof(glm::mat4), nullptr,
+                         GL_MAP_WRITE_BIT | GL_DYNAMIC_STORAGE_BIT);
+  }
+
   _resetGameplayState();
   _setupPlayer();
   _spawnInitialEnemies();
@@ -159,7 +183,7 @@ void Game::_setupPlayer() {
 void Game::_spawnInitialEnemies() {
   GameObjectFactory<Enemy> enemy_factory = createEnemyFactory();
 
-  for (size_t i = 0; i < 1000; ++i) {
+  for (size_t i = 0; i < 5; ++i) {
     Enemy enemy_clone = enemy_factory.create([this](Enemy &enemy) {
       enemy.move({Random::randFloat(-20.0f, 20.0f), 0.0f,
                   Random::randFloat(-20.0f, 20.0f)});
@@ -303,6 +327,11 @@ void Game::render(double delta_time) {
     };
 
     _drawLoadedObjects(shadow_draw_ctx);
+
+    glm::mat4 identity(1.0f);
+    glNamedBufferSubData(m_instanceSSBO, 0, sizeof(glm::mat4), &identity);
+    shadow_draw_ctx.shader.setBool("u_HasAnimation", false);
+
     m_mapManager.draw(shadow_draw_ctx);
   }
 
@@ -369,6 +398,11 @@ void Game::render(double delta_time) {
   };
 
   _drawLoadedObjects(ctx);
+
+  glm::mat4 identity(1.0f);
+  glNamedBufferSubData(m_instanceSSBO, 0, sizeof(glm::mat4), &identity);
+  ctx.shader.setBool("u_HasAnimation", false);
+
   m_mapManager.draw(ctx);
 
   if (false && m_debugAABB) {
@@ -496,14 +530,66 @@ void Game::_syncObjectsToTerrain() {
 }
 
 void Game::_drawLoadedObjects(const RenderContext &ctx) {
+  std::unordered_map<const Model *, std::vector<GameObject *>> modelBatches;
+
   m_mapManager.foreachLoadedChunkHandles(
-      [this, &ctx](const ObjectHandle &handle) {
+      [this, &modelBatches](const ObjectHandle &handle) {
         GameObject *object = m_objects.get(handle);
         if (!object || object->isRemovalRequested())
           return;
 
-        object->draw(ctx);
+        object->ensureTransformUpdated();
+        modelBatches[&object->getModel()].push_back(object);
       });
+
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_instanceSSBO);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_boneSSBO);
+
+  std::vector<glm::mat4> instanceData;
+  std::vector<glm::mat4> boneData;
+  instanceData.reserve(MAX_INSTANCES);
+  boneData.reserve(MAX_INSTANCES * MAX_BONES);
+
+  for (auto &[model, objects] : modelBatches) {
+    instanceData.clear();
+    boneData.clear();
+    bool hasAnimation = false;
+
+    for (GameObject *obj : objects) {
+      if (instanceData.size() >= MAX_INSTANCES)
+        break;
+
+      instanceData.push_back(obj->getModelMatrix());
+
+      const Animator *animator = obj->getAnimator();
+      if (animator) {
+        hasAnimation = true;
+        const auto &bones = animator->getFinalBoneMatrices();
+        size_t boneCount = std::min(bones.size(), MAX_BONES);
+        for (size_t i = 0; i < boneCount; ++i) {
+          boneData.push_back(bones[i]);
+        }
+        for (size_t i = boneCount; i < MAX_BONES; ++i) {
+          boneData.push_back(glm::mat4(1.0f));
+        }
+      }
+    }
+
+    if (instanceData.empty())
+      continue;
+
+    glNamedBufferSubData(m_instanceSSBO, 0,
+                         instanceData.size() * sizeof(glm::mat4),
+                         instanceData.data());
+
+    if (hasAnimation) {
+      glNamedBufferSubData(m_boneSSBO, 0, boneData.size() * sizeof(glm::mat4),
+                           boneData.data());
+    }
+
+    ctx.shader.setBool("u_HasAnimation", hasAnimation);
+    const_cast<Model *>(model)->drawInstanced(ctx, instanceData.size());
+  }
 }
 
 void Game::_registerGameplayEventHandlers() {

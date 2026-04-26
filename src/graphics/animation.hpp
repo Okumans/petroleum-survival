@@ -19,9 +19,11 @@ struct BoneInfo;
 
 struct AssimpNodeData {
   glm::mat4 transformation;
-  std::string name;
+  Bone::BoneNameHash name;
   uint32_t childrenCount;
   std::vector<AssimpNodeData> children;
+
+  AssimpNodeData() = default;
 };
 
 class Animation {
@@ -31,14 +33,16 @@ private:
   int m_ticksPerSecond;
   std::vector<Bone> m_bones;
   AssimpNodeData m_rootNode;
-  std::map<std::string, BoneInfo> m_boneInfoMap;
+  std::map<Bone::BoneNameHash, BoneInfo> m_boneInfoMap;
 
 public:
   Animation() = default;
   Animation(const std::string &animation_path, Model *model);
   ~Animation();
 
+  [[deprecated("Use findBone with hashed_name alternaive instead")]]
   Bone *findBone(const std::string &name);
+  Bone *findBone(Bone::BoneNameHash name);
 
   [[nodiscard]] float getTicksPerSecond() const { return m_ticksPerSecond; }
   [[nodiscard]] float getDuration() const { return m_duration; }
@@ -46,7 +50,8 @@ public:
   [[nodiscard]] const glm::mat4 &getGlobalTransformation() const {
     return m_globalTransformation;
   }
-  [[nodiscard]] const std::map<std::string, BoneInfo> &getBoneIDMap() const {
+  [[nodiscard]] const std::map<Bone::BoneNameHash, BoneInfo> &
+  getBoneIDMap() const {
     return m_boneInfoMap;
   }
 
