@@ -51,7 +51,7 @@ Bone::Bone(const std::string &name, uint32_t id, const aiNodeAnim *channel)
   }
 }
 
-Bone::Bone(BoneNameHash name, uint32_t id, const aiNodeAnim *channel)
+Bone::Bone(NameHash name, uint32_t id, const aiNodeAnim *channel)
     : m_localTransform(1.0f), m_name(name), m_id(id) {
 
   m_numPositions = channel->mNumPositionKeys;

@@ -30,7 +30,6 @@ public:
   Animator(Animation *animation);
   void updateAnimation(float delta_time);
   void playAnimation(Animation *p_animation, float blend_duration = 0.15f);
-  void apply(Shader &shader);
   [[nodiscard]] const std::vector<glm::mat4> &getFinalBoneMatrices() const {
     return m_finalBoneMatrices;
   }

@@ -14,9 +14,11 @@ struct Light {
 };
 
 class LightingManager {
+public:
+  static const int MAX_LIGHTS = 4;
+
 private:
   static std::vector<Light> m_lights;
-  static const int MAX_LIGHTS = 4;
 
 public:
   // Consistent API

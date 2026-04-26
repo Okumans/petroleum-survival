@@ -4,13 +4,15 @@
 #include "graphics/animation.hpp"
 #include "graphics/animation_data.hpp"
 #include "graphics/bone.hpp"
+#include "graphics/renderer.hpp"
+#include "utility/name_hash.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <glm/common.hpp>
-#include <string>
 
 Animator::Animator(Animation *animation)
     : m_finalBoneMatrices(200, glm::mat4(1.0f)),
@@ -114,20 +116,14 @@ void Animator::playAnimation(Animation *p_animation, float blend_duration) {
   m_isBlending = true;
 }
 
-void Animator::apply(Shader &shader) {
-  const auto &matrices = getFinalBoneMatrices();
-  for (size_t idx = 0; idx < matrices.size(); ++idx) {
-    shader.setMat4("finalBonesMatrices[" + std::to_string(idx) + "]",
-                   matrices[idx]);
-  }
-}
+
 
 void Animator::_calculateBoneTransform(const AssimpNodeData *node,
                                        glm::mat4 parent_transform,
                                        Animation *animation,
                                        float animation_time,
                                        std::vector<glm::mat4> &out_matrices) {
-  Bone::BoneNameHash node_name(node->name);
+  NameHash node_name(node->name);
   glm::mat4 node_transform = node->transformation;
 
   Bone *bone = animation->findBone(node_name);
@@ -139,8 +135,7 @@ void Animator::_calculateBoneTransform(const AssimpNodeData *node,
 
   glm::mat4 global_transformation = parent_transform * node_transform;
 
-  const std::map<Bone::BoneNameHash, BoneInfo> &bone_info_map =
-      animation->getBoneIDMap();
+  const std::map<NameHash, BoneInfo> &bone_info_map = animation->getBoneIDMap();
 
   auto bone_iterator = bone_info_map.find(node_name);
 

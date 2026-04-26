@@ -5,11 +5,13 @@
 
 #include "GLFW/glfw3.h"
 #include "glm/fwd.hpp"
+#include "graphics/shader_uniforms.hpp"
 #include "resource/animation_manager.hpp"
 #include "resource/model_manager.hpp"
 #include "resource/shader_manager.hpp"
 #include "resource/texture_manager.hpp"
 #include "ui/ui_manager.hpp"
+#include <print>
 
 #ifdef EMBED_SHADER
 #include "debug.frag.glsl.h"
@@ -24,7 +26,6 @@
 #include "skybox.vert.glsl.h"
 #include "ui.frag.glsl.h"
 #include "ui.vert.glsl.h"
-#include "water.frag.glsl.h"
 
 static std::string arr_to_str(unsigned char *arr, unsigned int len) {
   return std::string(reinterpret_cast<char *>(arr), len);
@@ -72,50 +73,11 @@ App::App(GLFWwindow *window) : m_window(window) {
   glfwSetScrollCallback(m_window, _glfwScrollCallback);
   glfwSetFramebufferSizeCallback(m_window, _glfwFramebufferSizeCallback);
 
-  // 1. Initial Resources (UI & Font)
-#ifdef EMBED_SHADER
-  ShaderManager::loadFromSource(
-      ShaderType::UI, arr_to_str(ui_vert_glsl, ui_vert_glsl_len).c_str(),
-      arr_to_str(ui_frag_glsl, ui_frag_glsl_len).c_str());
-
-  ShaderManager::loadFromSource(
-      ShaderType::PBR, arr_to_str(pbr_vert_glsl, pbr_vert_glsl_len).c_str(),
-      arr_to_str(pbr_frag_glsl, pbr_frag_glsl_len).c_str());
-
-  ShaderManager::loadFromSource(
-      ShaderType::SKYBOX,
-      arr_to_str(skybox_vert_glsl, skybox_vert_glsl_len).c_str(),
-      arr_to_str(skybox_frag_glsl, skybox_frag_glsl_len).c_str());
-
-  ShaderManager::loadFromSource(
-      ShaderType::SHADOW,
-      arr_to_str(shadow_vert_glsl, shadow_vert_glsl_len).c_str(),
-      arr_to_str(shadow_frag_glsl, shadow_frag_glsl_len).c_str());
-
-  ShaderManager::loadFromSource(
-      ShaderType::IRRADIANCE,
-      arr_to_str(irradiance_vert_glsl, irradiance_vert_glsl_len).c_str(),
-      arr_to_str(irradiance_frag_glsl, irradiance_frag_glsl_len).c_str());
-
-  ShaderManager::loadFromSource(
-      ShaderType::WATER, arr_to_str(pbr_vert_glsl, pbr_vert_glsl_len).c_str(),
-      arr_to_str(water_frag_glsl, water_frag_glsl_len).c_str());
-
-  ShaderManager::loadFromSource(
-      ShaderType::DEBUG,
-      arr_to_str(debug_vert_glsl, debug_vert_glsl_len).c_str(),
-      arr_to_str(debug_frag_glsl, debug_frag_glsl_len).c_str());
-#else
-  ShaderManager::loadFromPath(ShaderType::UI, UI_VERTEX_SHADER_PATH,
-                              UI_FRAGMENT_SHADER_PATH);
-#endif
   m_font.loadDefaultFont();
 
-  // 2. Setup UI
-  _setupUIElements();
-
-  // 3. Queue other resources
   _setupResources();
+
+  _setupUIElements();
 
   int width, height;
   glfwGetWindowSize(m_window, &width, &height);
@@ -142,30 +104,7 @@ void App::_setupResources() {
     };
   };
 
-  // Shaders
-#ifndef EMBED_SHADER
-  m_loadingTasks.push_back(
-      {"Shaders", []() {
-         ShaderManager::loadFromPath(ShaderType::PBR,
-                                     SHADER_PATH "/pbr.vert.glsl",
-                                     SHADER_PATH "/pbr.frag.glsl");
-         ShaderManager::loadFromPath(ShaderType::SKYBOX,
-                                     SHADER_PATH "/skybox.vert.glsl",
-                                     SHADER_PATH "/skybox.frag.glsl");
-         ShaderManager::loadFromPath(ShaderType::SHADOW,
-                                     SHADER_PATH "/shadow.vert.glsl",
-                                     SHADER_PATH "/shadow.frag.glsl");
-         ShaderManager::loadFromPath(ShaderType::IRRADIANCE,
-                                     SHADER_PATH "/irradiance.vert.glsl",
-                                     SHADER_PATH "/irradiance.frag.glsl");
-         ShaderManager::loadFromPath(ShaderType::WATER,
-                                     SHADER_PATH "/pbr.vert.glsl",
-                                     SHADER_PATH "/water.frag.glsl");
-         ShaderManager::loadFromPath(ShaderType::DEBUG,
-                                     SHADER_PATH "/debug.vert.glsl",
-                                     SHADER_PATH "/debug.frag.glsl");
-       }});
-#endif
+  _setupShaders();
 
   // Static Textures
   m_loadingTasks.push_back(
@@ -199,7 +138,6 @@ void App::_setupResources() {
   m_loadingTasks.push_back(
       {"Model: Coin",
        loadModel(ModelName::COIN, ASSETS_PATH "/objects/items/coin.glb")});
-
 
   // Animations
   m_loadingTasks.push_back({"Animation: Kasane Teto Idle",
@@ -401,6 +339,154 @@ void App::_updateUIElements(double delta_time) {
   }
 
   // Removed Game Over Fade out
+}
+
+void App::_setupShaders() {
+#ifdef EMBED_SHADER
+  ShaderManager::loadFromSource(
+      ShaderType::UI, arr_to_str(ui_vert_glsl, ui_vert_glsl_len).c_str(),
+      arr_to_str(ui_frag_glsl, ui_frag_glsl_len).c_str());
+
+  ShaderManager::loadFromSource(
+      ShaderType::PBR, arr_to_str(pbr_vert_glsl, pbr_vert_glsl_len).c_str(),
+      arr_to_str(pbr_frag_glsl, pbr_frag_glsl_len).c_str());
+
+  ShaderManager::loadFromSource(
+      ShaderType::SKYBOX,
+      arr_to_str(skybox_vert_glsl, skybox_vert_glsl_len).c_str(),
+      arr_to_str(skybox_frag_glsl, skybox_frag_glsl_len).c_str());
+
+  ShaderManager::loadFromSource(
+      ShaderType::SHADOW,
+      arr_to_str(shadow_vert_glsl, shadow_vert_glsl_len).c_str(),
+      arr_to_str(shadow_frag_glsl, shadow_frag_glsl_len).c_str());
+
+  ShaderManager::loadFromSource(
+      ShaderType::IRRADIANCE,
+      arr_to_str(irradiance_vert_glsl, irradiance_vert_glsl_len).c_str(),
+      arr_to_str(irradiance_frag_glsl, irradiance_frag_glsl_len).c_str());
+
+  ShaderManager::loadFromSource(
+      ShaderType::DEBUG,
+      arr_to_str(debug_vert_glsl, debug_vert_glsl_len).c_str(),
+      arr_to_str(debug_frag_glsl, debug_frag_glsl_len).c_str());
+#else
+  m_loadingTasks.push_back(
+      {"Shaders", []() {
+         ShaderManager::loadFromPath(ShaderType::UI,
+                                     SHADER_PATH "/ui.vert.glsl",
+                                     SHADER_PATH "/ui.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::PBR,
+                                     SHADER_PATH "/pbr.vert.glsl",
+                                     SHADER_PATH "/pbr.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::SKYBOX,
+                                     SHADER_PATH "/skybox.vert.glsl",
+                                     SHADER_PATH "/skybox.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::SHADOW,
+                                     SHADER_PATH "/shadow.vert.glsl",
+                                     SHADER_PATH "/shadow.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::IRRADIANCE,
+                                     SHADER_PATH "/irradiance.vert.glsl",
+                                     SHADER_PATH "/irradiance.frag.glsl");
+         ShaderManager::loadFromPath(ShaderType::DEBUG,
+                                     SHADER_PATH "/debug.vert.glsl",
+                                     SHADER_PATH "/debug.frag.glsl");
+
+         ShaderManager::ensureInit();
+
+         Shader &pbr_shader = ShaderManager::get(ShaderType::PBR);
+         pbr_shader.use();
+
+         pbr_shader.define("u_View");
+         pbr_shader.define("u_Projection");
+         pbr_shader.define("u_LightSpaceMatrix");
+         pbr_shader.define("u_UVOffset");
+         pbr_shader.define("u_UVScale");
+
+         pbr_shader.define("u_DiffuseTex");
+         pbr_shader.define("u_NormalTex");
+         pbr_shader.define("u_HeightTex");
+         pbr_shader.define("u_MetallicTex");
+         pbr_shader.define("u_RoughnessTex");
+         pbr_shader.define("u_AOTex");
+         pbr_shader.define("u_SpecularEnvMap");
+         pbr_shader.define("u_IrradianceMap");
+         pbr_shader.define("u_ShadowMap");
+
+         pbr_shader.define("u_BaseColor");
+         pbr_shader.define("u_Opacity");
+         pbr_shader.define("u_MetallicFactor");
+         pbr_shader.define("u_RoughnessFactor");
+         pbr_shader.define("u_AOFactor");
+         pbr_shader.define("u_HeightScale");
+         pbr_shader.define("u_AmbientIntensity");
+         pbr_shader.define("u_UsePackedMR");
+         pbr_shader.define("u_HasAnimation");
+
+         pbr_shader.define("u_Lights");
+         pbr_shader.define("u_NumLights");
+         pbr_shader.define("u_CameraPos");
+
+         constexpr auto lightUniforms = ShaderUniforms::generateLightUniforms();
+         for (const auto &u : lightUniforms) {
+           pbr_shader.define(u.position.data());
+           pbr_shader.define(u.color.data());
+           pbr_shader.define(u.type.data());
+         }
+
+         Shader &shadow_shader = ShaderManager::get(ShaderType::SHADOW);
+         shadow_shader.use();
+
+         shadow_shader.define("u_Opacity");
+         shadow_shader.define("u_DiffuseTex");
+         shadow_shader.define("u_NormalTex");
+         shadow_shader.define("u_HeightTex");
+         shadow_shader.define("u_MetallicTex");
+         shadow_shader.define("u_RoughnessTex");
+         shadow_shader.define("u_AOTex");
+         shadow_shader.define("u_BaseColor");
+         shadow_shader.define("u_MetallicFactor");
+         shadow_shader.define("u_RoughnessFactor");
+         shadow_shader.define("u_AOFactor");
+         shadow_shader.define("u_UsePackedMR");
+         shadow_shader.define("u_LightSpaceMatrix");
+         shadow_shader.define("u_HasAnimation");
+
+         Shader &skybox_shader = ShaderManager::get(ShaderType::SKYBOX);
+         skybox_shader.use();
+
+         skybox_shader.define("u_View");
+         skybox_shader.define("u_Projection");
+         skybox_shader.define("u_Skybox");
+
+         Shader &ui_shader = ShaderManager::get(ShaderType::UI);
+         ui_shader.use();
+
+         ui_shader.define("u_projection");
+         ui_shader.define("u_model");
+         ui_shader.define("u_uv_min");
+         ui_shader.define("u_uv_max");
+         ui_shader.define("u_icon");
+         ui_shader.define("u_color");
+         ui_shader.define("u_hasTexture");
+
+         Shader &irradiance_shader = ShaderManager::get(ShaderType::IRRADIANCE);
+         irradiance_shader.use();
+
+         irradiance_shader.define("u_Skybox");
+         irradiance_shader.define("u_View");
+         irradiance_shader.define("u_Projection");
+
+         Shader &debug_shader = ShaderManager::get(ShaderType::DEBUG);
+         debug_shader.use();
+
+         debug_shader.define("u_Model");
+         debug_shader.define("u_View");
+         debug_shader.define("u_Projection");
+         debug_shader.define("u_Color");
+       }});
+
+#endif
 }
 
 void App::_handleProcessInput(double delta_time) {

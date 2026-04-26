@@ -1,6 +1,6 @@
 #include "mesh.hpp"
-#include "graphics/idrawable.hpp"
 #include "graphics/material.hpp"
+#include "graphics/render_context.hpp"
 
 #include <glad/gl.h>
 

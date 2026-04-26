@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/idrawable.hpp"
+#include "graphics/render_context.hpp"
 #include "utility/aabb.hpp"
 
 class DebugDrawer {

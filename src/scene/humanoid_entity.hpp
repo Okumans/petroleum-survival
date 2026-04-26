@@ -73,20 +73,7 @@ public:
     return nullptr;
   }
 
-  virtual void draw(const RenderContext &ctx) override {
-    if (!m_model)
-      return;
 
-    ctx.shader.setBool("u_HasAnimation", true);
-
-    _updateTransform();
-    ctx.shader.setMat4("u_Model", m_modelMatrix);
-    m_animator.ensureInitialized().apply(ctx.shader);
-
-    m_model->draw(ctx);
-
-    ctx.shader.setBool("u_HasAnimation", false);
-  }
 
 protected:
   virtual void _setAnimation(AnimationTypes animation) {

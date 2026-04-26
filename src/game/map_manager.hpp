@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/idrawable.hpp"
+#include "graphics/render_context.hpp"
 #include "graphics/material.hpp"
 #include "graphics/mesh.hpp"
 #include "scene/game_object_manager.hpp"
@@ -11,6 +11,8 @@
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
+
+class Renderer;
 
 /** @brief Owns terrain generation and loaded-chunk membership.
  *
@@ -57,7 +59,7 @@ public:
 
   void setup();
   void update(const glm::vec3 &focus_position);
-  void draw(const RenderContext &ctx);
+  void submitToRenderer(Renderer& renderer);
 
   [[nodiscard]] float sampleHeight(float world_x, float world_z) const;
   [[nodiscard]] glm::vec3 sampleNormal(float world_x, float world_z) const;

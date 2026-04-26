@@ -1,7 +1,7 @@
 #pragma once
 
 #include "graphics/bone.hpp"
-#include "graphics/idrawable.hpp"
+#include "graphics/render_context.hpp"
 #include "mesh.hpp"
 
 #include <assimp/Importer.hpp>
@@ -13,14 +13,14 @@
 #include <map>
 #include <string>
 
-class Model : public IDrawable {
+class Model {
 private:
   // model data
   std::vector<Mesh> m_meshes;
   std::string m_directory;
   std::string m_path;
 
-  std::map<Bone::BoneNameHash, BoneInfo> m_boneInfoMap;
+  std::map<NameHash, BoneInfo> m_boneInfoMap;
   uint32_t m_boneCount = 0;
 
 public:
@@ -28,18 +28,17 @@ public:
 
   Model(const Model &) = delete;
   Model &operator=(Model &) const = delete;
+  Model &operator=(Model &&) = default;
+  Model(Model &&) noexcept = default;
 
-  Model(Model &&) noexcept;
-
-  void draw(const RenderContext &ctx) override;
+  void draw(const RenderContext &ctx);
   void drawInstanced(const RenderContext &ctx, uint32_t count);
   [[nodiscard]] const std::vector<Mesh> &getMeshes() const { return m_meshes; }
 
-  [[nodiscard]] std::map<Bone::BoneNameHash, BoneInfo> &getBoneInfoMap() {
+  [[nodiscard]] std::map<NameHash, BoneInfo> &getBoneInfoMap() {
     return m_boneInfoMap;
   }
-  [[nodiscard]] const std::map<Bone::BoneNameHash, BoneInfo> &
-  getBoneInfoMap() const {
+  [[nodiscard]] const std::map<NameHash, BoneInfo> &getBoneInfoMap() const {
     return m_boneInfoMap;
   }
   [[nodiscard]] uint32_t &getBoneCount() { return m_boneCount; }

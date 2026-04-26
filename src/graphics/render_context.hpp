@@ -8,9 +8,3 @@ struct RenderContext {
   Camera &camera;
   double deltaTime;
 };
-
-class IDrawable {
-public:
-  virtual void draw(const RenderContext &ctx) = 0;
-  virtual ~IDrawable() {}
-};

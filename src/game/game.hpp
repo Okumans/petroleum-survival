@@ -2,6 +2,7 @@
 
 #include "graphics/camera.hpp"
 #include "graphics/camera_controller.hpp"
+#include "graphics/renderer.hpp"
 #include "graphics/shadow_map.hpp"
 #include "graphics/skybox.hpp"
 #include "map_manager.hpp"
@@ -59,10 +60,7 @@ private:
   bool m_debugAABB = true;
   GameState m_state = GameState::START_MENU;
 
-  GLuint m_instanceSSBO = 0;
-  GLuint m_boneSSBO = 0;
-  static constexpr size_t MAX_INSTANCES = 10000;
-  static constexpr size_t MAX_BONES = 200;
+  Renderer m_renderer;
 
 public:
   Game();
@@ -103,5 +101,4 @@ private:
   inline void _runCollisionPass();
   inline void _updateEnemies();
   inline void _syncObjectsToTerrain();
-  inline void _drawLoadedObjects(const RenderContext &ctx);
 };

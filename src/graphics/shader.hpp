@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include "utility/name_hash.hpp"
 #include <glad/gl.h>
 #include <glm/glm.hpp>
 #include <string>
@@ -90,7 +90,8 @@ class Shader {
 private:
   unsigned int m_id;
 
-  std::unordered_map<uint32_t, GLint> m_uniformLocationCache;
+  std::unordered_map<NameHash, std::pair<std::string, GLint>>
+      m_uniformLocationCache;
   GLUniformCache m_uniformValueCache;
 
 public:
@@ -113,22 +114,24 @@ public:
 
   void use();
 
-  void setBool(const std::string &name, bool value);
-  void setInt(const std::string &name, int value);
-  void setFloat(const std::string &name, float value);
-  void setVec2(const std::string &name, const glm::vec2 &value);
-  void setVec2(const std::string &name, float x, float y);
-  void setVec3(const std::string &name, const glm::vec3 &value);
-  void setVec3(const std::string &name, float x, float y, float z);
-  void setVec4(const std::string &name, const glm::vec4 &value);
-  void setVec4(const std::string &name, float x, float y, float z, float w);
-  void setMat2(const std::string &name, const glm::mat2 &mat);
-  void setMat3(const std::string &name, const glm::mat3 &mat);
-  void setMat4(const std::string &name, const glm::mat4 &mat);
+  void setBool(NameHash name, bool value);
+  void setInt(NameHash name, int value);
+  void setFloat(NameHash name, float value);
+  void setVec2(NameHash name, const glm::vec2 &value);
+  void setVec2(NameHash name, float x, float y);
+  void setVec3(NameHash name, const glm::vec3 &value);
+  void setVec3(NameHash name, float x, float y, float z);
+  void setVec4(NameHash name, const glm::vec4 &value);
+  void setVec4(NameHash name, float x, float y, float z, float w);
+  void setMat2(NameHash name, const glm::mat2 &mat);
+  void setMat3(NameHash name, const glm::mat3 &mat);
+  void setMat4(NameHash name, const glm::mat4 &mat);
+
+  void define(const std::string name);
 
   [[nodiscard]] GLuint getID() const { return m_id; }
 
 private:
-  GLint _getUniformLocation(std::string_view name);
+  GLint _getUniformLocation(NameHash name);
   static void checkCompileErrors(GLuint shader, std::string type);
 };

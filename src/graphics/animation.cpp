@@ -50,7 +50,7 @@ Bone *Animation::findBone(const std::string &name) {
   return &(*iter);
 }
 
-Bone *Animation::findBone(Bone::BoneNameHash hashed_name) {
+Bone *Animation::findBone(NameHash hashed_name) {
   auto iter = std::ranges::lower_bound(
       m_bones, hashed_name.hash, {},
       [](const Bone &bone) { return bone.getBoneName().hash; });
@@ -65,13 +65,12 @@ Bone *Animation::findBone(Bone::BoneNameHash hashed_name) {
 void Animation::_readMissingBones(const aiAnimation *animation, Model &model) {
   size_t size = animation->mNumChannels;
 
-  std::map<Bone::BoneNameHash, BoneInfo> &bone_info_map =
-      model.getBoneInfoMap();
+  std::map<NameHash, BoneInfo> &bone_info_map = model.getBoneInfoMap();
   uint32_t &bone_count = model.getBoneCount();
 
   for (size_t i = 0; i < size; ++i) {
     auto channel = animation->mChannels[i];
-    Bone::BoneNameHash bone_name(channel->mNodeName.data);
+    NameHash bone_name(channel->mNodeName.data);
 
     if (!bone_info_map.contains(bone_name)) {
       bone_info_map[bone_name].id = bone_count;
@@ -91,7 +90,7 @@ void Animation::_readMissingBones(const aiAnimation *animation, Model &model) {
 void Animation::_readHierarchyData(AssimpNodeData &dest, const aiNode *src) {
   assert(src);
 
-  dest.name = Bone::BoneNameHash(src->mName.data);
+  dest.name = NameHash(src->mName.data);
   dest.transformation = mat4FromAssimp(src->mTransformation);
   dest.childrenCount = src->mNumChildren;
 

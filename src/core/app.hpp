@@ -5,6 +5,10 @@
 
 #include <GLFW/glfw3.h>
 
+#include <functional>
+#include <string>
+#include <vector>
+
 #ifndef SHADER_PATH
 #define SHADER_PATH ASSETS_PATH "/shaders"
 #endif
@@ -12,9 +16,6 @@
 #ifndef ICONS_PATH
 #define ICONS_PATH ASSETS_PATH "/icons"
 #endif
-
-#define UI_VERTEX_SHADER_PATH SHADER_PATH "/ui.vert.glsl"
-#define UI_FRAGMENT_SHADER_PATH SHADER_PATH "/ui.frag.glsl"
 
 struct InputState {
   bool isFirstMouse = false;
@@ -26,10 +27,6 @@ struct AppState {
   InputState inputState;
   bool gameStarted = false;
 };
-
-#include <functional>
-#include <string>
-#include <vector>
 
 struct LoadingTask {
   std::string name;
@@ -76,6 +73,7 @@ private:
   void _handleFramebufferSizeCallback(int width, int height);
 
   void _setupResources();
+  void _setupShaders();
   void _setupUIElements();
   void _updateUIElements(double delta_time);
 };

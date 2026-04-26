@@ -1,4 +1,5 @@
 #include "lighting_manager.hpp"
+#include "graphics/shader_uniforms.hpp"
 #include <format>
 #include <glm/gtc/matrix_transform.hpp>
 #include <string>
@@ -34,13 +35,14 @@ size_t LightingManager::count() { return m_lights.size(); }
 void LightingManager::clear() { m_lights.clear(); }
 
 void LightingManager::apply(Shader &shader) {
-  shader.setInt("u_NumLights", (int)m_lights.size());
+  constexpr auto lighting_uniforms = ShaderUniforms::generateLightUniforms();
+
+  shader.setInt("u_NumLights", static_cast<int>(m_lights.size()));
 
   for (size_t i = 0; i < m_lights.size(); ++i) {
-    std::string base = std::format("u_Lights[{}]", i);
-    shader.setVec3(base + ".position", m_lights[i].position);
-    shader.setVec3(base + ".color", m_lights[i].color);
-    shader.setInt(base + ".type", (int)m_lights[i].type);
+    shader.setVec3(lighting_uniforms[i].positionHash, m_lights[i].position);
+    shader.setVec3(lighting_uniforms[i].colorHash, m_lights[i].color);
+    shader.setInt(lighting_uniforms[i].typeHash, (int)m_lights[i].type);
   }
 }
 
@@ -105,3 +107,5 @@ Light LightingManager::getShadowCaster() {
 
   return Light();
 }
+
+

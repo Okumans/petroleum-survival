@@ -2,7 +2,7 @@
 
 #include "graphics/material.hpp"
 
-#include "graphics/idrawable.hpp"
+#include "graphics/render_context.hpp"
 
 #include <glad/gl.h>
 #include <glm/fwd.hpp>
@@ -22,7 +22,7 @@ struct Vertex {
   float m_weights[MAX_BONE_INFLUENCE];
 };
 
-class Mesh : public IDrawable {
+class Mesh {
 private:
   // mesh data
   std::vector<Vertex> m_vertices;
@@ -54,10 +54,11 @@ public:
   void setOpacity(float opacity) { m_opacity = opacity; }
   void setMaterial(const Material &material) { m_material = material; }
 
-  virtual void draw(const RenderContext &ctx) override;
+  virtual void draw(const RenderContext &ctx);
   void draw(const RenderContext &ctx, const Material &material);
   void drawInstanced(const RenderContext &ctx, uint32_t count);
-  void drawInstanced(const RenderContext &ctx, const Material &material, uint32_t count);
+  void drawInstanced(const RenderContext &ctx, const Material &material,
+                     uint32_t count);
 
 private:
   void _setupMesh();

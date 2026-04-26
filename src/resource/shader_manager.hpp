@@ -5,7 +5,7 @@
 #include "utility/not_initialized.hpp"
 #include <memory>
 
-enum class ShaderType { UI, PBR, SKYBOX, SHADOW, IRRADIANCE, WATER, DEBUG };
+enum class ShaderType { UI, PBR, SKYBOX, SHADOW, IRRADIANCE, DEBUG };
 
 class ShaderManager {
 public:

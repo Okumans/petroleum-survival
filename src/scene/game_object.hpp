@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/idrawable.hpp"
+#include "graphics/render_context.hpp"
 #include "graphics/model.hpp"
 #include "utility/aabb.hpp"
 
@@ -9,7 +9,7 @@
 
 enum class GameObjectType { PLAYER, ENEMY, ITEM };
 
-class GameObject : public IDrawable {
+class GameObject {
 protected:
   std::shared_ptr<Model> m_model;
 
@@ -38,7 +38,7 @@ public:
   virtual ~GameObject() = default;
 
   virtual void update(double delta_time) { (void)delta_time; }
-  virtual void draw(const RenderContext &ctx) override;
+  virtual void draw(const RenderContext &ctx) ;
 
   void requestRemoval() { m_removeRequested = true; }
   [[nodiscard]] bool isRemovalRequested() const { return m_removeRequested; }

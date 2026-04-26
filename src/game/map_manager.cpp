@@ -1,6 +1,7 @@
 #include "map_manager.hpp"
 
 #include "graphics/mesh.hpp"
+#include "graphics/renderer.hpp"
 #include "resource/texture_manager.hpp"
 #include "scene/game_object_manager.hpp"
 
@@ -79,13 +80,13 @@ void MapManager::update(const glm::vec3 &focus_position) {
   _pruneChunks(center_chunk_x, center_chunk_z);
 }
 
-void MapManager::draw(const RenderContext &ctx) {
+void MapManager::submitToRenderer(Renderer& renderer) {
   if (!m_isInitialized) {
     return;
   }
 
   for (auto &[_, chunk] : m_chunks) {
-    chunk.mesh.draw(ctx);
+    renderer.submit(&chunk.mesh, glm::mat4(1.0f));
   }
 }
 

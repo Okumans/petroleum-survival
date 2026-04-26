@@ -1,7 +1,8 @@
 #include "model.hpp"
 #include "assimp/mesh.h"
-#include "graphics/idrawable.hpp"
+#include "graphics/bone.hpp"
 #include "graphics/material.hpp"
+#include "graphics/render_context.hpp"
 #include "graphics/texture.hpp"
 
 #include <assimp/Importer.hpp>
@@ -25,13 +26,6 @@
 
 Model::Model(const char *path, bool flip_vertical) : m_path(path) {
   _loadModel(path, flip_vertical);
-}
-
-Model::Model(Model &&other) noexcept
-    : m_meshes(std::move(other.m_meshes)),
-      m_directory(std::move(other.m_directory)),
-      m_path(std::move(other.m_path)) {
-  other.m_meshes.clear();
 }
 
 void Model::draw(const RenderContext &ctx) {
@@ -364,7 +358,7 @@ void Model::_extractBoneWeightForVertices(std::vector<Vertex> &vertices,
 
   for (size_t bone_index = 0; bone_index < mesh->mNumBones; ++bone_index) {
     std::optional<uint32_t> bone_id;
-    Bone::BoneNameHash bone_name(mesh->mBones[bone_index]->mName.C_Str());
+    NameHash bone_name(mesh->mBones[bone_index]->mName.C_Str());
 
     if (!m_boneInfoMap.contains(bone_name)) {
 

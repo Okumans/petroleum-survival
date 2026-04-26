@@ -61,27 +61,27 @@ int main() {
 
   double last_frame_time = glfwGetTime();
 
-  try {
-    App application(window);
+  // try {
+  App application(window);
 
-    while (!glfwWindowShouldClose(window)) {
-      double current_frame_time = glfwGetTime();
-      double delta_frame_time = current_frame_time - last_frame_time;
-      last_frame_time = current_frame_time;
+  while (!glfwWindowShouldClose(window)) {
+    double current_frame_time = glfwGetTime();
+    double delta_frame_time = current_frame_time - last_frame_time;
+    last_frame_time = current_frame_time;
 
-      process_input(window);
+    process_input(window);
 
-      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      application.render(delta_frame_time);
+    application.render(delta_frame_time);
 
-      glfwSwapBuffers(window);
-      glfwPollEvents();
-    }
-  } catch (const std::exception &e) {
-    puts(e.what());
+    glfwSwapBuffers(window);
+    glfwPollEvents();
   }
+  // } catch (const std::exception &e) {
+  //   puts(e.what());
+  // }
 
   glfwDestroyWindow(window);
   glfwTerminate();
