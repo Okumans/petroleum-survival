@@ -69,7 +69,7 @@ public:
   virtual void update(double delta_time) override {
     _updateModeBySensing();
 
-    if (m_mode == EnemyMode::CHASE) {
+    if (true || m_mode == EnemyMode::CHASE) {
       _updateChaseState();
     } else {
       _updatePatrolState();

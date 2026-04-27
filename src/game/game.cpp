@@ -1,7 +1,6 @@
 #include "game.hpp"
 
 #include "game/map_manager.hpp"
-#include "glm/detail/qualifier.hpp"
 #include "graphics/debug_drawer.hpp"
 #include "graphics/ibl_generator.hpp"
 #include "graphics/render_context.hpp"
@@ -18,7 +17,6 @@
 #include "scene/item.hpp"
 #include "scene/player.hpp"
 #include "scene/projectile.hpp"
-#include "scene/weapon.hpp"
 #include "utility/random.hpp"
 
 #include <glad/gl.h>

@@ -19,6 +19,7 @@ void DamageTextManager::addText(glm::vec3 pos, float damage, bool isCritical) {
                         : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
   dt.maxLifetime = 0.8f;
   dt.lifetime = 0.0f;
+  dt.scale = isCritical ? 0.3f : 0.15f;
   m_texts.push_back(dt);
 }
 

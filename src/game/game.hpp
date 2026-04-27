@@ -61,7 +61,7 @@ private:
   int m_expToNextLevel = 10;
   int m_currentLevel = 1;
 
-  NotInitialized<Player *> m_player;
+  NotInitialized<Player *, "Player"> m_player;
 
   bool m_debugAABB = true;
   GameState m_state = GameState::START_MENU;
