@@ -16,6 +16,8 @@ protected:
 
   std::function<void(const GameEvents::ProjectileSpawnRequestedEvent &)>
       m_spawnProjectile;
+    std::function<void(const GameEvents::EnemyDamageRequestedEvent &)>
+      m_requestEnemyDamage;
 
 public:
   Weapon(float cooldown, float damage)
@@ -26,12 +28,12 @@ public:
 
   void setStats(const StatManager *stats) { m_stats.init(stats); }
 
-  float getDamage() const {
+  virtual float getDamage() const {
     return m_baseDamage *
            m_stats.ensureInitialized()->getMultiplier(StatType::MIGHT);
   }
 
-  float getCooldown() const {
+  virtual float getCooldown() const {
     return m_baseCooldown *
            m_stats.ensureInitialized()->getMultiplier(StatType::COOLDOWN);
   }
@@ -40,6 +42,18 @@ public:
       std::function<void(const GameEvents::ProjectileSpawnRequestedEvent &)>
           spawnProjectile) {
     m_spawnProjectile = spawnProjectile;
+  }
+
+  void setDamageContext(
+      std::function<void(const GameEvents::EnemyDamageRequestedEvent &)>
+          requestEnemyDamage) {
+    m_requestEnemyDamage = requestEnemyDamage;
+  }
+
+  void emitEnemyDamage(const GameEvents::EnemyDamageRequestedEvent &evt) const {
+    if (m_requestEnemyDamage) {
+      m_requestEnemyDamage(evt);
+    }
   }
 
   virtual void update(double delta_time, const glm::vec3 &playerPos,

@@ -19,6 +19,7 @@ public:
     static const GameObjectFactory<Player>& getPlayer();
     static const GameObjectFactory<Exp>& getExp();
     static const GameObjectFactory<CarEnemy>& getCar(ModelName model);
+    static const GameObjectFactory<Projectile>& getProjectile(ModelName model);
     static const GameObjectFactory<Projectile>& getProjectile();
     static const GameObjectFactory<MeleeProjectile>& getMeleeProjectile();
 
@@ -27,6 +28,6 @@ private:
     static std::optional<GameObjectFactory<Player>> s_player;
     static std::optional<GameObjectFactory<Exp>> s_exp;
     static EnumMap<ModelName, std::optional<GameObjectFactory<CarEnemy>>> s_cars;
-    static std::optional<GameObjectFactory<Projectile>> s_projectile;
+    static EnumMap<ModelName, std::optional<GameObjectFactory<Projectile>>> s_projectiles;
     static std::optional<GameObjectFactory<MeleeProjectile>> s_meleeProjectile;
 };

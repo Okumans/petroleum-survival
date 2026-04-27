@@ -23,6 +23,8 @@ enum class ModelName {
   CAR_MONSTER_TRUCK,
   SPHERE,
   CUBE,
+  WATER_BOTTLE,
+  TRAFFIC_CONE,
 };
 
 class ModelManager {

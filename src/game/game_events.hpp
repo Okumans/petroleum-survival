@@ -47,6 +47,16 @@ struct ProjectileSpawnRequestedEvent {
   std::shared_ptr<Projectile> projectile;
 };
 
+struct EnemyDamageRequestedEvent {
+  Enemy *enemy;
+  float amount;
+  bool isCritical;
+  glm::vec3 knockbackDirection;
+  float knockbackStrength;
+  glm::vec3 hitPosition;
+  ParticleEffectType hitEffect;
+};
+
 struct EnemyKilledEvent {
   Enemy *enemy;
   glm::vec3 killerPosition;

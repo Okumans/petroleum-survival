@@ -197,6 +197,14 @@ void App::_setupResources() {
   m_loadingTasks.push_back(
       {"Model: Cube",
        loadModel(ModelName::CUBE, ASSETS_PATH "/objects/cube.obj")});
+  m_loadingTasks.push_back(
+      {"Model: Water Bottle",
+       loadModel(ModelName::WATER_BOTTLE, ASSETS_PATH
+                 "/objects/projectiles/water_bottle/fiji_water_bottle.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Traffic Cone",
+       loadModel(ModelName::TRAFFIC_CONE,
+                 ASSETS_PATH "/objects/traffic_cone/traffic_cone.glb")});
 
   // Animations
   m_loadingTasks.push_back({"Animation: Kasane Teto Idle",
