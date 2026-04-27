@@ -1,6 +1,7 @@
 #include "game.hpp"
 
 #include "game/map_manager.hpp"
+#include "graphics/animation_state.hpp"
 #include "graphics/debug_drawer.hpp"
 #include "graphics/ibl_generator.hpp"
 #include "graphics/render_context.hpp"
@@ -45,8 +46,7 @@ bool isDynamicBlockingObject(const GameObject &object) {
   return object.getObjectType() == GameObjectType::ENEMY;
 }
 
-bool resolveDynamicOverlap(MapManager &map_manager,
-                           GameObject &lhs,
+bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
                            GameObject &rhs) {
   const AABB lhs_box = lhs.getHitboxAABB();
   const AABB rhs_box = rhs.getHitboxAABB();
@@ -121,6 +121,31 @@ Game::Game()
 Game::~Game() {}
 
 void Game::setup() {
+  m_spawner.addWave({
+      .timeStart = 0.0f,
+      .timeEnd = 50.0f,
+      .spawnLogic =
+          [](Game &game, float current_time, float delta_time) {
+            static AnimationState<void> cool_down(0.1f);
+            static uint32_t enemies_spawn = 0;
+
+            cool_down.updateTimer(delta_time);
+
+            if (enemies_spawn >= 50 || !cool_down.isFinished())
+              return;
+
+            glm::vec3 pos = game.m_player.ensureInitialized()->getPosition();
+            glm::vec3 offset = {
+                Random::randFloat(-5.0f, 5.0f),
+                Random::randFloat(-5.0f, 5.0f),
+                Random::randFloat(-5.0f, 5.0f),
+            };
+
+            game.m_spawner.spawnEnemy(pos + offset, 3);
+            cool_down.reset();
+          },
+  });
+
   _initializeManagers();
 
   m_renderer.setup();
@@ -156,10 +181,8 @@ void Game::render(double delta_time) {
     if (!object || object->isRemovalRequested())
       return;
     object->ensureTransformUpdated();
-    m_renderer.submit(&object->getModel(),
-                      object->getModelMatrix(),
-                      object->getAnimator(),
-                      object->getEmissionColor());
+    m_renderer.submit(&object->getModel(), object->getModelMatrix(),
+                      object->getAnimator(), object->getEmissionColor());
   });
 
   m_mapManager.submitToRenderer(m_renderer);
@@ -190,9 +213,7 @@ void Game::render(double delta_time) {
   glCullFace(GL_BACK); // Restore back-face culling
 
   // 2. Main Pass
-  glViewport(0,
-             0,
-             (int)m_camera.getSceneWidth(),
+  glViewport(0, 0, (int)m_camera.getSceneWidth(),
              (int)m_camera.getSceneHeight());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -267,8 +288,7 @@ void Game::render(double delta_time) {
           GameObject *object = m_objects.get(handle);
           if (!object || object->isRemovalRequested())
             return;
-          DebugDrawer::drawAABB(debug_ctx,
-                                object->getHitboxAABB(),
+          DebugDrawer::drawAABB(debug_ctx, object->getHitboxAABB(),
                                 {1.0f, 0.0f, 0.0f});
         });
   }
@@ -312,9 +332,8 @@ void Game::_setupPlayer() {
   m_player.ensureInitialized()->setup();
 
   snapObjectToGround(m_mapManager, *m_player.ensureInitialized());
-  m_mapManager.registerObject(player_handle,
-                              m_player.ensureInitialized()->getPosition(),
-                              false);
+  m_mapManager.registerObject(
+      player_handle, m_player.ensureInitialized()->getPosition(), false);
 
   auto magic_wand = std::make_shared<MagicWand>();
   magic_wand->setContext(
@@ -322,8 +341,7 @@ void Game::_setupPlayer() {
         m_eventBus.emit(evt);
       });
   magic_wand->setTargetingContext(
-      [this](float range,
-             uint32_t k,
+      [this](float range, uint32_t k,
              ProjectileWeapon::EnemyCallback callback) {
         for (auto &ed : getClosestEnemies(range, k)) {
           callback(ed.enemy);
@@ -346,10 +364,8 @@ void Game::_setupEnvironment() {
   m_skybox->setTexture(skybox_tex);
 
   Shader &irradiance_shader = ShaderManager::get(ShaderType::IRRADIANCE);
-  std::shared_ptr<Texture> irradiance_map =
-      IBLGenerator::generateIrradianceMap(*skybox_tex,
-                                          *m_skybox,
-                                          irradiance_shader);
+  std::shared_ptr<Texture> irradiance_map = IBLGenerator::generateIrradianceMap(
+      *skybox_tex, *m_skybox, irradiance_shader);
   TextureManager::manage(TextureName("irradiance_map"),
                          std::move(*irradiance_map));
 
@@ -401,8 +417,7 @@ void Game::update(double delta_time) {
   const float sun_speed = 0.03f;
   const float sun_radius = 1.0f;
   glm::vec3 sun_dir = glm::normalize(
-      glm::vec3(std::cos(current_time * sun_speed) * sun_radius,
-                -1.0f,
+      glm::vec3(std::cos(current_time * sun_speed) * sun_radius, -1.0f,
                 std::sin(current_time * sun_speed) * sun_radius));
 
   Light sun = LightingManager::getShadowCaster();
@@ -482,8 +497,7 @@ void Game::_runCollisionPass() {
 
       m_damageTextManager.addText(m_player.ensureInitialized()->getPosition() +
                                       offset,
-                                  enemy->getBaseDamage(),
-                                  false);
+                                  enemy->getBaseDamage(), false);
 
       m_eventBus.emit(ParticleSpawnRequestedEvent{
           .position = m_player.ensureInitialized()->getPosition() +
@@ -507,18 +521,15 @@ void Game::_runCollisionPass() {
       Enemy *enemy = static_cast<Enemy *>(enemy_obj);
       if (proj->collidesWith(*enemy)) {
         bool wasDead = enemy->isDead();
-        enemy->takeDamage(proj->getDamage(),
-                          false,
-                          glm::normalize(proj->getVelocity()),
-                          2.0f);
+        enemy->takeDamage(proj->getDamage(), false,
+                          glm::normalize(proj->getVelocity()), 2.0f);
 
         glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
                             Random::randFloat(-0.5f, 0.5f),
                             Random::randFloat(-0.5f, 0.5f)};
 
         m_damageTextManager.addText(enemy->getPosition() + offset,
-                                    proj->getDamage(),
-                                    false);
+                                    proj->getDamage(), false);
 
         m_eventBus.emit(ParticleSpawnRequestedEvent{
             .position = enemy->getPosition() + glm::vec3(0.0f, 1.0f, 0.0f),
@@ -600,9 +611,8 @@ void Game::_calculateClosestEnemies(glm::vec3 position) {
 
         Enemy *enemy = static_cast<Enemy *>(object);
 
-        m_closestEnemies.emplace_back(enemy,
-                                      glm::distance2(position,
-                                                     object->getPosition()));
+        m_closestEnemies.emplace_back(
+            enemy, glm::distance2(position, object->getPosition()));
       });
 
   std::ranges::sort(m_closestEnemies, {}, &EnemyDist::dist_sq);

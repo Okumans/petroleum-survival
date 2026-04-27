@@ -1,5 +1,6 @@
 #pragma once
 
+#include "glm/fwd.hpp"
 #include "utility/name_hash.hpp"
 #include <assimp/scene.h>
 #include <cstdint>
@@ -9,7 +10,6 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include <cassert>
-#include <string>
 #include <vector>
 
 struct KeyPosition {
@@ -41,9 +41,11 @@ private:
   NameHash m_name;
   uint32_t m_id;
 
+  mutable uint32_t m_lastPositionIndex = 0;
+  mutable uint32_t m_lastRotationIndex = 0;
+  mutable uint32_t m_lastScaleIndex = 0;
+
 public:
-  [[deprecated("Use more efficient BoneNameHash constructor instead")]] Bone(
-      const std::string &name, uint32_t id, const aiNodeAnim *channel);
   Bone(NameHash name, uint32_t id, const aiNodeAnim *channel);
 
   void update(float animation_time);
@@ -60,7 +62,7 @@ private:
   [[nodiscard]] float _getScaleFactor(float last_timestamp,
                                       float next_timestamp,
                                       float animation_time) const;
-  [[nodiscard]] glm::mat4 _interpolatePosition(float animation_time) const;
-  [[nodiscard]] glm::mat4 _interpolateRotation(float animation_time) const;
-  [[nodiscard]] glm::mat4 _interpolateScaling(float animation_time) const;
+  [[nodiscard]] glm::vec3 _interpolatePosition(float animation_time) const;
+  [[nodiscard]] glm::quat _interpolateRotation(float animation_time) const;
+  [[nodiscard]] glm::vec3 _interpolateScaling(float animation_time) const;
 };
