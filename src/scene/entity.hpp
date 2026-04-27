@@ -36,7 +36,7 @@ public:
          glm::vec3 rotation = glm::vec3(0.0f),
          bool defer_aabb_calculation = false)
       : GameObject(model, pos, scale, rotation, defer_aabb_calculation) {
-    m_damageFlashState.duration.init(0.2f);
+    m_damageFlashState.duration = 0.2f;
   }
 
   virtual ~Entity() = default;

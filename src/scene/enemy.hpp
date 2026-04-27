@@ -35,7 +35,7 @@ public:
   Enemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
         glm::vec3 scale = glm::vec3(1.0f), glm::vec3 rotation = glm::vec3(0.0f))
       : HumaniodEntity<EnemyAnimation>(model, pos, scale, rotation) {
-    m_iFrameState.duration.init(0.0f);
+    m_iFrameState.duration = 0.0f;
   }
 
   [[nodiscard]] GameObjectType getObjectType() const override {
@@ -93,7 +93,7 @@ public:
 
   inline virtual void _setupAnimationDuration() override {
     m_locomotion.setup(0.8f, 0.6f);
-    m_waitingState.duration.init(0.0f);
+    m_waitingState.duration = 0.0f;
   }
 
 private:
@@ -150,9 +150,8 @@ private:
 
   void _enterWaiting() {
     m_patrolState = EnemyPatrolState::WAITING;
-    m_waitingState.duration.ensureInitialized() = Random::randFloat(2.0f, 3.0f);
-    m_waitingState.startAnimation(0.0f,
-                                  m_waitingState.duration.ensureInitialized());
+    m_waitingState.duration = Random::randFloat(2.0f, 3.0f);
+    m_waitingState.startAnimation(0.0f, m_waitingState.duration);
   }
 
   void _enterWander() {

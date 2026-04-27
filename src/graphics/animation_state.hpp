@@ -1,13 +1,11 @@
 #pragma once
 
-#include "utility/not_initialized.hpp"
-
 #include <concepts>
 
 template <typename T, typename Counter = float>
   requires std::integral<Counter> || std::floating_point<Counter>
 struct AnimationState {
-  NotInitialized<Counter, "duration"> duration;
+  Counter duration;
   Counter timer{};
 
   T target{};
@@ -16,7 +14,7 @@ struct AnimationState {
   bool animationStarted = false;
 
   AnimationState() = default;
-  AnimationState(Counter duration) { this->duration.init(duration); }
+  AnimationState(Counter duration) { this->duration = duration; }
 
   Counter updateTimer(Counter delta_time) {
     timer += delta_time;
@@ -36,10 +34,10 @@ struct AnimationState {
   }
 
   [[nodiscard]] Counter getProgress() const noexcept {
-    if (duration.ensureInitialized() <= 0)
+    if (duration <= 0)
       return 1.0f;
 
-    Counter t = timer / duration.ensureInitialized();
+    Counter t = timer / duration;
 
     if (t > 1.0)
       return 1.0;
@@ -54,12 +52,12 @@ struct AnimationState {
 };
 
 template <typename Counter> struct AnimationState<void, Counter> {
-  NotInitialized<Counter, "duration"> duration;
+  Counter duration;
   Counter timer{};
   bool animationStarted = false;
 
   AnimationState() = default;
-  AnimationState(Counter d) { this->duration.init(d); }
+  AnimationState(Counter duration) { this->duration = duration; }
 
   Counter updateTimer(Counter delta_time) {
     timer += delta_time;
@@ -77,7 +75,7 @@ template <typename Counter> struct AnimationState<void, Counter> {
   }
 
   [[nodiscard]] Counter getProgress() const noexcept {
-    Counter d = duration.ensureInitialized();
+    Counter d = duration;
     if (d <= 0)
       return static_cast<Counter>(1.0);
 

@@ -1,6 +1,7 @@
 #include "game.hpp"
 
 #include "game/map_manager.hpp"
+#include "glm/detail/qualifier.hpp"
 #include "graphics/debug_drawer.hpp"
 #include "graphics/ibl_generator.hpp"
 #include "graphics/render_context.hpp"
@@ -18,6 +19,7 @@
 #include "scene/player.hpp"
 #include "scene/projectile.hpp"
 #include "scene/weapon.hpp"
+#include "utility/random.hpp"
 
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -89,6 +91,7 @@ bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
 
   return true;
 }
+} // namespace
 
 GameObjectFactory<::Enemy> createEnemyFactory() {
   return GameObjectFactory<::Enemy>::create_factory([]() {
@@ -98,20 +101,6 @@ GameObjectFactory<::Enemy> createEnemyFactory() {
     return enemy;
   });
 }
-
-GameObjectFactory<Exp> createExpFactory(ModelName modelName) {
-  return GameObjectFactory<Exp>::create_factory([modelName]() {
-    Exp exp(ModelManager::copy(modelName));
-
-    if (modelName == ModelName::EXP_GEM_1)
-      exp.setScale(1.0f);
-    else if (modelName == ModelName::EXP_GEM_2)
-      exp.setScale(50.0f);
-
-    return exp;
-  });
-}
-} // namespace
 
 Game::Game()
     : m_camera(glm::vec3(0.0f, 10.0f, 10.0f)),
@@ -132,11 +121,10 @@ void Game::setup() {
 
   m_renderer.setup();
   m_particleSystem.setup();
+  m_spawner.init(this);
 
   _resetGameplayState();
   _setupPlayer();
-  _spawnInitialEnemies();
-  _spawnInitialExp();
   _setupEnvironment();
   reset();
 }
@@ -173,50 +161,16 @@ void Game::_setupPlayer() {
 
   auto magic_wand = std::make_shared<MagicWand>();
   magic_wand->setContext(
-      [this](glm::vec3 pos, float range) {
-        return getClosestEnemy(pos, range);
-      },
       [this](const GameEvents::ProjectileSpawnRequestedEvent &evt) {
         m_eventBus.emit(evt);
       });
+  magic_wand->setTargetingContext(
+      [this](glm::vec3 pos, float range, uint32_t k) {
+        return getClosestEnemies(pos, range, k);
+      });
 
+  magic_wand->setStats(&m_statManager);
   m_player.ensureInitialized()->addWeapon(magic_wand);
-}
-
-void Game::_spawnInitialEnemies() {
-  GameObjectFactory<::Enemy> enemy_factory = createEnemyFactory();
-
-  for (size_t i = 0; i < 100; ++i) {
-    ::Enemy enemy_clone = enemy_factory.create([this](::Enemy &enemy) {
-      enemy.move({Random::randFloat(-20.0f, 20.0f), 0.0f,
-                  Random::randFloat(-20.0f, 20.0f)});
-      snapObjectToGround(m_mapManager, enemy);
-    });
-
-    auto [enemy, enemy_handle] =
-        m_objects.emplaceWithHandle<::Enemy>(std::move(enemy_clone));
-
-    m_mapManager.registerObject(enemy_handle, enemy.getPosition(), false);
-  }
-}
-
-void Game::_spawnInitialExp() {
-  GameObjectFactory<Exp> gem1_factory = createExpFactory(ModelName::EXP_GEM_1);
-  GameObjectFactory<Exp> gem2_factory = createExpFactory(ModelName::EXP_GEM_2);
-
-  for (size_t i = 0; i < 4; ++i) {
-    auto &factory = (i % 2 == 0) ? gem1_factory : gem2_factory;
-    Exp exp_clone = factory.create([](Exp &exp) {
-      exp.translate({Random::randFloat(-10.0f, 20.0f),
-                     10.0f, // Start high
-                     Random::randFloat(-10.0f, 20.0f)});
-      // Let the update loop handle falling
-    });
-
-    auto [exp, exp_handle] = m_objects.emplaceWithHandle<Exp>(exp_clone);
-
-    m_mapManager.registerObject(exp_handle, exp.getPosition(), true);
-  }
 }
 
 void Game::_setupEnvironment() {
@@ -259,10 +213,17 @@ void Game::reset() {
 void Game::startGame() {
   if (m_state == GameState::START_MENU) {
     m_state = GameState::PLAYING;
+    m_gameTime = 0.0f;
   }
 }
 
 void Game::update(double delta_time) {
+  if (m_state == GameState::PLAYING) {
+    m_gameTime += static_cast<float>(delta_time);
+    m_spawner.update(m_gameTime, static_cast<float>(delta_time));
+  }
+
+  m_damageTextManager.update(static_cast<float>(delta_time));
 
   // --- PBR DEBUG: Rotate Sun ---
   static float current_time = 0.0f;
@@ -482,10 +443,19 @@ void Game::_runCollisionPass() {
     ::Enemy *enemy = static_cast<::Enemy *>(enemy_obj);
     if (enemy->collidesWith(*m_player.ensureInitialized())) {
       m_player.ensureInitialized()->takeDamage(enemy->getBaseDamage(), false);
+
+      glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
+                          Random::randFloat(-0.5f, 0.5f),
+                          Random::randFloat(-0.5f, 0.5f)};
+
+      m_damageTextManager.addText(m_player.ensureInitialized()->getPosition() +
+                                      offset,
+                                  enemy->getBaseDamage(), false);
+
       m_eventBus.emit(ParticleSpawnRequestedEvent{
-          .position = m_player.ensureInitialized()->getPosition() + glm::vec3(0.0f, 1.0f, 0.0f),
-          .effectId = ParticleEffectType::PLAYER_BLOOD
-      });
+          .position = m_player.ensureInitialized()->getPosition() +
+                      glm::vec3(0.0f, 1.0f, 0.0f),
+          .effectId = ParticleEffectType::PLAYER_BLOOD});
     }
   }
 
@@ -506,10 +476,17 @@ void Game::_runCollisionPass() {
         bool wasDead = enemy->isDead();
         enemy->takeDamage(proj->getDamage(), false,
                           glm::normalize(proj->getVelocity()), 2.0f);
+
+        glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
+                            Random::randFloat(-0.5f, 0.5f),
+                            Random::randFloat(-0.5f, 0.5f)};
+
+        m_damageTextManager.addText(enemy->getPosition() + offset,
+                                    proj->getDamage(), false);
+
         m_eventBus.emit(ParticleSpawnRequestedEvent{
             .position = enemy->getPosition() + glm::vec3(0.0f, 1.0f, 0.0f),
-            .effectId = ParticleEffectType::MAGIC_HIT
-        });
+            .effectId = ParticleEffectType::MAGIC_HIT});
 
         if (!wasDead && enemy->isDead()) {
           m_eventBus.emit(EnemyKilledEvent{
@@ -574,9 +551,18 @@ void Game::_runCollisionPass() {
   }
 }
 
-::Enemy *Game::getClosestEnemy(glm::vec3 position, float radius) {
-  ::Enemy *closest = nullptr;
-  float min_dist_sq = radius * radius;
+std::vector<::Enemy *> Game::getClosestEnemies(glm::vec3 position, float radius,
+                                               uint32_t top_k) {
+  if (top_k == 0)
+    return {};
+
+  struct EnemyDist {
+    ::Enemy *enemy;
+    float dist_sq;
+  };
+  std::vector<EnemyDist> candidates;
+  float radius_sq = radius * radius;
+
   for (GameObject *enemy_obj :
        m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
     if (!enemy_obj || enemy_obj->isRemovalRequested())
@@ -586,12 +572,24 @@ void Game::_runCollisionPass() {
       continue;
 
     float dist_sq = glm::distance2(position, enemy->getPosition());
-    if (dist_sq < min_dist_sq) {
-      min_dist_sq = dist_sq;
-      closest = enemy;
+    if (dist_sq < radius_sq) {
+      candidates.push_back({enemy, dist_sq});
     }
   }
-  return closest;
+
+  std::sort(candidates.begin(), candidates.end(),
+            [](const EnemyDist &a, const EnemyDist &b) {
+              return a.dist_sq < b.dist_sq;
+            });
+
+  std::vector<::Enemy *> result;
+  uint32_t count = std::min(static_cast<uint32_t>(candidates.size()), top_k);
+  result.reserve(count);
+  for (uint32_t i = 0; i < count; ++i) {
+    result.push_back(candidates[i].enemy);
+  }
+
+  return result;
 }
 
 void Game::_updateEnemies() {
@@ -649,8 +647,20 @@ void Game::_registerGameplayEventHandlers() {
       });
 
   m_eventBus.subscribe<ExpCollectedEvent>([this](const ExpCollectedEvent &evt) {
-    // TODO: Actually add to XP pool instead of score
     m_score += static_cast<int>(evt.amount);
+    m_currentExp += static_cast<int>(evt.amount);
+
+    if (m_currentExp >= m_expToNextLevel) {
+      m_currentExp -= m_expToNextLevel;
+      m_expToNextLevel =
+          static_cast<int>(m_expToNextLevel * 1.5f); // Scale requirement
+      m_currentLevel++;
+      m_state = GameState::LEVEL_UP;
+
+      // TODO: Generate 3 random upgrades and present them to the user
+      // For now, it will just pause the game. We will add UI later.
+    }
+
     m_eventBus.emit(DespawnRequestedEvent{.object = evt.exp});
 
     if (evt.exp) {

@@ -21,8 +21,8 @@ public:
     m_positionDurationPerUnit = positionDuration;
     m_rotateDurationPer180Deg = rotateDuration;
 
-    positionState.duration.init(positionDuration);
-    rotateState.duration.init(rotateDuration);
+    positionState.duration = positionDuration;
+    rotateState.duration = rotateDuration;
 
     reset();
   }
@@ -47,8 +47,8 @@ public:
         std::max(m_minRotateDuration,
                  (abs_yaw_delta / 180.0f) * m_rotateDurationPer180Deg);
 
-    positionState.duration.ensureInitialized() = position_duration;
-    rotateState.duration.ensureInitialized() = rotate_duration;
+    positionState.duration = position_duration;
+    rotateState.duration = rotate_duration;
 
     positionState.startAnimation(currentPosition, new_target_pos);
     rotateState.startAnimation(currentRotation.y, target_yaw);

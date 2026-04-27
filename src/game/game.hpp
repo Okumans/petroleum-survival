@@ -1,18 +1,20 @@
 #pragma once
 
+#include "game/game_events.hpp"
+#include "game/stat_manager.hpp"
+#include "game/vfx_handler.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/camera_controller.hpp"
+#include "graphics/particle_system.hpp"
 #include "graphics/renderer.hpp"
 #include "graphics/shadow_map.hpp"
 #include "graphics/skybox.hpp"
-#include "game/game_events.hpp"
 #include "map_manager.hpp"
+#include "scene/exp.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
-#include "scene/exp.hpp"
 #include "scene/player.hpp"
-#include "graphics/particle_system.hpp"
-#include "game/vfx_handler.hpp"
+#include "ui/damage_text_manager.hpp"
 #include "utility/event_bus.hpp"
 #include "utility/not_initialized.hpp"
 
@@ -30,7 +32,9 @@
 #define ICONS_PATH ASSETS_PATH "/icons"
 #endif
 
-enum class GameState { LOADING, START_MENU, PLAYING, GAME_OVER };
+#include "game/enemy_spawner.hpp"
+
+enum class GameState { LOADING, START_MENU, PLAYING, LEVEL_UP, GAME_OVER };
 
 class Game {
 private:
@@ -46,8 +50,16 @@ private:
 
   ParticleSystem m_particleSystem;
   VFXHandler m_vfxHandler;
+  EnemySpawner m_spawner;
+  StatManager m_statManager;
+  DamageTextManager m_damageTextManager;
+
+  float m_gameTime = 0.0f;
 
   int m_score = 0;
+  int m_currentExp = 0;
+  int m_expToNextLevel = 10;
+  int m_currentLevel = 1;
 
   NotInitialized<Player *> m_player;
 
@@ -60,6 +72,24 @@ public:
   Game();
   ~Game();
 
+  GameObjectManager &getObjects() { return m_objects; }
+  MapManager &getMapManager() { return m_mapManager; }
+  Player *getPlayer() {
+    return m_player.isInitialized() ? m_player.ensureInitialized() : nullptr;
+  }
+  StatManager &getStats() { return m_statManager; }
+  DamageTextManager &getDamageTextManager() { return m_damageTextManager; }
+  const Camera &getCamera() const { return m_camera; }
+
+  int getCurrentExp() const { return m_currentExp; }
+  int getExpToNextLevel() const { return m_expToNextLevel; }
+  int getCurrentLevel() const { return m_currentLevel; }
+
+  void resumePlaying() {
+    if (m_state == GameState::LEVEL_UP)
+      m_state = GameState::PLAYING;
+  }
+
   void update(double delta_time);
   void render(double delta_time);
 
@@ -69,7 +99,8 @@ public:
   void startGame();
 
   void movePlayer(glm::vec3 vec);
-  ::Enemy* getClosestEnemy(glm::vec3 position, float radius);
+  std::vector<::Enemy *> getClosestEnemies(glm::vec3 position, float radius,
+                                           uint32_t top_k);
 
   void setDebugAABB(bool state) { m_debugAABB = state; }
 
