@@ -10,6 +10,7 @@
 #include "graphics/shadow_map.hpp"
 #include "graphics/skybox.hpp"
 #include "map_manager.hpp"
+#include "scene/enemy/enemy.hpp"
 #include "scene/exp.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
@@ -99,7 +100,7 @@ public:
   void startGame();
 
   void movePlayer(glm::vec3 vec);
-  std::vector<::Enemy *> getClosestEnemies(glm::vec3 position, float radius,
+  std::vector<Enemy *> getClosestEnemies(glm::vec3 position, float radius,
                                            uint32_t top_k);
 
   void setDebugAABB(bool state) { m_debugAABB = state; }

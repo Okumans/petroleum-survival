@@ -1,13 +1,15 @@
 #include "game/enemy_spawner.hpp"
 #include "game/game.hpp"
-#include "scene/enemy.hpp"
+#include "scene/enemy/enemy.hpp"
 #include "scene/game_object_factory.hpp"
 #include "utility/random.hpp"
 
 // We need access to createEnemyFactory, which is in game.cpp. 
 // We can move it to game.hpp or just re-implement/call a Game method.
 // For now, let's declare it as extern if it's not static.
-extern GameObjectFactory<::Enemy> createEnemyFactory();
+#include "scene/enemy/humanoid_enemy.hpp"
+
+extern GameObjectFactory<HumanoidEnemy> createEnemyFactory();
 
 void EnemySpawner::init(Game* game) {
   m_game = game;
@@ -48,15 +50,15 @@ void EnemySpawner::update(float currentTime, float delta_time) {
 }
 
 void EnemySpawner::spawnEnemy(glm::vec3 position, float healthMultiplier) {
-  static GameObjectFactory<::Enemy> factory = createEnemyFactory();
+  static GameObjectFactory<HumanoidEnemy> factory = createEnemyFactory();
   
-  ::Enemy enemy_clone = factory.create([&](::Enemy &enemy) {
+  HumanoidEnemy enemy_clone = factory.create([&](HumanoidEnemy &enemy) {
     enemy.move(position);
     // TODO: apply health multiplier if enemy supports it
     // snapObjectToGround logic is handled in game.cpp or we can do it later
   });
 
-  auto [enemy, enemy_handle] = m_game->getObjects().emplaceWithHandle<::Enemy>(std::move(enemy_clone));
+  auto [enemy, enemy_handle] = m_game->getObjects().emplaceWithHandle<HumanoidEnemy>(std::move(enemy_clone));
   m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(), false);
 }
 

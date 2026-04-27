@@ -13,7 +13,8 @@ enum class ModelName {
   COIN,
   EXP_GEM_1,
   EXP_GEM_2,
-  SPHERE
+  SPHERE,
+  CUBE
 };
 
 class ModelManager {

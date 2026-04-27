@@ -1,10 +1,11 @@
 #pragma once
 
 #include "resource/model_manager.hpp"
-#include "scene/enemy.hpp"
+#include "scene/enemy/enemy.hpp"
 #include "scene/projectile.hpp"
 #include "scene/weapon/projectile_weapon.hpp"
 #include "utility/random.hpp"
+#include <memory>
 #include <vector>
 
 class MagicWand : public ProjectileWeapon {
@@ -27,7 +28,8 @@ public:
     m_findClosestEnemies = findClosestEnemies;
   }
 
-  bool fire(const glm::vec3 &playerPos) override {
+  bool fire(const glm::vec3 &playerPos,
+            const glm::vec3 &playerForward) override {
     if (!m_findClosestEnemies || !m_spawnProjectile)
       return false;
 
@@ -58,11 +60,13 @@ public:
     model->setEmissionColor(glm::vec3(2.0f, 20.0f, 40.0f) *
                             0.5f); // Bright blue-ish glow
 
-    Projectile proj(model, spawnPos, velocity, getDamage(),
-                    m_projectileLifetime, [](Projectile &p, double dt) {
-                      p.translate(p.getVelocity() * static_cast<float>(dt));
-                    });
-    proj.setScale(glm::vec3(0.2f));
+    std::shared_ptr<Projectile> proj = std::make_shared<Projectile>(
+        model, spawnPos, velocity, getDamage(), m_projectileLifetime,
+        [](Projectile &p, double dt) {
+          p.translate(p.getVelocity() * static_cast<float>(dt));
+        });
+
+    proj->setScale(glm::vec3(0.2f));
 
     m_spawnProjectile(
         GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});

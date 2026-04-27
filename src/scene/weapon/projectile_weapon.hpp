@@ -20,13 +20,13 @@ public:
                m_stats.ensureInitialized()->getMultiplier(StatType::AMOUNT));
   }
 
-  virtual void update(double delta_time, const glm::vec3 &playerPos) override {
+  virtual void update(double delta_time, const glm::vec3 &playerPos, const glm::vec3 &playerForward) override {
     m_coolDownState.updateTimer(static_cast<float>(delta_time));
     m_subCooldownState.updateTimer(static_cast<float>(delta_time));
 
     if (m_coolDownState.isFinished()) {
       if (m_subCooldownState.isFinished() && m_amountShoot < getAmount()) {
-        if (fire(playerPos)) {
+        if (fire(playerPos, playerForward)) {
           m_subCooldownState.reset();
           m_amountShoot++;
         }

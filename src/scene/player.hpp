@@ -3,7 +3,7 @@
 #include "glm/fwd.hpp"
 #include "resource/animation_manager.hpp"
 #include "scene/humanoid_entity.hpp"
-#include "scene/weapon.hpp"
+#include "scene/weapon/weapon.hpp"
 #include "utility/enum_map.hpp"
 #include "utility/not_initialized.hpp"
 #include <cassert>
@@ -12,7 +12,7 @@
 
 enum class PlayerAnimation { IDLE, WALKING, RUNNING };
 
-class Player : public HumaniodEntity<PlayerAnimation> {
+class Player : public HumaniodEntity<Entity, PlayerAnimation> {
 private:
   std::vector<std::shared_ptr<Weapon>> m_weapons;
 
@@ -20,7 +20,7 @@ public:
   Player(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
          glm::vec3 scale = glm::vec3(1.0f),
          glm::vec3 rotation = glm::vec3(0.0f))
-      : HumaniodEntity<PlayerAnimation>(model, pos, scale, rotation) {
+      : HumaniodEntity<Entity, PlayerAnimation>(model, pos, scale, rotation) {
     m_iFrameState.duration = 0.2f;
   }
 
@@ -50,11 +50,11 @@ public:
                         .get_checked(PlayerAnimation::IDLE)
                         .get());
 
-    HumaniodEntity<PlayerAnimation>::_setupAnimationDuration();
+    HumaniodEntity::_setupAnimationDuration();
   }
 
   void moveWithAnimation(glm::vec3 vec) override {
-    HumaniodEntity<PlayerAnimation>::moveWithAnimation(vec);
+    HumaniodEntity::moveWithAnimation(vec);
   }
 
   void update(double delta_time) override {
@@ -64,7 +64,12 @@ public:
       AABB box = getHitboxAABB();
       glm::vec3 spawnPos =
           m_position + glm::vec3(0.0f, (box.max.y - box.min.y) * 0.5f, 0.0f);
-      w->update(delta_time, spawnPos);
+
+      // Calculate forward vector based on Y rotation (assuming Y is up)
+      float rad = glm::radians(m_rotation.y);
+      glm::vec3 forward = glm::vec3(sin(rad), 0.0f, cos(rad));
+
+      w->update(delta_time, spawnPos, forward);
     }
 
     _updateRotateAnimationState(delta_time);

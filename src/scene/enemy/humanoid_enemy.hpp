@@ -5,6 +5,7 @@
 #include "graphics/animation_state.hpp"
 #include "resource/animation_manager.hpp"
 #include "scene/humanoid_entity.hpp"
+#include "scene/enemy/enemy.hpp"
 #include "utility/enum_map.hpp"
 #include "utility/not_initialized.hpp"
 #include "utility/random.hpp"
@@ -16,7 +17,7 @@ enum class EnemyAnimation { IDLE, WALKING };
 enum class EnemyMode { PATROL, CHASE };
 enum class EnemyPatrolState { WAITING, WANDERING };
 
-class Enemy : public HumaniodEntity<EnemyAnimation> {
+class HumanoidEnemy : public HumaniodEntity<Enemy, EnemyAnimation> {
 private:
   AnimationState<float> m_waitingState;
 
@@ -29,20 +30,15 @@ private:
   float m_aggroRange = 5.0f;
   float m_deaggroRange = 8.25f;
   float m_wanderRange = 3.0f;
-  float m_chaseStep = 0.8f;
 
 public:
-  Enemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
-        glm::vec3 scale = glm::vec3(1.0f), glm::vec3 rotation = glm::vec3(0.0f))
-      : HumaniodEntity<EnemyAnimation>(model, pos, scale, rotation) {
+  HumanoidEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
+                glm::vec3 scale = glm::vec3(1.0f), glm::vec3 rotation = glm::vec3(0.0f))
+      : HumaniodEntity<Enemy, EnemyAnimation>(model, pos, scale, rotation) {
     m_iFrameState.duration = 0.0f;
   }
 
-  [[nodiscard]] GameObjectType getObjectType() const override {
-    return GameObjectType::ENEMY;
-  }
-
-  void setPlayerPosition(const glm::vec3 &player_position) {
+  void setPlayerPosition(const glm::vec3 &player_position) override {
     m_playerPosition = player_position;
     m_hasPlayerPosition = true;
   }
@@ -69,14 +65,14 @@ public:
   virtual void update(double delta_time) override {
     _updateModeBySensing();
 
-    if (true || m_mode == EnemyMode::CHASE) {
+    if (m_mode == EnemyMode::CHASE) {
       _updateChaseState();
     } else {
       _updatePatrolState();
     }
 
     _updateWaitingAnimationState(delta_time);
-    HumaniodEntity<EnemyAnimation>::update(delta_time);
+    HumaniodEntity<Enemy, EnemyAnimation>::update(delta_time);
   }
 
   virtual void _updateWaitingAnimationState(double delta_time) {
@@ -143,7 +139,7 @@ private:
     }
 
     glm::vec3 chase_step =
-        glm::normalize(to_player) * std::min(distance, m_chaseStep);
+        glm::normalize(to_player) * std::min(distance, m_baseSpeed);
 
     moveWithAnimation(chase_step);
   }

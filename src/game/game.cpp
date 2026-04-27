@@ -10,13 +10,16 @@
 #include "resource/model_manager.hpp"
 #include "resource/shader_manager.hpp"
 #include "resource/texture_manager.hpp"
-#include "scene/enemy.hpp"
+#include "scene/enemy/enemy.hpp"
+#include "scene/enemy/humanoid_enemy.hpp"
 #include "scene/game_object.hpp"
 #include "scene/game_object_factory.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
 #include "scene/player.hpp"
 #include "scene/projectile.hpp"
+#include "scene/weapon/magic_wand.hpp"
+#include "scene/weapons/wood_block.hpp"
 #include "utility/random.hpp"
 
 #include <glad/gl.h>
@@ -91,9 +94,9 @@ bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
 }
 } // namespace
 
-GameObjectFactory<::Enemy> createEnemyFactory() {
-  return GameObjectFactory<::Enemy>::create_factory([]() {
-    ::Enemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
+GameObjectFactory<HumanoidEnemy> createEnemyFactory() {
+  return GameObjectFactory<HumanoidEnemy>::create_factory([]() {
+    HumanoidEnemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
     enemy.setScale(60.0f);
     enemy.setup();
     return enemy;
@@ -169,6 +172,11 @@ void Game::_setupPlayer() {
 
   magic_wand->setStats(&m_statManager);
   m_player.ensureInitialized()->addWeapon(magic_wand);
+
+  auto wood_block = std::make_shared<SolidWoodBlock>();
+  wood_block->setStats(&m_statManager);
+  wood_block->setContext([this](const auto &evt) { m_eventBus.emit(evt); });
+  m_player.ensureInitialized()->addWeapon(wood_block);
 }
 
 void Game::_setupEnvironment() {
@@ -438,7 +446,7 @@ void Game::_runCollisionPass() {
     if (!enemy_obj || enemy_obj->isRemovalRequested())
       continue;
 
-    ::Enemy *enemy = static_cast<::Enemy *>(enemy_obj);
+    Enemy *enemy = static_cast<Enemy *>(enemy_obj);
     if (enemy->collidesWith(*m_player.ensureInitialized())) {
       m_player.ensureInitialized()->takeDamage(enemy->getBaseDamage(), false);
 
@@ -469,7 +477,7 @@ void Game::_runCollisionPass() {
       if (!enemy_obj || enemy_obj->isRemovalRequested())
         continue;
 
-      ::Enemy *enemy = static_cast<::Enemy *>(enemy_obj);
+      Enemy *enemy = static_cast<Enemy *>(enemy_obj);
       if (proj->collidesWith(*enemy)) {
         bool wasDead = enemy->isDead();
         enemy->takeDamage(proj->getDamage(), false,
@@ -549,13 +557,13 @@ void Game::_runCollisionPass() {
   }
 }
 
-std::vector<::Enemy *> Game::getClosestEnemies(glm::vec3 position, float radius,
-                                               uint32_t top_k) {
+std::vector<Enemy *> Game::getClosestEnemies(glm::vec3 position, float radius,
+                                             uint32_t top_k) {
   if (top_k == 0)
     return {};
 
   struct EnemyDist {
-    ::Enemy *enemy;
+    Enemy *enemy;
     float dist_sq;
   };
   std::vector<EnemyDist> candidates;
@@ -565,7 +573,7 @@ std::vector<::Enemy *> Game::getClosestEnemies(glm::vec3 position, float radius,
        m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
     if (!enemy_obj || enemy_obj->isRemovalRequested())
       continue;
-    ::Enemy *enemy = static_cast<::Enemy *>(enemy_obj);
+    Enemy *enemy = static_cast<Enemy *>(enemy_obj);
     if (enemy->isDead())
       continue;
 
@@ -580,7 +588,7 @@ std::vector<::Enemy *> Game::getClosestEnemies(glm::vec3 position, float radius,
               return a.dist_sq < b.dist_sq;
             });
 
-  std::vector<::Enemy *> result;
+  std::vector<Enemy *> result;
   uint32_t count = std::min(static_cast<uint32_t>(candidates.size()), top_k);
   result.reserve(count);
   for (uint32_t i = 0; i < count; ++i) {
@@ -597,7 +605,7 @@ void Game::_updateEnemies() {
        m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
     assert(enemy);
 
-    static_cast<::Enemy *>(enemy)->setPlayerPosition(player_position);
+    static_cast<Enemy *>(enemy)->setPlayerPosition(player_position);
   }
 }
 
@@ -679,7 +687,7 @@ void Game::_registerGameplayEventHandlers() {
   m_eventBus.subscribe<ProjectileSpawnRequestedEvent>(
       [this](const ProjectileSpawnRequestedEvent &evt) {
         auto [object, handle] =
-            m_objects.emplaceWithHandle<Projectile>(evt.projectile);
+            m_objects.emplaceWithHandle<Projectile>(*evt.projectile);
         m_mapManager.registerObject(handle, object.getPosition(), false);
       });
 

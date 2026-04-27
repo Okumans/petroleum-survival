@@ -1,8 +1,10 @@
 #pragma once
 
-#include "resource/model_manager.hpp"
-#include <functional>
+#include "scene/item.hpp"
 #include <glm/glm.hpp>
+#include <memory>
+
+class Enemy;
 
 class Player;
 class Item;
@@ -42,11 +44,11 @@ struct ParticleSpawnRequestedEvent {
   ParticleEffectType effectId;
 };
 struct ProjectileSpawnRequestedEvent {
-  Projectile projectile;
+  std::shared_ptr<Projectile> projectile;
 };
 
 struct EnemyKilledEvent {
-  ::Enemy *enemy;
+  Enemy *enemy;
   glm::vec3 killerPosition;
 };
 

@@ -13,12 +13,12 @@
 #include <memory>
 #include <type_traits>
 
-template <typename AnimationTypes>
-  requires std::is_enum_v<AnimationTypes> && requires {
+template <typename BaseClass, typename AnimationTypes>
+  requires std::is_base_of_v<Entity, BaseClass> && std::is_enum_v<AnimationTypes> && requires {
     AnimationTypes::IDLE;
     AnimationTypes::WALKING;
   }
-class HumaniodEntity : public Entity {
+class HumaniodEntity : public BaseClass {
 protected:
   SettableNotInitialized<
       EnumMap<AnimationTypes, std::shared_ptr<Animation>>, "m_animations",
@@ -34,39 +34,39 @@ public:
                  glm::vec3 scale = glm::vec3(1.0f),
                  glm::vec3 rotation = glm::vec3(0.0f),
                  bool defer_aabb_calculation = false)
-      : Entity(model, pos, scale, rotation, defer_aabb_calculation) {}
+      : BaseClass(model, pos, scale, rotation, defer_aabb_calculation) {}
 
   virtual void setup() = 0;
   virtual void moveToWithAnimation(glm::vec3 target) {
-    moveWithAnimation(target - m_position);
+    moveWithAnimation(target - this->m_position);
   }
-  virtual void moveTo(glm::vec3 target) { move(target - m_position); }
+  virtual void moveTo(glm::vec3 target) { move(target - this->m_position); }
   virtual void moveWithAnimation(glm::vec3 vec) {
     if (glm::length(vec) < 0.001f)
       return;
 
     _setAnimation(AnimationTypes::WALKING);
 
-    m_locomotion.startMove(m_position, m_rotation, vec);
+    m_locomotion.startMove(this->m_position, this->m_rotation, vec);
   }
 
   virtual void move(glm::vec3 vec) {
     m_locomotion.reset();
 
-    translate(vec);
+    this->translate(vec);
   }
 
   virtual void takeDamage(float amount, bool isCritical,
                           glm::vec3 knockbackDir = glm::vec3(0.0f),
                           float knockbackForce = 0.0f) override {
     // Call base takeDamage but prevent it from translating automatically
-    Entity::takeDamage(amount, isCritical, glm::vec3(0.0f), 0.0f);
+    BaseClass::takeDamage(amount, isCritical, glm::vec3(0.0f), 0.0f);
 
-    if (m_isDead || m_removeRequested)
+    if (this->m_isDead || this->m_removeRequested)
       return;
 
-    if (knockbackForce > 0.0f && m_knockbackResist < 1.0f) {
-      float actualKnockback = knockbackForce * (1.0f - m_knockbackResist);
+    if (knockbackForce > 0.0f && this->m_knockbackResist < 1.0f) {
+      float actualKnockback = knockbackForce * (1.0f - this->m_knockbackResist);
 
       // Interrupt current movement to prevent setPosition overwriting knockback
       m_locomotion.reset();
@@ -77,14 +77,14 @@ public:
   }
 
   virtual void update(double delta_time) override {
-    Entity::update(delta_time);
+    BaseClass::update(delta_time);
 
     _updateRotateAnimationState(delta_time);
     _updatePositionAnimationState(delta_time);
 
     // Apply knockback with deceleration (lerp)
     if (glm::length(m_knockbackVelocity) > 0.01f) {
-      translate(m_knockbackVelocity * static_cast<float>(delta_time));
+      this->translate(m_knockbackVelocity * static_cast<float>(delta_time));
 
       // Decelerate: higher velocity at start, slower at stop
       m_knockbackVelocity =
@@ -131,11 +131,11 @@ protected:
     float current_yaw = lerpAngle(m_locomotion.rotateState.start,
                                   m_locomotion.rotateState.target, t);
 
-    setRotation({0.0f, current_yaw, 0.0f});
+    this->setRotation({0.0f, current_yaw, 0.0f});
 
     if (t >= 1.0f) {
       m_locomotion.rotateState.animationStarted = false;
-      m_rotation.y = std::fmod(m_rotation.y, 360.0f);
+      this->m_rotation.y = std::fmod(this->m_rotation.y, 360.0f);
     }
   }
 
@@ -152,7 +152,7 @@ protected:
     glm::vec3 current_pos = glm::mix(m_locomotion.positionState.start,
                                      m_locomotion.positionState.target, t);
 
-    setPosition(current_pos);
+    this->setPosition(current_pos);
   }
 
   virtual void _updateAnimation(double delta_time) {

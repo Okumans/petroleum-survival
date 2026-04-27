@@ -42,11 +42,12 @@ public:
     m_spawnProjectile = spawnProjectile;
   }
 
-  virtual void update(double delta_time, const glm::vec3 &playerPos) {
+  virtual void update(double delta_time, const glm::vec3 &playerPos,
+                      const glm::vec3 &playerForward) {
     m_coolDownState.updateTimer(static_cast<float>(delta_time));
 
     if (m_coolDownState.isFinished()) {
-      if (fire(playerPos)) {
+      if (fire(playerPos, playerForward)) {
         m_coolDownState.reset();
         m_coolDownState.duration = getCooldown();
       }
@@ -54,5 +55,6 @@ public:
   }
 
   // Returns true if successfully fired
-  virtual bool fire(const glm::vec3 &playerPos) = 0;
+  virtual bool fire(const glm::vec3 &playerPos,
+                    const glm::vec3 &playerForward) = 0;
 };

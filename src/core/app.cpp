@@ -54,7 +54,8 @@ void App::render(double delta_time) {
 
   if (m_game.getState() != GameState::LOADING) {
     m_game.render(delta_time);
-    m_game.getDamageTextManager().render(m_game.getCamera(), m_appState.windowWidth, m_appState.windowHeight);
+    m_game.getDamageTextManager().render(
+        m_game.getCamera(), m_appState.windowWidth, m_appState.windowHeight);
   } else {
     // Clear screen for loading
     glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
@@ -148,6 +149,9 @@ void App::_setupResources() {
   m_loadingTasks.push_back(
       {"Model: Sphere",
        loadModel(ModelName::SPHERE, ASSETS_PATH "/objects/sphere.obj")});
+  m_loadingTasks.push_back(
+      {"Model: Cube",
+       loadModel(ModelName::CUBE, ASSETS_PATH "/objects/cube.obj")});
 
   // Animations
   m_loadingTasks.push_back({"Animation: Kasane Teto Idle",
@@ -287,18 +291,28 @@ void App::_setupUIElements() {
                              0.15f);
 
   // EXP Bar
-  m_uiManager.addStaticElement("exp_bg", {0.0f, 0.0f, 100.0f, 1.0f}, {0.1f, 0.1f, 0.1f, 1.0f});
-  m_uiManager.addStaticElement("exp_fill", {0.0f, 0.0f, 0.0f, 1.0f}, {0.2f, 0.5f, 1.0f, 1.0f});
-  m_uiManager.addTextElement("level_text", {0.0f, 1.5f, 0.0f, 0.0f}, "LV 1", m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.1f);
+  m_uiManager.addStaticElement("exp_bg", {0.0f, 0.0f, 100.0f, 1.0f},
+                               {0.1f, 0.1f, 0.1f, 1.0f});
+  m_uiManager.addStaticElement("exp_fill", {0.0f, 0.0f, 0.0f, 1.0f},
+                               {0.2f, 0.5f, 1.0f, 1.0f});
+  m_uiManager.addTextElement("level_text", {0.0f, 1.5f, 0.0f, 0.0f}, "LV 1",
+                             m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.1f);
 
   // Level Up Overlay
-  m_uiManager.addStaticElement("level_up_bg", {0.0f, 5.0f, 40.0f, 30.0f}, {0.1f, 0.1f, 0.1f, 0.9f});
-  m_uiManager.addTextElement("level_up_title", {0.0f, 7.0f, 0.0f, 0.0f}, "LEVEL UP!", m_font, {1.0f, 0.8f, 0.0f, 1.0f}, 0.2f);
-  m_uiManager.addTextElement("level_up_hint", {0.0f, 15.0f, 0.0f, 0.0f}, "Upgrades coming soon...", m_font, {0.7f, 0.7f, 0.7f, 1.0f}, 0.15f);
-  m_uiManager.addInteractiveElement("level_up_btn", {0.0f, 25.0f, 10.0f, 3.0f}, {0.2f, 0.6f, 0.2f, 1.0f}, [this]() {
-    m_game.resumePlaying();
-  });
-  m_uiManager.addTextElement("level_up_btn_text", {0.0f, 25.5f, 0.0f, 0.0f}, "CONTINUE", m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.15f);
+  m_uiManager.addStaticElement("level_up_bg", {0.0f, 5.0f, 40.0f, 30.0f},
+                               {0.1f, 0.1f, 0.1f, 0.9f});
+  m_uiManager.addTextElement("level_up_title", {0.0f, 7.0f, 0.0f, 0.0f},
+                             "LEVEL UP!", m_font, {1.0f, 0.8f, 0.0f, 1.0f},
+                             0.2f);
+  m_uiManager.addTextElement("level_up_hint", {0.0f, 15.0f, 0.0f, 0.0f},
+                             "Upgrades coming soon...", m_font,
+                             {0.7f, 0.7f, 0.7f, 1.0f}, 0.15f);
+  m_uiManager.addInteractiveElement("level_up_btn", {0.0f, 25.0f, 10.0f, 3.0f},
+                                    {0.2f, 0.6f, 0.2f, 1.0f},
+                                    [this]() { m_game.resumePlaying(); });
+  m_uiManager.addTextElement("level_up_btn_text", {0.0f, 25.5f, 0.0f, 0.0f},
+                             "CONTINUE", m_font, {1.0f, 1.0f, 1.0f, 1.0f},
+                             0.15f);
 
   m_game.getDamageTextManager().init(&m_font);
 }
@@ -344,35 +358,43 @@ void App::_updateUIElements(double delta_time) {
 
   // Handle Menu Screens
   bool isMenu = (state != GameState::PLAYING && state != GameState::LEVEL_UP);
-  m_uiManager.getElement("darken_screen")->visible = isMenu || state == GameState::LEVEL_UP;
+  m_uiManager.getElement("darken_screen")->visible =
+      isMenu || state == GameState::LEVEL_UP;
   m_uiManager.getElement("darken_screen")->bounds.w = vWidth;
 
-  if (auto *title = dynamic_cast<TextElement *>(m_uiManager.getElement("start_title"))) {
+  if (auto *title =
+          dynamic_cast<TextElement *>(m_uiManager.getElement("start_title"))) {
     title->visible = (state == GameState::START_MENU);
     float w = m_font.getTextWidth(title->text, title->scale);
     title->bounds.x = (vWidth - w) / 2.0f;
   }
 
-  if (auto *hint = dynamic_cast<TextElement *>(m_uiManager.getElement("start_hint"))) {
+  if (auto *hint =
+          dynamic_cast<TextElement *>(m_uiManager.getElement("start_hint"))) {
     hint->visible = (state == GameState::START_MENU);
     float w = m_font.getTextWidth(hint->text, hint->scale);
     hint->bounds.x = (vWidth - w) / 2.0f;
-    hint->color.a = 0.3f + 0.7f * (0.5f * (std::cos(glfwGetTime() * 4.0) + 1.0f));
+    hint->color.a =
+        0.3f + 0.7f * (0.5f * (std::cos(glfwGetTime() * 4.0) + 1.0f));
   }
 
   bool isPlaying = state == GameState::PLAYING || state == GameState::LEVEL_UP;
   m_uiManager.getElement("exp_bg")->visible = isPlaying;
   m_uiManager.getElement("exp_fill")->visible = isPlaying;
   m_uiManager.getElement("level_text")->visible = isPlaying;
-  
+
   if (isPlaying) {
     m_uiManager.getElement("exp_bg")->bounds.w = vWidth;
-    float pct = (float)m_game.getCurrentExp() / (float)m_game.getExpToNextLevel();
+    float pct =
+        (float)m_game.getCurrentExp() / (float)m_game.getExpToNextLevel();
     m_uiManager.getElement("exp_fill")->bounds.w = pct * vWidth;
 
-    if (auto* levelText = dynamic_cast<TextElement*>(m_uiManager.getElement("level_text"))) {
+    if (auto *levelText =
+            dynamic_cast<TextElement *>(m_uiManager.getElement("level_text"))) {
       levelText->text = "LV " + std::to_string(m_game.getCurrentLevel());
-      levelText->bounds.x = vWidth - m_font.getTextWidth(levelText->text, levelText->scale) - 1.0f;
+      levelText->bounds.x =
+          vWidth - m_font.getTextWidth(levelText->text, levelText->scale) -
+          1.0f;
     }
   }
 
@@ -385,15 +407,22 @@ void App::_updateUIElements(double delta_time) {
 
   if (isLevelUp) {
     m_uiManager.getElement("level_up_bg")->bounds.x = vWidth / 2.0f - 20.0f;
-    if (auto* title = dynamic_cast<TextElement*>(m_uiManager.getElement("level_up_title"))) {
-      title->bounds.x = vWidth / 2.0f - m_font.getTextWidth(title->text, title->scale) / 2.0f;
+    if (auto *title = dynamic_cast<TextElement *>(
+            m_uiManager.getElement("level_up_title"))) {
+      title->bounds.x =
+          vWidth / 2.0f - m_font.getTextWidth(title->text, title->scale) / 2.0f;
     }
-    if (auto* hint = dynamic_cast<TextElement*>(m_uiManager.getElement("level_up_hint"))) {
-      hint->bounds.x = vWidth / 2.0f - m_font.getTextWidth(hint->text, hint->scale) / 2.0f;
+    if (auto *hint = dynamic_cast<TextElement *>(
+            m_uiManager.getElement("level_up_hint"))) {
+      hint->bounds.x =
+          vWidth / 2.0f - m_font.getTextWidth(hint->text, hint->scale) / 2.0f;
     }
     m_uiManager.getElement("level_up_btn")->bounds.x = vWidth / 2.0f - 5.0f;
-    if (auto* btnText = dynamic_cast<TextElement*>(m_uiManager.getElement("level_up_btn_text"))) {
-      btnText->bounds.x = vWidth / 2.0f - m_font.getTextWidth(btnText->text, btnText->scale) / 2.0f;
+    if (auto *btnText = dynamic_cast<TextElement *>(
+            m_uiManager.getElement("level_up_btn_text"))) {
+      btnText->bounds.x =
+          vWidth / 2.0f -
+          m_font.getTextWidth(btnText->text, btnText->scale) / 2.0f;
     }
   }
 }

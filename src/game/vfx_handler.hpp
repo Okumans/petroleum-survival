@@ -3,7 +3,8 @@
 #include "game/game_events.hpp"
 #include "game/map_manager.hpp"
 #include "graphics/particle_system.hpp"
-#include "scene/enemy.hpp"
+#include "resource/model_manager.hpp"
+#include "scene/enemy/enemy.hpp"
 #include "scene/exp.hpp"
 #include "scene/game_object_manager.hpp"
 #include "utility/event_bus.hpp"
@@ -21,7 +22,8 @@ private:
 public:
   VFXHandler(ParticleSystem &ps, GameObjectManager &gom, MapManager &mm,
              EventBus &eb)
-      : m_particleSystem(ps), m_objects(gom), m_mapManager(mm), m_eventBus(eb) {}
+      : m_particleSystem(ps), m_objects(gom), m_mapManager(mm), m_eventBus(eb) {
+  }
 
   void handleParticleSpawn(const GameEvents::ParticleSpawnRequestedEvent &evt) {
     using namespace GameEvents;
@@ -44,7 +46,7 @@ public:
   }
 
   void handleEnemyKilled(const GameEvents::EnemyKilledEvent &evt) {
-    ::Enemy *enemy = static_cast<::Enemy *>(evt.enemy);
+    Enemy *enemy = static_cast<Enemy *>(evt.enemy);
 
     // 1. Emit death particles
     m_eventBus.emit(GameEvents::ParticleSpawnRequestedEvent{

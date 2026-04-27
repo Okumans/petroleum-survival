@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 
 class Projectile : public GameObject {
-private:
+protected:
   glm::vec3 m_velocity;
   float m_damage;
   float m_lifetime;
