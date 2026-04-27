@@ -130,6 +130,14 @@ void App::_setupResources() {
   ;
 
   // Models
+  m_loadingTasks.push_back({"Model: Car Sedan", loadModel(ModelName::CAR_SEDAN, ASSETS_PATH "/objects/car/sedan.glb")});
+  m_loadingTasks.push_back({"Model: Car Muscle", loadModel(ModelName::CAR_MUSCLE, ASSETS_PATH "/objects/car/muscle.glb")});
+  m_loadingTasks.push_back({"Model: Car Pickup", loadModel(ModelName::CAR_PICKUP, ASSETS_PATH "/objects/car/pickup.glb")});
+  m_loadingTasks.push_back({"Model: Car Taxi", loadModel(ModelName::CAR_TAXI, ASSETS_PATH "/objects/car/taxi.glb")});
+  m_loadingTasks.push_back({"Model: Car Police", loadModel(ModelName::CAR_POLICE, ASSETS_PATH "/objects/car/policeSedan.glb")});
+  m_loadingTasks.push_back({"Model: Car Bus", loadModel(ModelName::CAR_BUS, ASSETS_PATH "/objects/car/bus.glb")});
+  m_loadingTasks.push_back({"Model: Car Monster Truck", loadModel(ModelName::CAR_MONSTER_TRUCK, ASSETS_PATH "/objects/car/monsterTruck.glb")});
+
   m_loadingTasks.push_back(
       {"Model: Kasane Teto", loadModel(ModelName::KASANE_TETO, ASSETS_PATH
                                        "/objects/kasane_teto/teto.dae")});
@@ -137,15 +145,44 @@ void App::_setupResources() {
       {"Model: Hatsune Miku", loadModel(ModelName::HATSUNE_MIKU, ASSETS_PATH
                                         "/objects/hatsune_miku/miku.dae")});
   m_loadingTasks.push_back(
-      {"Model: Coin",
-       loadModel(ModelName::COIN, ASSETS_PATH "/objects/items/coin.glb")});
+      {"Model: Money 20",
+       loadModel(ModelName::MONEY_20,
+                 ASSETS_PATH "/objects/items/money/20_baht.glb")});
   m_loadingTasks.push_back(
-      {"Model: Exp Gem 1", loadModel(ModelName::EXP_GEM_1, ASSETS_PATH
-                                     "/objects/gems/1/chaos_emerald.glb")});
+      {"Model: Money 100",
+       loadModel(ModelName::MONEY_100,
+                 ASSETS_PATH "/objects/items/money/100_baht.glb")});
   m_loadingTasks.push_back(
-      {"Model: Exp Gem 2",
-       loadModel(ModelName::EXP_GEM_2,
-                 ASSETS_PATH "/objects/gems/2/enchanted_crystal_02.glb")});
+      {"Model: Money 500",
+       loadModel(ModelName::MONEY_500,
+                 ASSETS_PATH "/objects/items/money/500_baht.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Money 1000",
+       loadModel(ModelName::MONEY_1000,
+                 ASSETS_PATH "/objects/items/money/1000_baht.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Sedan",
+       loadModel(ModelName::CAR_SEDAN, ASSETS_PATH "/objects/car/sedan.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Muscle",
+       loadModel(ModelName::CAR_MUSCLE, ASSETS_PATH "/objects/car/muscle.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Pickup",
+       loadModel(ModelName::CAR_PICKUP, ASSETS_PATH "/objects/car/pickup.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Taxi",
+       loadModel(ModelName::CAR_TAXI, ASSETS_PATH "/objects/car/taxi.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Police",
+       loadModel(ModelName::CAR_POLICE,
+                 ASSETS_PATH "/objects/car/policeSedan.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Bus",
+       loadModel(ModelName::CAR_BUS, ASSETS_PATH "/objects/car/bus.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Monster Truck",
+       loadModel(ModelName::CAR_MONSTER_TRUCK,
+                 ASSETS_PATH "/objects/car/monsterTruck.glb")});
   m_loadingTasks.push_back(
       {"Model: Sphere",
        loadModel(ModelName::SPHERE, ASSETS_PATH "/objects/sphere.obj")});

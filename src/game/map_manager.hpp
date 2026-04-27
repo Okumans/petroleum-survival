@@ -1,8 +1,8 @@
 #pragma once
 
-#include "graphics/render_context.hpp"
 #include "graphics/material.hpp"
 #include "graphics/mesh.hpp"
+#include "graphics/render_context.hpp"
 #include "scene/game_object_manager.hpp"
 
 #include <concepts>
@@ -54,12 +54,17 @@ private:
   std::unordered_map<int64_t, ChunkObjectSet> m_chunk_objects;
   std::unordered_map<uint64_t, TrackedObjectState> m_tracked_objects;
 
+  // Heightmap cache for O(1) lookup
+  std::vector<float> m_heightmap;
+  static constexpr float s_gridResolution = 0.5f;
+  uint32_t m_gridSize = 0;
+
 public:
   MapManager() = default;
 
   void setup();
   void update(const glm::vec3 &focus_position);
-  void submitToRenderer(Renderer& renderer);
+  void submitToRenderer(Renderer &renderer);
 
   [[nodiscard]] float sampleHeight(float world_x, float world_z) const;
   [[nodiscard]] glm::vec3 sampleNormal(float world_x, float world_z) const;
@@ -101,12 +106,14 @@ private:
   [[nodiscard]] float _valueNoise(float x, float z) const;
   [[nodiscard]] float _fbm(float x, float z) const;
   [[nodiscard]] float _terrainHeight(float world_x, float world_z) const;
+  [[nodiscard]] float _sampleHeightCached(float world_x, float world_z) const;
   [[nodiscard]] glm::vec3 _terrainNormal(float world_x, float world_z) const;
   [[nodiscard]] glm::vec2 _chunkOrigin(int chunk_x, int chunk_z) const;
   [[nodiscard]] bool _isInsideWorld(float world_x, float world_z) const;
 
   void _ensureChunk(int chunk_x, int chunk_z);
   void _pruneChunks(int center_chunk_x, int center_chunk_z);
+  void _generateHeightmap();
   [[nodiscard]] Mesh _buildChunkMesh(int chunk_x, int chunk_z) const;
 };
 

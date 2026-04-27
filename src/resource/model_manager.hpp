@@ -10,11 +10,19 @@
 enum class ModelName {
   KASANE_TETO,
   HATSUNE_MIKU,
-  COIN,
-  EXP_GEM_1,
-  EXP_GEM_2,
+  MONEY_20,
+  MONEY_100,
+  MONEY_500,
+  MONEY_1000,
+  CAR_SEDAN,
+  CAR_MUSCLE,
+  CAR_PICKUP,
+  CAR_TAXI,
+  CAR_POLICE,
+  CAR_BUS,
+  CAR_MONSTER_TRUCK,
   SPHERE,
-  CUBE
+  CUBE,
 };
 
 class ModelManager {

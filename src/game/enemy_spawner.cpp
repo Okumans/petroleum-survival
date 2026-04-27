@@ -4,30 +4,27 @@
 #include "scene/game_object_factory.hpp"
 #include "utility/random.hpp"
 
-// We need access to createEnemyFactory, which is in game.cpp. 
+// We need access to createEnemyFactory, which is in game.cpp.
 // We can move it to game.hpp or just re-implement/call a Game method.
 // For now, let's declare it as extern if it's not static.
+#include "resource/model_manager.hpp"
+#include "scene/enemy/car_enemy.hpp"
 #include "scene/enemy/humanoid_enemy.hpp"
 
 extern GameObjectFactory<HumanoidEnemy> createEnemyFactory();
 
-void EnemySpawner::init(Game* game) {
-  m_game = game;
-}
+void EnemySpawner::init(Game *game) { m_game = game; }
 
-void EnemySpawner::addWave(const WaveConfig& wave) {
-  m_waves.push_back(wave);
-}
+void EnemySpawner::addWave(const WaveConfig &wave) { m_waves.push_back(wave); }
 
-void EnemySpawner::clearWaves() {
-  m_waves.clear();
-}
+void EnemySpawner::clearWaves() { m_waves.clear(); }
 
 void EnemySpawner::update(float currentTime, float delta_time) {
-  if (!m_game) return;
+  if (!m_game)
+    return;
 
   bool waveActive = false;
-  for (const auto& wave : m_waves) {
+  for (const auto &wave : m_waves) {
     if (currentTime >= wave.timeStart && currentTime <= wave.timeEnd) {
       if (wave.spawnLogic) {
         wave.spawnLogic(*m_game, currentTime, delta_time);
@@ -50,23 +47,45 @@ void EnemySpawner::update(float currentTime, float delta_time) {
 }
 
 void EnemySpawner::spawnEnemy(glm::vec3 position, float healthMultiplier) {
-  static GameObjectFactory<HumanoidEnemy> factory = createEnemyFactory();
-  
-  HumanoidEnemy enemy_clone = factory.create([&](HumanoidEnemy &enemy) {
-    enemy.move(position);
-    // TODO: apply health multiplier if enemy supports it
-    // snapObjectToGround logic is handled in game.cpp or we can do it later
-  });
+  // 20% chance to spawn a vehicle instead of a humanoid
+  if (Random::randFloat() < 0.2f) {
+    ModelName carModels[] = {ModelName::CAR_SEDAN,        ModelName::CAR_MUSCLE,
+                             ModelName::CAR_PICKUP,       ModelName::CAR_TAXI,
+                             ModelName::CAR_POLICE,       ModelName::CAR_BUS,
+                             ModelName::CAR_MONSTER_TRUCK};
 
-  auto [enemy, enemy_handle] = m_game->getObjects().emplaceWithHandle<HumanoidEnemy>(std::move(enemy_clone));
-  m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(), false);
+    int randIdx = Random::randInt(0, 6);
+    CarEnemy enemy_clone(ModelManager::copy(carModels[randIdx]));
+
+    enemy_clone.setScale(0.8f);
+    enemy_clone.moveWithAnimation(position);
+
+    auto [enemy, enemy_handle] =
+        m_game->getObjects().emplaceWithHandle<CarEnemy>(
+            std::move(enemy_clone));
+    m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
+                                           false);
+  } else {
+    static GameObjectFactory<HumanoidEnemy> factory = createEnemyFactory();
+
+    HumanoidEnemy enemy_clone =
+        factory.create([&](HumanoidEnemy &enemy) { enemy.move(position); });
+
+    auto [enemy, enemy_handle] =
+        m_game->getObjects().emplaceWithHandle<HumanoidEnemy>(
+            std::move(enemy_clone));
+    m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
+                                           false);
+  }
 }
 
-void EnemySpawner::spawnInCircle(int count, float radius, float healthMultiplier) {
-  if (!m_game || !m_game->getPlayer()) return;
-  
+void EnemySpawner::spawnInCircle(int count, float radius,
+                                 float healthMultiplier) {
+  if (!m_game || !m_game->getPlayer())
+    return;
+
   glm::vec3 center = m_game->getPlayer()->getPosition();
-  
+
   for (int i = 0; i < count; ++i) {
     float angle = Random::randFloat(0.0f, 3.14159f * 2.0f);
     glm::vec3 offset(std::cos(angle) * radius, 0.0f, std::sin(angle) * radius);

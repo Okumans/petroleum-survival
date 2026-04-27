@@ -57,10 +57,10 @@ public:
     glm::vec3 spawnPos = enemy->getHitboxAABB().getCenter();
     spawnPos += Random::randVec3(-0.5f, 0.5f);
 
-    Exp exp_clone(ModelManager::copy(ModelName::EXP_GEM_2),
+    Exp exp_clone(ModelManager::copy(ModelName::MONEY_20),
                   enemy->getExpDropAmount(), spawnPos);
-    exp_clone.setScale(50.0f);
-    exp_clone.setEmissionColor(glm::vec3({0.0, 0.2, 0.3f}));
+    exp_clone.setScale(1.0f); // Money models might need different scale
+    exp_clone.setEmissionColor(glm::vec3({0.0f, 0.0f, 0.0f})); // Money shouldn't glow maybe?
 
     auto [exp, exp_handle] = m_objects.emplaceWithHandle<Exp>(exp_clone);
     m_mapManager.registerObject(exp_handle, exp.getPosition(), true);

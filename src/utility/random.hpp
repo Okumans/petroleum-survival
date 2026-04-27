@@ -26,6 +26,15 @@ public:
   }
 
   /**
+   * @brief Generates a random float between 0 and 1
+   * Constrained to floating point types (float, double, long double)
+   */
+  template <std::floating_point T = float> static T randFloat() {
+    std::uniform_real_distribution<T> dist(0, 1);
+    return dist(s_engine);
+  }
+
+  /**
    * @brief Generates a random integer in range [min, max] using custom weights.
    * The weights vector size must equal (max - min + 1).
    */
@@ -45,7 +54,7 @@ public:
    * @brief Returns true based on a probability P where 0 <= P <= 1
    */
   static bool randChance(std::floating_point auto prob) {
-    return randFloat<decltype(prob)>(0, 1) < prob;
+    return randFloat<decltype(prob)>() < prob;
   }
 
   static glm::vec3 randVec3(float min, float max) {

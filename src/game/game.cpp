@@ -121,30 +121,30 @@ Game::Game()
 Game::~Game() {}
 
 void Game::setup() {
-  m_spawner.addWave({
-      .timeStart = 0.0f,
-      .timeEnd = 50.0f,
-      .spawnLogic =
-          [](Game &game, float current_time, float delta_time) {
-            static AnimationState<void> cool_down(0.1f);
-            static uint32_t enemies_spawn = 0;
-
-            cool_down.updateTimer(delta_time);
-
-            if (enemies_spawn >= 50 || !cool_down.isFinished())
-              return;
-
-            glm::vec3 pos = game.m_player.ensureInitialized()->getPosition();
-            glm::vec3 offset = {
-                Random::randFloat(-5.0f, 5.0f),
-                Random::randFloat(-5.0f, 5.0f),
-                Random::randFloat(-5.0f, 5.0f),
-            };
-
-            game.m_spawner.spawnEnemy(pos + offset, 3);
-            cool_down.reset();
-          },
-  });
+  // m_spawner.addWave({
+  //     .timeStart = 0.0f,
+  //     .timeEnd = 50.0f,
+  //     .spawnLogic =
+  //         [](Game &game, float current_time, float delta_time) {
+  //           static AnimationState<void> cool_down(0.1f);
+  //           static uint32_t enemies_spawn = 0;
+  //
+  //           cool_down.updateTimer(delta_time);
+  //
+  //           if (enemies_spawn >= 50 || !cool_down.isFinished())
+  //             return;
+  //
+  //           glm::vec3 pos = game.m_player.ensureInitialized()->getPosition();
+  //           glm::vec3 offset = {
+  //               Random::randFloat(-5.0f, 5.0f),
+  //               Random::randFloat(-5.0f, 5.0f),
+  //               Random::randFloat(-5.0f, 5.0f),
+  //           };
+  //
+  //           game.m_spawner.spawnEnemy(pos + offset, 3);
+  //           cool_down.reset();
+  //         },
+  // });
 
   _initializeManagers();
 

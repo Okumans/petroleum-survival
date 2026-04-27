@@ -56,6 +56,8 @@ void MapManager::setup() {
                           .setAOFactor(1.0f)
                           .create();
 
+  _generateHeightmap();
+
   m_isInitialized = true;
 }
 
@@ -80,7 +82,7 @@ void MapManager::update(const glm::vec3 &focus_position) {
   _pruneChunks(center_chunk_x, center_chunk_z);
 }
 
-void MapManager::submitToRenderer(Renderer& renderer) {
+void MapManager::submitToRenderer(Renderer &renderer) {
   if (!m_isInitialized) {
     return;
   }
@@ -96,7 +98,7 @@ float MapManager::sampleHeight(float world_x, float world_z) const {
     world_z = std::clamp(world_z, -s_worldHalfSize, s_worldHalfSize);
   }
 
-  return _terrainHeight(world_x, world_z);
+  return _sampleHeightCached(world_x, world_z);
 }
 
 glm::vec3 MapManager::sampleNormal(float world_x, float world_z) const {
@@ -295,6 +297,48 @@ float MapManager::_fbm(float x, float z) const {
   return total / normalization;
 }
 
+float MapManager::_sampleHeightCached(float world_x, float world_z) const {
+  float local_x = (world_x + s_worldHalfSize) / s_gridResolution;
+  float local_z = (world_z + s_worldHalfSize) / s_gridResolution;
+
+  uint32_t x0 = std::clamp(static_cast<uint32_t>(std::floor(local_x)), 0u,
+                           m_gridSize - 1);
+  uint32_t z0 = std::clamp(static_cast<uint32_t>(std::floor(local_z)), 0u,
+                           m_gridSize - 1);
+
+  uint32_t x1 = std::min(x0 + 1, m_gridSize - 1);
+  uint32_t z1 = std::min(z0 + 1, m_gridSize - 1);
+
+  float tx = local_x - std::floor(local_x);
+  float tz = local_z - std::floor(local_z);
+
+  float h00 = m_heightmap[static_cast<size_t>(z0) * m_gridSize + x0];
+  float h10 = m_heightmap[static_cast<size_t>(z0) * m_gridSize + x1];
+  float h01 = m_heightmap[static_cast<size_t>(z1) * m_gridSize + x0];
+  float h11 = m_heightmap[static_cast<size_t>(z1) * m_gridSize + x1];
+
+  float h0 = _lerp(h00, h10, tx);
+  float h1 = _lerp(h01, h11, tx);
+  return _lerp(h0, h1, tz);
+}
+
+void MapManager::_generateHeightmap() {
+  float world_size = s_worldHalfSize * 2.0f;
+  m_gridSize = static_cast<uint32_t>(world_size / s_gridResolution) + 1;
+  m_heightmap.resize(static_cast<size_t>(m_gridSize) * m_gridSize);
+
+  for (uint32_t z = 0; z < m_gridSize; ++z) {
+    for (uint32_t x = 0; x < m_gridSize; ++x) {
+      float world_x =
+          -s_worldHalfSize + (static_cast<float>(x) * s_gridResolution);
+      float world_z =
+          -s_worldHalfSize + (static_cast<float>(z) * s_gridResolution);
+      m_heightmap[static_cast<size_t>(z) * m_gridSize + x] =
+          _terrainHeight(world_x, world_z);
+    }
+  }
+}
+
 float MapManager::_terrainHeight(float world_x, float world_z) const {
   float broad_wave = std::sin(world_x * 0.0075f) * std::cos(world_z * 0.0065f);
   float ridge_noise = 1.0f - std::abs(_fbm(world_x + 13.0f, world_z - 7.0f));
@@ -309,10 +353,10 @@ float MapManager::_terrainHeight(float world_x, float world_z) const {
 glm::vec3 MapManager::_terrainNormal(float world_x, float world_z) const {
   const float epsilon = 0.5f;
 
-  float height_l = _terrainHeight(world_x - epsilon, world_z);
-  float height_r = _terrainHeight(world_x + epsilon, world_z);
-  float height_d = _terrainHeight(world_x, world_z - epsilon);
-  float height_u = _terrainHeight(world_x, world_z + epsilon);
+  float height_l = _sampleHeightCached(world_x - epsilon, world_z);
+  float height_r = _sampleHeightCached(world_x + epsilon, world_z);
+  float height_d = _sampleHeightCached(world_x, world_z - epsilon);
+  float height_u = _sampleHeightCached(world_x, world_z + epsilon);
 
   glm::vec3 normal(height_l - height_r, 2.0f * epsilon, height_d - height_u);
   return glm::normalize(normal);
@@ -372,7 +416,7 @@ Mesh MapManager::_buildChunkMesh(int chunk_x, int chunk_z) const {
     for (size_t x = 0; x < vertices_per_side; ++x) {
       float world_x = chunk_origin.x + static_cast<float>(x) * step;
       float world_z = chunk_origin.y + static_cast<float>(z) * step;
-      float height = _terrainHeight(world_x, world_z);
+      float height = _sampleHeightCached(world_x, world_z);
 
       Vertex vertex{};
       vertex.position = {world_x, height, world_z};
