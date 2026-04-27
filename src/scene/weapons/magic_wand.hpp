@@ -9,31 +9,25 @@
 #include <vector>
 
 class MagicWand : public ProjectileWeapon {
+
 private:
   float m_range = 15.0f;
   float m_projectileSpeed = 10.0f;
   float m_projectileLifetime = 2.0f;
 
-  std::function<std::vector<Enemy *>(glm::vec3, float, uint32_t)>
-      m_findClosestEnemies;
-
 public:
   MagicWand()
-      : ProjectileWeapon(1.0f, 0.05f, 25.0f, 100) {
-  } // 1 attack per sec, 25 damage, 5 proj
-
-  void setTargetingContext(
-      std::function<std::vector<Enemy *>(glm::vec3, float, uint32_t)>
-          findClosestEnemies) {
-    m_findClosestEnemies = findClosestEnemies;
-  }
+      : ProjectileWeapon(1.0f, 0.05f, 25.0f, 3) {
+  } // 1 attack per sec, 25 damage, 3 proj
 
   bool fire(const glm::vec3 &playerPos,
             const glm::vec3 &playerForward) override {
-    if (!m_findClosestEnemies || !m_spawnProjectile)
+    (void)playerForward;
+
+    if (!m_spawnProjectile)
       return false;
 
-    auto targets = m_findClosestEnemies(playerPos, m_range, getAmount());
+    auto targets = acquireTargets(m_range, getAmount());
 
     if (targets.empty())
       return false;
@@ -41,8 +35,7 @@ public:
     Enemy *target =
         targets[Random::randInt(0, static_cast<int>(targets.size()) - 1)];
 
-    glm::vec3 spawnPos =
-        playerPos; // playerPos is already passed as the centered spawn position
+    glm::vec3 spawnPos = playerPos;
 
     AABB targetBox = target->getHitboxAABB();
     glm::vec3 targetPos =
@@ -56,15 +49,21 @@ public:
 
     glm::vec3 velocity = glm::normalize(toTarget) * m_projectileSpeed;
 
-    auto model = ModelManager::copy(ModelName::SPHERE);
-    model->setEmissionColor(glm::vec3(2.0f, 20.0f, 40.0f) *
-                            0.5f); // Bright blue-ish glow
+    // TODO: consider using a factory based system for creating projectiles
+    // instead.
+    std::shared_ptr<Model> model = ModelManager::copy(ModelName::SPHERE);
+    model->setEmissionColor(glm::vec3(2.0f, 20.0f, 40.0f) * 0.5f);
 
-    std::shared_ptr<Projectile> proj = std::make_shared<Projectile>(
-        model, spawnPos, velocity, getDamage(), m_projectileLifetime,
-        [](Projectile &p, double dt) {
-          p.translate(p.getVelocity() * static_cast<float>(dt));
-        });
+    std::shared_ptr<Projectile> proj =
+        std::make_shared<Projectile>(model,
+                                     spawnPos,
+                                     velocity,
+                                     getDamage(),
+                                     m_projectileLifetime,
+                                     [](Projectile &p, double dt) {
+                                       p.translate(p.getVelocity() *
+                                                   static_cast<float>(dt));
+                                     });
 
     proj->setScale(glm::vec3(0.2f));
 

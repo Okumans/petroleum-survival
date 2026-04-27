@@ -1,12 +1,19 @@
 #pragma once
 
 #include "scene/weapon/weapon.hpp"
+#include "scene/enemy/enemy.hpp"
+#include <vector>
 
 class ProjectileWeapon : public Weapon {
+public:
+  using EnemyCallback = std::function<void(Enemy*)>;
+  using TargetAcquirer = std::function<void(float range, uint32_t k, EnemyCallback)>;
+
 protected:
   uint32_t m_amount;
   uint32_t m_amountShoot = 0;
   AnimationState<void> m_subCooldownState;
+  TargetAcquirer m_findTargets;
 
 public:
   ProjectileWeapon(float cooldown, float sub_cooldown, float damage,
@@ -14,10 +21,22 @@ public:
       : Weapon(cooldown, damage), m_amount(amount),
         m_subCooldownState(sub_cooldown) {}
 
+  void setTargetingContext(TargetAcquirer findTargets) {
+    m_findTargets = findTargets;
+  }
+
   uint32_t getAmount() const {
     return m_amount +
            static_cast<uint32_t>(
                m_stats.ensureInitialized()->getMultiplier(StatType::AMOUNT));
+  }
+
+  std::vector<Enemy*> acquireTargets(float range, uint32_t k) const {
+    std::vector<Enemy*> targets;
+    if (m_findTargets) {
+      m_findTargets(range, k, [&](Enemy* e) { targets.push_back(e); });
+    }
+    return targets;
   }
 
   virtual void update(double delta_time, const glm::vec3 &playerPos, const glm::vec3 &playerForward) override {

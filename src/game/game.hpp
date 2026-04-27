@@ -38,6 +38,12 @@
 enum class GameState { LOADING, START_MENU, PLAYING, LEVEL_UP, GAME_OVER };
 
 class Game {
+public:
+  struct EnemyDist {
+    Enemy *enemy;
+    float dist_sq;
+  };
+
 private:
   // Events are now in GameEvents namespace
 
@@ -68,6 +74,8 @@ private:
   GameState m_state = GameState::START_MENU;
 
   Renderer m_renderer;
+
+  std::vector<EnemyDist> m_closestEnemies;
 
 public:
   Game();
@@ -100,8 +108,8 @@ public:
   void startGame();
 
   void movePlayer(glm::vec3 vec);
-  std::vector<Enemy *> getClosestEnemies(glm::vec3 position, float radius,
-                                           uint32_t top_k);
+
+  auto getClosestEnemies(float radius, uint32_t top_k) const;
 
   void setDebugAABB(bool state) { m_debugAABB = state; }
 
@@ -116,6 +124,8 @@ public:
   }
 
 private:
+  void _calculateClosestEnemies(glm::vec3 position);
+
   void _initializeManagers();
   void _resetGameplayState();
   void _setupPlayer();

@@ -18,16 +18,18 @@
 #include "scene/item.hpp"
 #include "scene/player.hpp"
 #include "scene/projectile.hpp"
-#include "scene/weapon/magic_wand.hpp"
+#include "scene/weapons/magic_wand.hpp"
 #include "scene/weapons/wood_block.hpp"
 #include "utility/random.hpp"
 
+#include <cstdlib>
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/norm.hpp>
 
 #include <algorithm>
 #include <memory>
+#include <ranges>
 
 using namespace GameEvents;
 
@@ -43,7 +45,8 @@ bool isDynamicBlockingObject(const GameObject &object) {
   return object.getObjectType() == GameObjectType::ENEMY;
 }
 
-bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
+bool resolveDynamicOverlap(MapManager &map_manager,
+                           GameObject &lhs,
                            GameObject &rhs) {
   const AABB lhs_box = lhs.getHitboxAABB();
   const AABB rhs_box = rhs.getHitboxAABB();
@@ -130,142 +133,6 @@ void Game::setup() {
   reset();
 }
 
-void Game::_initializeManagers() {
-  ShaderManager::ensureInit();
-  ModelManager::ensureInit();
-  AnimationManager::ensureInit();
-
-  m_mapManager.setup();
-}
-
-void Game::_resetGameplayState() {
-  m_mapManager.clearObjectTracking();
-
-  m_objects.clear();
-  m_eventBus.clear();
-  _registerGameplayEventHandlers();
-
-  m_score = 0;
-}
-
-void Game::_setupPlayer() {
-  auto [player_object, player_handle] = m_objects.emplaceWithHandle<Player>(
-      ModelManager::copy(ModelName::KASANE_TETO));
-
-  m_player.init(&player_object);
-  m_player.ensureInitialized()->setScale(20.0f);
-  m_player.ensureInitialized()->setup();
-
-  snapObjectToGround(m_mapManager, *m_player.ensureInitialized());
-  m_mapManager.registerObject(
-      player_handle, m_player.ensureInitialized()->getPosition(), false);
-
-  auto magic_wand = std::make_shared<MagicWand>();
-  magic_wand->setContext(
-      [this](const GameEvents::ProjectileSpawnRequestedEvent &evt) {
-        m_eventBus.emit(evt);
-      });
-  magic_wand->setTargetingContext(
-      [this](glm::vec3 pos, float range, uint32_t k) {
-        return getClosestEnemies(pos, range, k);
-      });
-
-  magic_wand->setStats(&m_statManager);
-  m_player.ensureInitialized()->addWeapon(magic_wand);
-
-  auto wood_block = std::make_shared<SolidWoodBlock>();
-  wood_block->setStats(&m_statManager);
-  wood_block->setContext([this](const auto &evt) { m_eventBus.emit(evt); });
-  m_player.ensureInitialized()->addWeapon(wood_block);
-}
-
-void Game::_setupEnvironment() {
-  // Generate Irradiance Map
-  std::shared_ptr<Texture> skybox_tex =
-      TextureManager::copy(TextureName("skybox"));
-  m_skybox->setTexture(skybox_tex);
-
-  Shader &irradiance_shader = ShaderManager::get(ShaderType::IRRADIANCE);
-  std::shared_ptr<Texture> irradiance_map = IBLGenerator::generateIrradianceMap(
-      *skybox_tex, *m_skybox, irradiance_shader);
-  TextureManager::manage(TextureName("irradiance_map"),
-                         std::move(*irradiance_map));
-
-  // Setup Lights
-  LightingManager::clear();
-
-  // 1. "Sun" Light (Directional, casts shadows)
-  LightingManager::add({.type = LightType::DIRECTIONAL,
-                        .position = glm::vec3(0.3f, -1.0f, 0.1f),
-                        .color = glm::vec3(11.0f, 9.0f, 8.0f) * .8f,
-                        .castsShadows = true});
-
-  // 2. Sky Blue Fill Light (Directional)
-  LightingManager::add({.type = LightType::DIRECTIONAL,
-                        .position = glm::vec3(0.5f, -1.0f, 0.2f),
-                        .color = glm::vec3(0.1f, 0.15f, 0.25f)});
-
-  // 3. Ground Bounce Fill (Point light)
-  LightingManager::add({.type = LightType::POINT,
-                        .position = glm::vec3(0.0f, -5.0f, 0.0f),
-                        .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
-}
-
-void Game::reset() {
-  m_state = GameState::START_MENU;
-  m_cameraController.setTarget(glm::vec3(0.0f, 0.0f, 0.0f), true);
-}
-
-void Game::startGame() {
-  if (m_state == GameState::START_MENU) {
-    m_state = GameState::PLAYING;
-    m_gameTime = 0.0f;
-  }
-}
-
-void Game::update(double delta_time) {
-  if (m_state == GameState::PLAYING) {
-    m_gameTime += static_cast<float>(delta_time);
-    m_spawner.update(m_gameTime, static_cast<float>(delta_time));
-  }
-
-  m_damageTextManager.update(static_cast<float>(delta_time));
-
-  // --- PBR DEBUG: Rotate Sun ---
-  static float current_time = 0.0f;
-
-  current_time += static_cast<float>(delta_time);
-
-  const float sun_speed = 0.03f;
-  const float sun_radius = 1.0f;
-  glm::vec3 sun_dir = glm::normalize(
-      glm::vec3(std::cos(current_time * sun_speed) * sun_radius, -1.0f,
-                std::sin(current_time * sun_speed) * sun_radius));
-
-  Light sun = LightingManager::getShadowCaster();
-  sun.position = sun_dir;
-  LightingManager::set(0, sun);
-  // -----------------------------
-
-  _updateCamera(delta_time);
-  m_cameraController.update(static_cast<float>(delta_time));
-
-  m_mapManager.update(m_player.ensureInitialized()->getPosition());
-
-  _updateEnemies();
-
-  // Update can be expensive
-  m_objects.updateWhere(delta_time, [this](const GameObject &object) {
-    return m_mapManager.isPositionInLoadedChunk(object.getPosition());
-  });
-
-  _syncObjectsToTerrain();
-
-  _runCollisionPass();
-  m_eventBus.flush();
-  m_objects.collectGarbage();
-}
-
 void Game::movePlayer(glm::vec3 vec) {
   m_player.ensureInitialized()->moveWithAnimation(vec);
 
@@ -289,8 +156,10 @@ void Game::render(double delta_time) {
     if (!object || object->isRemovalRequested())
       return;
     object->ensureTransformUpdated();
-    m_renderer.submit(&object->getModel(), object->getModelMatrix(),
-                      object->getAnimator(), object->getEmissionColor());
+    m_renderer.submit(&object->getModel(),
+                      object->getModelMatrix(),
+                      object->getAnimator(),
+                      object->getEmissionColor());
   });
 
   m_mapManager.submitToRenderer(m_renderer);
@@ -321,7 +190,9 @@ void Game::render(double delta_time) {
   glCullFace(GL_BACK); // Restore back-face culling
 
   // 2. Main Pass
-  glViewport(0, 0, (int)m_camera.getSceneWidth(),
+  glViewport(0,
+             0,
+             (int)m_camera.getSceneWidth(),
              (int)m_camera.getSceneHeight());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -396,13 +267,168 @@ void Game::render(double delta_time) {
           GameObject *object = m_objects.get(handle);
           if (!object || object->isRemovalRequested())
             return;
-          DebugDrawer::drawAABB(debug_ctx, object->getHitboxAABB(),
+          DebugDrawer::drawAABB(debug_ctx,
+                                object->getHitboxAABB(),
                                 {1.0f, 0.0f, 0.0f});
         });
   }
 
   glDisable(GL_BLEND);
   glDisable(GL_DEPTH_TEST);
+}
+
+auto Game::getClosestEnemies(float radius, uint32_t top_k) const {
+  return m_closestEnemies |
+         std::views::take_while([radius](const EnemyDist &dist) {
+           return dist.dist_sq < (radius * radius);
+         }) |
+         std::views::take(top_k);
+}
+
+void Game::_initializeManagers() {
+  ShaderManager::ensureInit();
+  ModelManager::ensureInit();
+  AnimationManager::ensureInit();
+
+  m_mapManager.setup();
+}
+
+void Game::_resetGameplayState() {
+  m_mapManager.clearObjectTracking();
+
+  m_objects.clear();
+  m_eventBus.clear();
+  _registerGameplayEventHandlers();
+
+  m_score = 0;
+}
+
+void Game::_setupPlayer() {
+  auto [player_object, player_handle] = m_objects.emplaceWithHandle<Player>(
+      ModelManager::copy(ModelName::KASANE_TETO));
+
+  m_player.init(&player_object);
+  m_player.ensureInitialized()->setScale(20.0f);
+  m_player.ensureInitialized()->setup();
+
+  snapObjectToGround(m_mapManager, *m_player.ensureInitialized());
+  m_mapManager.registerObject(player_handle,
+                              m_player.ensureInitialized()->getPosition(),
+                              false);
+
+  auto magic_wand = std::make_shared<MagicWand>();
+  magic_wand->setContext(
+      [this](const GameEvents::ProjectileSpawnRequestedEvent &evt) {
+        m_eventBus.emit(evt);
+      });
+  magic_wand->setTargetingContext(
+      [this](float range,
+             uint32_t k,
+             ProjectileWeapon::EnemyCallback callback) {
+        for (auto &ed : getClosestEnemies(range, k)) {
+          callback(ed.enemy);
+        }
+      });
+
+  magic_wand->setStats(&m_statManager);
+  m_player.ensureInitialized()->addWeapon(magic_wand);
+
+  auto wood_block = std::make_shared<SolidWoodBlock>();
+  wood_block->setStats(&m_statManager);
+  wood_block->setContext([this](const auto &evt) { m_eventBus.emit(evt); });
+  m_player.ensureInitialized()->addWeapon(wood_block);
+}
+
+void Game::_setupEnvironment() {
+  // Generate Irradiance Map
+  std::shared_ptr<Texture> skybox_tex =
+      TextureManager::copy(TextureName("skybox"));
+  m_skybox->setTexture(skybox_tex);
+
+  Shader &irradiance_shader = ShaderManager::get(ShaderType::IRRADIANCE);
+  std::shared_ptr<Texture> irradiance_map =
+      IBLGenerator::generateIrradianceMap(*skybox_tex,
+                                          *m_skybox,
+                                          irradiance_shader);
+  TextureManager::manage(TextureName("irradiance_map"),
+                         std::move(*irradiance_map));
+
+  // Setup Lights
+  LightingManager::clear();
+
+  // 1. "Sun" Light (Directional, casts shadows)
+  LightingManager::add({.type = LightType::DIRECTIONAL,
+                        .position = glm::vec3(0.3f, -1.0f, 0.1f),
+                        .color = glm::vec3(11.0f, 9.0f, 8.0f) * .8f,
+                        .castsShadows = true});
+
+  // 2. Sky Blue Fill Light (Directional)
+  LightingManager::add({.type = LightType::DIRECTIONAL,
+                        .position = glm::vec3(0.5f, -1.0f, 0.2f),
+                        .color = glm::vec3(0.1f, 0.15f, 0.25f)});
+
+  // 3. Ground Bounce Fill (Point light)
+  LightingManager::add({.type = LightType::POINT,
+                        .position = glm::vec3(0.0f, -5.0f, 0.0f),
+                        .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
+}
+
+void Game::reset() {
+  m_state = GameState::START_MENU;
+  m_cameraController.setTarget(glm::vec3(0.0f, 0.0f, 0.0f), true);
+}
+
+void Game::startGame() {
+  if (m_state == GameState::START_MENU) {
+    m_state = GameState::PLAYING;
+    m_gameTime = 0.0f;
+  }
+}
+
+void Game::update(double delta_time) {
+  if (m_state == GameState::PLAYING) {
+    m_gameTime += static_cast<float>(delta_time);
+    m_spawner.update(m_gameTime, static_cast<float>(delta_time));
+  }
+
+  m_damageTextManager.update(static_cast<float>(delta_time));
+
+  // --- PBR DEBUG: Rotate Sun ---
+  static float current_time = 0.0f;
+
+  current_time += static_cast<float>(delta_time);
+
+  const float sun_speed = 0.03f;
+  const float sun_radius = 1.0f;
+  glm::vec3 sun_dir = glm::normalize(
+      glm::vec3(std::cos(current_time * sun_speed) * sun_radius,
+                -1.0f,
+                std::sin(current_time * sun_speed) * sun_radius));
+
+  Light sun = LightingManager::getShadowCaster();
+  sun.position = sun_dir;
+  LightingManager::set(0, sun);
+  // -----------------------------
+
+  _updateCamera(delta_time);
+  m_cameraController.update(static_cast<float>(delta_time));
+
+  m_mapManager.update(m_player.ensureInitialized()->getPosition());
+
+  _updateEnemies();
+
+  _calculateClosestEnemies(m_player.ensureInitialized()->getPosition());
+
+  // Update can be expensive
+  m_objects.updateWhere(delta_time, [this](const GameObject &object) {
+    return m_mapManager.isPositionInLoadedChunk(object.getPosition());
+  });
+
+  _syncObjectsToTerrain();
+
+  _runCollisionPass();
+  m_eventBus.flush();
+  m_objects.collectGarbage();
 }
 
 void Game::_updateCamera(double delta_time) {
@@ -456,7 +482,8 @@ void Game::_runCollisionPass() {
 
       m_damageTextManager.addText(m_player.ensureInitialized()->getPosition() +
                                       offset,
-                                  enemy->getBaseDamage(), false);
+                                  enemy->getBaseDamage(),
+                                  false);
 
       m_eventBus.emit(ParticleSpawnRequestedEvent{
           .position = m_player.ensureInitialized()->getPosition() +
@@ -480,15 +507,18 @@ void Game::_runCollisionPass() {
       Enemy *enemy = static_cast<Enemy *>(enemy_obj);
       if (proj->collidesWith(*enemy)) {
         bool wasDead = enemy->isDead();
-        enemy->takeDamage(proj->getDamage(), false,
-                          glm::normalize(proj->getVelocity()), 2.0f);
+        enemy->takeDamage(proj->getDamage(),
+                          false,
+                          glm::normalize(proj->getVelocity()),
+                          2.0f);
 
         glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
                             Random::randFloat(-0.5f, 0.5f),
                             Random::randFloat(-0.5f, 0.5f)};
 
         m_damageTextManager.addText(enemy->getPosition() + offset,
-                                    proj->getDamage(), false);
+                                    proj->getDamage(),
+                                    false);
 
         m_eventBus.emit(ParticleSpawnRequestedEvent{
             .position = enemy->getPosition() + glm::vec3(0.0f, 1.0f, 0.0f),
@@ -557,45 +587,25 @@ void Game::_runCollisionPass() {
   }
 }
 
-std::vector<Enemy *> Game::getClosestEnemies(glm::vec3 position, float radius,
-                                             uint32_t top_k) {
-  if (top_k == 0)
-    return {};
+void Game::_calculateClosestEnemies(glm::vec3 position) {
+  m_closestEnemies.clear();
 
-  struct EnemyDist {
-    Enemy *enemy;
-    float dist_sq;
-  };
-  std::vector<EnemyDist> candidates;
-  float radius_sq = radius * radius;
+  m_mapManager.foreachLoadedChunkHandles(
+      [this, &position](const ObjectHandle &handle) {
+        GameObject *object = m_objects.get(handle);
 
-  for (GameObject *enemy_obj :
-       m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
-    if (!enemy_obj || enemy_obj->isRemovalRequested())
-      continue;
-    Enemy *enemy = static_cast<Enemy *>(enemy_obj);
-    if (enemy->isDead())
-      continue;
+        if (!object || object->isRemovalRequested() ||
+            object->getObjectType() != GameObjectType::ENEMY)
+          return;
 
-    float dist_sq = glm::distance2(position, enemy->getPosition());
-    if (dist_sq < radius_sq) {
-      candidates.push_back({enemy, dist_sq});
-    }
-  }
+        Enemy *enemy = static_cast<Enemy *>(object);
 
-  std::sort(candidates.begin(), candidates.end(),
-            [](const EnemyDist &a, const EnemyDist &b) {
-              return a.dist_sq < b.dist_sq;
-            });
+        m_closestEnemies.emplace_back(enemy,
+                                      glm::distance2(position,
+                                                     object->getPosition()));
+      });
 
-  std::vector<Enemy *> result;
-  uint32_t count = std::min(static_cast<uint32_t>(candidates.size()), top_k);
-  result.reserve(count);
-  for (uint32_t i = 0; i < count; ++i) {
-    result.push_back(candidates[i].enemy);
-  }
-
-  return result;
+  std::ranges::sort(m_closestEnemies, {}, &EnemyDist::dist_sq);
 }
 
 void Game::_updateEnemies() {
@@ -663,8 +673,7 @@ void Game::_registerGameplayEventHandlers() {
       m_currentLevel++;
       m_state = GameState::LEVEL_UP;
 
-      // TODO: Generate 3 random upgrades and present them to the user
-      // For now, it will just pause the game. We will add UI later.
+      // TODO: Generate 3 random upgrades
     }
 
     m_eventBus.emit(DespawnRequestedEvent{.object = evt.exp});
