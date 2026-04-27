@@ -12,8 +12,8 @@ private:
 
 public:
   // Base stats: 1.5s cooldown, 10 damage, 2.0 range, 0.2s sweep duration
-  SolidWoodBlock(float cooldown = 1.5f, float damage = 10.0f,
-                 float range = 2.0f, float sweep_duration = 0.2f)
+  SolidWoodBlock(float cooldown = 1.5f, float damage = 25.0f,
+                 float range = 2.0f, float sweep_duration = 0.5f)
       : Weapon(cooldown, damage), m_meleeRange(range),
         m_lifetime(sweep_duration) {}
 

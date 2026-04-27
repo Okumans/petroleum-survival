@@ -1,10 +1,12 @@
 #pragma once
 
 #include "scene/item.hpp"
+#include <functional>
 #include <glm/glm.hpp>
 #include <memory>
 
 class Enemy;
+struct ObjectHandle;
 
 class Player;
 class Item;
@@ -45,6 +47,7 @@ struct ParticleSpawnRequestedEvent {
 };
 struct ProjectileSpawnRequestedEvent {
   std::shared_ptr<Projectile> projectile;
+  std::function<void(const ObjectHandle &)> onSpawned = nullptr;
 };
 
 struct EnemyDamageRequestedEvent {

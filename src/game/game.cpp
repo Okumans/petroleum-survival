@@ -17,12 +17,12 @@
 #include "scene/item.hpp"
 #include "scene/player.hpp"
 #include "scene/projectile.hpp"
+#include "scene/weapons/gas_nozzle.hpp"
 #include "scene/weapons/magic_wand.hpp"
-#include "scene/weapons/wood_block.hpp"
-#include "scene/weapons/water_bottle.hpp"
 #include "scene/weapons/orbiting_cones.hpp"
 #include "scene/weapons/toxic_fumes.hpp"
-#include "scene/weapons/gas_nozzle.hpp"
+#include "scene/weapons/water_bottle.hpp"
+#include "scene/weapons/wood_block.hpp"
 #include "utility/random.hpp"
 
 #include <cstdlib>
@@ -270,7 +270,7 @@ void Game::render(double delta_time) {
   // Render particles on top of forward pass models
   m_particleSystem.render(forwardCtx);
 
-  if (false && m_debugAABB) {
+  if (m_debugAABB) {
     RenderContext debug_ctx = {
         .shader = pbr_shader,
         .camera = m_camera,
@@ -328,26 +328,26 @@ void Game::_setupPlayer() {
   m_mapManager.registerObject(
       player_handle, m_player.ensureInitialized()->getPosition(), false);
 
-  // auto magic_wand = std::make_shared<MagicWand>();
-  // magic_wand->setContext(
-  //     [this](const GameEvents::ProjectileSpawnRequestedEvent &evt) {
-  //       m_eventBus.emit(evt);
-  //     });
-  // magic_wand->setTargetingContext(
-  //     [this](float range, uint32_t k,
-  //            ProjectileWeapon::EnemyCallback callback) {
-  //       for (auto &ed : getClosestEnemies(range, k)) {
-  //         callback(ed.enemy);
-  //       }
-  //     });
+  auto magic_wand = std::make_shared<MagicWand>();
+  magic_wand->setContext(
+      [this](const GameEvents::ProjectileSpawnRequestedEvent &evt) {
+        m_eventBus.emit(evt);
+      });
+  magic_wand->setTargetingContext(
+      [this](float range, uint32_t k,
+             ProjectileWeapon::EnemyCallback callback) {
+        for (auto &ed : getClosestEnemies(range, k)) {
+          callback(ed.enemy);
+        }
+      });
 
-  // magic_wand->setStats(&m_statManager);
-  // m_player.ensureInitialized()->addWeapon(magic_wand);
+  magic_wand->setStats(&m_statManager);
+  m_player.ensureInitialized()->addWeapon(magic_wand);
 
-  // auto wood_block = std::make_shared<SolidWoodBlock>();
-  // wood_block->setStats(&m_statManager);
-  // wood_block->setContext([this](const auto &evt) { m_eventBus.emit(evt); });
-  // m_player.ensureInitialized()->addWeapon(wood_block);
+  auto wood_block = std::make_shared<SolidWoodBlock>();
+  wood_block->setStats(&m_statManager);
+  wood_block->setContext([this](const auto &evt) { m_eventBus.emit(evt); });
+  m_player.ensureInitialized()->addWeapon(wood_block);
 
   // Water Bottle Weapon
   auto water_bottle = std::make_shared<WaterBottle>();
@@ -367,6 +367,14 @@ void Game::_setupPlayer() {
         for (auto &ed : getClosestEnemies(range, k)) {
           callback(ed.enemy);
         }
+      });
+  orbiting_cones->setProjectileResolver(
+      [this](const ObjectHandle &handle) -> Projectile * {
+        GameObject *obj = m_objects.get(handle);
+        if (!obj || obj->getObjectType() != GameObjectType::PLAYER_PROJECTILE) {
+          return nullptr;
+        }
+        return static_cast<Projectile *>(obj);
       });
   orbiting_cones->setStats(&m_statManager);
   m_player.ensureInitialized()->addWeapon(orbiting_cones);
@@ -563,9 +571,9 @@ void Game::_runCollisionPass() {
       if (proj->collidesWith(*enemy)) {
         glm::vec3 velocity = proj->getVelocity();
         float velocity_len = glm::length(velocity);
-        glm::vec3 knockback_dir =
-            (velocity_len < 0.001f) ? glm::vec3(0.0f, 0.0f, 1.0f)
-                                    : glm::normalize(velocity);
+        glm::vec3 knockback_dir = (velocity_len < 0.001f)
+                                      ? glm::vec3(0.0f, 0.0f, 1.0f)
+                                      : glm::normalize(velocity);
 
         m_eventBus.emit(EnemyDamageRequestedEvent{
             .enemy = enemy,
@@ -745,15 +753,15 @@ void Game::_registerGameplayEventHandlers() {
           return;
 
         bool wasDead = evt.enemy->isDead();
-        evt.enemy->takeDamage(evt.amount, evt.isCritical, evt.knockbackDirection,
-                              evt.knockbackStrength);
+        evt.enemy->takeDamage(evt.amount, evt.isCritical,
+                              evt.knockbackDirection, evt.knockbackStrength);
 
         glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
                             Random::randFloat(-0.5f, 0.5f),
                             Random::randFloat(-0.5f, 0.5f)};
 
-        m_damageTextManager.addText(evt.enemy->getPosition() + offset, evt.amount,
-                                    evt.isCritical);
+        m_damageTextManager.addText(evt.enemy->getPosition() + offset,
+                                    evt.amount, evt.isCritical);
 
         m_eventBus.emit(ParticleSpawnRequestedEvent{.position = evt.hitPosition,
                                                     .effectId = evt.hitEffect});
@@ -770,6 +778,10 @@ void Game::_registerGameplayEventHandlers() {
         auto [object, handle] =
             m_objects.emplaceWithHandle<Projectile>(*evt.projectile);
         m_mapManager.registerObject(handle, object.getPosition(), false);
+
+        if (evt.onSpawned) {
+          evt.onSpawned(handle);
+        }
       });
 
   m_eventBus.subscribe<ParticleSpawnRequestedEvent>(

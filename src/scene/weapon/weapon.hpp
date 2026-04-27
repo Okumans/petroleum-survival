@@ -16,7 +16,7 @@ protected:
 
   std::function<void(const GameEvents::ProjectileSpawnRequestedEvent &)>
       m_spawnProjectile;
-    std::function<void(const GameEvents::EnemyDamageRequestedEvent &)>
+  std::function<void(const GameEvents::EnemyDamageRequestedEvent &)>
       m_requestEnemyDamage;
 
 public:
