@@ -1,6 +1,6 @@
 #pragma once
 
-#include "resource/model_manager.hpp"
+#include "scene/game_factories.hpp"
 #include "scene/enemy/enemy.hpp"
 #include "scene/projectile.hpp"
 #include "scene/weapon/projectile_weapon.hpp"
@@ -49,23 +49,19 @@ public:
 
     glm::vec3 velocity = glm::normalize(toTarget) * m_projectileSpeed;
 
-    // TODO: consider using a factory based system for creating projectiles
-    // instead.
-    std::shared_ptr<Model> model = ModelManager::copy(ModelName::SPHERE);
-    model->setEmissionColor(glm::vec3(2.0f, 20.0f, 40.0f) * 0.5f);
-
-    std::shared_ptr<Projectile> proj =
-        std::make_shared<Projectile>(model,
-                                     spawnPos,
-                                     velocity,
-                                     getDamage(),
-                                     m_projectileLifetime,
-                                     [](Projectile &p, double dt) {
-                                       p.translate(p.getVelocity() *
-                                                   static_cast<float>(dt));
-                                     });
-
-    proj->setScale(glm::vec3(0.2f));
+    std::shared_ptr<Projectile> proj = std::make_shared<Projectile>(
+        GameFactories::getProjectile().create([&](Projectile &p) {
+          p.setPosition(spawnPos);
+          p.setVelocity(velocity);
+          p.setDamage(getDamage());
+          p.setLifetime(m_projectileLifetime);
+          p.setUpdateLogic([](Projectile &p, double dt) {
+            p.translate(p.getVelocity() * static_cast<float>(dt));
+          });
+          p.setScale(glm::vec3(0.2f));
+          // Sphere color
+          p.copyModel()->setEmissionColor(glm::vec3(2.0f, 20.0f, 40.0f) * 0.5f);
+        }));
 
     m_spawnProjectile(
         GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});

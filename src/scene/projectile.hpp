@@ -42,4 +42,11 @@ public:
 
   [[nodiscard]] float getDamage() const { return m_damage; }
   [[nodiscard]] glm::vec3 getVelocity() const { return m_velocity; }
+
+  void setVelocity(const glm::vec3 &velocity) { m_velocity = velocity; }
+  void setDamage(float damage) { m_damage = damage; }
+  void setLifetime(float lifetime) { m_lifetime = lifetime; }
+  void setUpdateLogic(std::function<void(Projectile &, double)> logic) {
+    m_behaviorCallback = logic;
+  }
 };

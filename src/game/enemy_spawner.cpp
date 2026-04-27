@@ -4,14 +4,9 @@
 #include "scene/game_object_factory.hpp"
 #include "utility/random.hpp"
 
-// We need access to createEnemyFactory, which is in game.cpp.
-// We can move it to game.hpp or just re-implement/call a Game method.
-// For now, let's declare it as extern if it's not static.
-#include "resource/model_manager.hpp"
-#include "scene/enemy/car_enemy.hpp"
-#include "scene/enemy/humanoid_enemy.hpp"
+#include "scene/game_factories.hpp"
 
-extern GameObjectFactory<HumanoidEnemy> createEnemyFactory();
+// We need access to createEnemyFactory, which is in game.cpp.
 
 void EnemySpawner::init(Game *game) { m_game = game; }
 
@@ -55,25 +50,21 @@ void EnemySpawner::spawnEnemy(glm::vec3 position, float healthMultiplier) {
                              ModelName::CAR_MONSTER_TRUCK};
 
     int randIdx = Random::randInt(0, 6);
-    CarEnemy enemy_clone(ModelManager::copy(carModels[randIdx]));
-
-    enemy_clone.setScale(0.8f);
-    enemy_clone.moveWithAnimation(position);
+    const auto &factory = GameFactories::getCar(carModels[randIdx]);
 
     auto [enemy, enemy_handle] =
-        m_game->getObjects().emplaceWithHandle<CarEnemy>(
-            std::move(enemy_clone));
+        m_game->getObjects().createWithHandle<CarEnemy>(
+            factory, [&](CarEnemy &car) { car.moveWithAnimation(position); });
+
     m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
                                            false);
   } else {
-    static GameObjectFactory<HumanoidEnemy> factory = createEnemyFactory();
-
-    HumanoidEnemy enemy_clone =
-        factory.create([&](HumanoidEnemy &enemy) { enemy.move(position); });
+    const auto &factory = GameFactories::getHumanoidEnemy();
 
     auto [enemy, enemy_handle] =
-        m_game->getObjects().emplaceWithHandle<HumanoidEnemy>(
-            std::move(enemy_clone));
+        m_game->getObjects().createWithHandle<HumanoidEnemy>(
+            factory, [&](HumanoidEnemy &enemy) { enemy.move(position); });
+
     m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
                                            false);
   }

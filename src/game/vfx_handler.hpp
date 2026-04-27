@@ -3,9 +3,9 @@
 #include "game/game_events.hpp"
 #include "game/map_manager.hpp"
 #include "graphics/particle_system.hpp"
-#include "resource/model_manager.hpp"
 #include "scene/enemy/enemy.hpp"
 #include "scene/exp.hpp"
+#include "scene/game_factories.hpp"
 #include "scene/game_object_manager.hpp"
 #include "utility/event_bus.hpp"
 #include "utility/random.hpp"
@@ -57,12 +57,12 @@ public:
     glm::vec3 spawnPos = enemy->getHitboxAABB().getCenter();
     spawnPos += Random::randVec3(-0.5f, 0.5f);
 
-    Exp exp_clone(ModelManager::copy(ModelName::MONEY_20),
-                  enemy->getExpDropAmount(), spawnPos);
-    exp_clone.setScale(1.0f); // Money models might need different scale
-    exp_clone.setEmissionColor(glm::vec3({0.0f, 0.0f, 0.0f})); // Money shouldn't glow maybe?
+    auto [exp, exp_handle] =
+        m_objects.createWithHandle<Exp>(GameFactories::getExp(), [&](Exp &e) {
+          e.setPosition(spawnPos);
+          e.setAmount(enemy->getExpDropAmount());
+        });
 
-    auto [exp, exp_handle] = m_objects.emplaceWithHandle<Exp>(exp_clone);
     m_mapManager.registerObject(exp_handle, exp.getPosition(), true);
   }
 

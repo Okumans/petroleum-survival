@@ -15,6 +15,8 @@ enum class PlayerAnimation { IDLE, WALKING, RUNNING };
 class Player : public HumaniodEntity<Entity, PlayerAnimation> {
 private:
   std::vector<std::shared_ptr<Weapon>> m_weapons;
+  bool m_isRunning = false;
+  float m_currentSpeedMultiplier = 1.0f;
 
 public:
   Player(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
@@ -27,6 +29,8 @@ public:
   void addWeapon(std::shared_ptr<Weapon> weapon) {
     m_weapons.push_back(weapon);
   }
+
+  void setRunning(bool running) { m_isRunning = running; }
 
   [[nodiscard]] GameObjectType getObjectType() const override {
     return GameObjectType::PLAYER;
@@ -53,12 +57,33 @@ public:
     HumaniodEntity::_setupAnimationDuration();
   }
 
-  void moveWithAnimation(glm::vec3 vec) override {
-    HumaniodEntity::moveWithAnimation(vec);
+  void moveWithAnimation(glm::vec3 vec,
+                         float speed_multiplier = 1.0f) override {
+    (void)speed_multiplier;
+
+    if (glm::length(vec) < 0.001f)
+      return;
+
+    if (m_isRunning) {
+      _setAnimation(PlayerAnimation::RUNNING);
+    } else {
+      _setAnimation(PlayerAnimation::WALKING);
+    }
+
+    m_locomotion.startMove(this->m_position, this->m_rotation, vec,
+                           m_currentSpeedMultiplier);
   }
 
   void update(double delta_time) override {
     Entity::update(delta_time);
+
+    // Smooth speed multiplier transition (exponential approach)
+    float targetMultiplier = m_isRunning ? 1.8f : 1.0f;
+    float k = 5.0f;
+
+    m_currentSpeedMultiplier +=
+        (targetMultiplier - m_currentSpeedMultiplier) *
+        (1.0f - std::exp(-k * static_cast<float>(delta_time)));
 
     for (auto &w : m_weapons) {
       AABB box = getHitboxAABB();

@@ -1,7 +1,6 @@
 #include "game.hpp"
 
 #include "game/map_manager.hpp"
-#include "graphics/animation_state.hpp"
 #include "graphics/debug_drawer.hpp"
 #include "graphics/ibl_generator.hpp"
 #include "graphics/render_context.hpp"
@@ -12,9 +11,8 @@
 #include "resource/shader_manager.hpp"
 #include "resource/texture_manager.hpp"
 #include "scene/enemy/enemy.hpp"
-#include "scene/enemy/humanoid_enemy.hpp"
+#include "scene/game_factories.hpp"
 #include "scene/game_object.hpp"
-#include "scene/game_object_factory.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
 #include "scene/player.hpp"
@@ -97,15 +95,6 @@ bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
 }
 } // namespace
 
-GameObjectFactory<HumanoidEnemy> createEnemyFactory() {
-  return GameObjectFactory<HumanoidEnemy>::create_factory([]() {
-    HumanoidEnemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
-    enemy.setScale(60.0f);
-    enemy.setup();
-    return enemy;
-  });
-}
-
 Game::Game()
     : m_camera(glm::vec3(0.0f, 10.0f, 10.0f)),
       m_cameraController(m_camera, glm::vec3(0.0f, 12.0f, 10.0f)),
@@ -115,7 +104,7 @@ Game::Game()
       m_state(GameState::LOADING) {
   m_camera.setPitch(-45.0f);
   m_camera.setYaw(-90.0f);
-  m_camera.zoom = 45.0f;
+  m_camera.zoom = 60.0f;
 }
 
 Game::~Game() {}
@@ -158,7 +147,8 @@ void Game::setup() {
   reset();
 }
 
-void Game::movePlayer(glm::vec3 vec) {
+void Game::movePlayer(glm::vec3 vec, bool isRunning) {
+  m_player.ensureInitialized()->setRunning(isRunning);
   m_player.ensureInitialized()->moveWithAnimation(vec);
 
   GameObject *player_object = m_player.ensureInitialized();
@@ -309,6 +299,7 @@ void Game::_initializeManagers() {
   ShaderManager::ensureInit();
   ModelManager::ensureInit();
   AnimationManager::ensureInit();
+  GameFactories::init();
 
   m_mapManager.setup();
 }
@@ -324,12 +315,10 @@ void Game::_resetGameplayState() {
 }
 
 void Game::_setupPlayer() {
-  auto [player_object, player_handle] = m_objects.emplaceWithHandle<Player>(
-      ModelManager::copy(ModelName::KASANE_TETO));
+  auto [player_object, player_handle] =
+      m_objects.createWithHandle<Player>(GameFactories::getPlayer());
 
   m_player.init(&player_object);
-  m_player.ensureInitialized()->setScale(20.0f);
-  m_player.ensureInitialized()->setup();
 
   snapObjectToGround(m_mapManager, *m_player.ensureInitialized());
   m_mapManager.registerObject(

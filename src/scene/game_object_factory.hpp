@@ -1,3 +1,5 @@
+#pragma once
+
 #include "scene/game_object.hpp"
 
 #include <concepts>
@@ -20,7 +22,9 @@ public:
       : m_prototype(std::move(object_template)) {}
 
   template <typename... Args>
-  [[nodiscard]] static auto create_factory(Args &&...args) {
+    requires(sizeof...(Args) != 1 ||
+             !(std::invocable<Args> && ...)) [[nodiscard]] static auto
+  create_factory(Args &&...args) {
     return GameObjectFactory(T(std::forward<Args>(args)...));
   }
 

@@ -14,6 +14,8 @@ public:
     m_lifetime = 0.0f;
   }
 
+  void setMaxLifetime(float lifetime) { m_maxLifetime = lifetime; }
+
   void update(double delta_time) override {
     // Melee projectiles just sit in the position they were spawned
     // (or relative to player, but for now we just let them move very slightly

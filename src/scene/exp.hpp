@@ -37,6 +37,7 @@ public:
     }
 
     [[nodiscard]] float getAmount() const { return m_amount; }
+    void setAmount(float amount) { m_amount = amount; }
     
     void setCollected() {
         m_isCollected = true;

@@ -3,8 +3,8 @@
 #include "scene/enemy/enemy.hpp"
 #include "scene/humanoid_locomotion_state.hpp"
 #include "utility/utility.hpp"
-#include <glm/glm.hpp>
 #include <algorithm>
+#include <glm/glm.hpp>
 
 class CarEnemy : public Enemy {
 private:
@@ -17,16 +17,18 @@ private:
 
 public:
   CarEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
-           glm::vec3 scale = glm::vec3(1.0f), glm::vec3 rotation = glm::vec3(0.0f))
+           glm::vec3 scale = glm::vec3(1.0f),
+           glm::vec3 rotation = glm::vec3(0.0f))
       : Enemy(model, pos, scale, rotation) {
-    m_baseSpeed = 1.5f;
+    m_iFrameState.duration = 0.0f;
+    m_baseSpeed = 0.15f;
     m_knockbackResist = 0.7f;
     m_baseDamage = 20.0f;
     m_health = 300.0f;
     m_maxHealth = 300.0f;
-    
+
     // Cars move with momentum and smooth rotation
-    m_locomotion.setup(0.05f, 0.5f); 
+    m_locomotion.setup(0.05f, 0.5f);
   }
 
   void setPlayerPosition(const glm::vec3 &player_position) override {
@@ -68,7 +70,8 @@ public:
     // We handle translation via m_knockbackVelocity for smooth movement
     Enemy::takeDamage(amount, isCritical, glm::vec3(0.0f), 0.0f);
 
-    if (this->m_isDead || this->m_removeRequested || !m_iFrameState.isFinished())
+    if (this->m_isDead || this->m_removeRequested ||
+        !m_iFrameState.isFinished())
       return;
 
     if (knockbackForce > 0.0f && this->m_knockbackResist < 1.0f) {
@@ -82,7 +85,7 @@ private:
   void _updateChaseState() {
     float distance_to_player = glm::distance(m_position, m_playerPosition);
     if (distance_to_player > m_aggroRange) {
-        return;
+      return;
     }
 
     glm::vec3 to_player = m_playerPosition - m_position;

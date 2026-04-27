@@ -130,13 +130,27 @@ void App::_setupResources() {
   ;
 
   // Models
-  m_loadingTasks.push_back({"Model: Car Sedan", loadModel(ModelName::CAR_SEDAN, ASSETS_PATH "/objects/car/sedan.glb")});
-  m_loadingTasks.push_back({"Model: Car Muscle", loadModel(ModelName::CAR_MUSCLE, ASSETS_PATH "/objects/car/muscle.glb")});
-  m_loadingTasks.push_back({"Model: Car Pickup", loadModel(ModelName::CAR_PICKUP, ASSETS_PATH "/objects/car/pickup.glb")});
-  m_loadingTasks.push_back({"Model: Car Taxi", loadModel(ModelName::CAR_TAXI, ASSETS_PATH "/objects/car/taxi.glb")});
-  m_loadingTasks.push_back({"Model: Car Police", loadModel(ModelName::CAR_POLICE, ASSETS_PATH "/objects/car/policeSedan.glb")});
-  m_loadingTasks.push_back({"Model: Car Bus", loadModel(ModelName::CAR_BUS, ASSETS_PATH "/objects/car/bus.glb")});
-  m_loadingTasks.push_back({"Model: Car Monster Truck", loadModel(ModelName::CAR_MONSTER_TRUCK, ASSETS_PATH "/objects/car/monsterTruck.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Sedan",
+       loadModel(ModelName::CAR_SEDAN, ASSETS_PATH "/objects/car/sedan.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Muscle", loadModel(ModelName::CAR_MUSCLE,
+                                      ASSETS_PATH "/objects/car/muscle.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Pickup", loadModel(ModelName::CAR_PICKUP,
+                                      ASSETS_PATH "/objects/car/pickup.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Taxi",
+       loadModel(ModelName::CAR_TAXI, ASSETS_PATH "/objects/car/taxi.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Police", loadModel(ModelName::CAR_POLICE, ASSETS_PATH
+                                      "/objects/car/policeSedan.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Car Bus",
+       loadModel(ModelName::CAR_BUS, ASSETS_PATH "/objects/car/bus.glb")});
+  m_loadingTasks.push_back({"Model: Car Monster Truck",
+                            loadModel(ModelName::CAR_MONSTER_TRUCK, ASSETS_PATH
+                                      "/objects/car/monsterTruck.glb")});
 
   m_loadingTasks.push_back(
       {"Model: Kasane Teto", loadModel(ModelName::KASANE_TETO, ASSETS_PATH
@@ -145,44 +159,38 @@ void App::_setupResources() {
       {"Model: Hatsune Miku", loadModel(ModelName::HATSUNE_MIKU, ASSETS_PATH
                                         "/objects/hatsune_miku/miku.dae")});
   m_loadingTasks.push_back(
-      {"Model: Money 20",
-       loadModel(ModelName::MONEY_20,
-                 ASSETS_PATH "/objects/items/money/20_baht.glb")});
+      {"Model: Money 20", loadModel(ModelName::MONEY_20, ASSETS_PATH
+                                    "/objects/items/money/20_baht.glb")});
   m_loadingTasks.push_back(
-      {"Model: Money 100",
-       loadModel(ModelName::MONEY_100,
-                 ASSETS_PATH "/objects/items/money/100_baht.glb")});
+      {"Model: Money 100", loadModel(ModelName::MONEY_100, ASSETS_PATH
+                                     "/objects/items/money/100_baht.glb")});
   m_loadingTasks.push_back(
-      {"Model: Money 500",
-       loadModel(ModelName::MONEY_500,
-                 ASSETS_PATH "/objects/items/money/500_baht.glb")});
+      {"Model: Money 500", loadModel(ModelName::MONEY_500, ASSETS_PATH
+                                     "/objects/items/money/500_baht.glb")});
   m_loadingTasks.push_back(
-      {"Model: Money 1000",
-       loadModel(ModelName::MONEY_1000,
-                 ASSETS_PATH "/objects/items/money/1000_baht.glb")});
+      {"Model: Money 1000", loadModel(ModelName::MONEY_1000, ASSETS_PATH
+                                      "/objects/items/money/1000_baht.glb")});
   m_loadingTasks.push_back(
       {"Model: Car Sedan",
        loadModel(ModelName::CAR_SEDAN, ASSETS_PATH "/objects/car/sedan.glb")});
   m_loadingTasks.push_back(
-      {"Model: Car Muscle",
-       loadModel(ModelName::CAR_MUSCLE, ASSETS_PATH "/objects/car/muscle.glb")});
+      {"Model: Car Muscle", loadModel(ModelName::CAR_MUSCLE,
+                                      ASSETS_PATH "/objects/car/muscle.glb")});
   m_loadingTasks.push_back(
-      {"Model: Car Pickup",
-       loadModel(ModelName::CAR_PICKUP, ASSETS_PATH "/objects/car/pickup.glb")});
+      {"Model: Car Pickup", loadModel(ModelName::CAR_PICKUP,
+                                      ASSETS_PATH "/objects/car/pickup.glb")});
   m_loadingTasks.push_back(
       {"Model: Car Taxi",
        loadModel(ModelName::CAR_TAXI, ASSETS_PATH "/objects/car/taxi.glb")});
   m_loadingTasks.push_back(
-      {"Model: Car Police",
-       loadModel(ModelName::CAR_POLICE,
-                 ASSETS_PATH "/objects/car/policeSedan.glb")});
+      {"Model: Car Police", loadModel(ModelName::CAR_POLICE, ASSETS_PATH
+                                      "/objects/car/policeSedan.glb")});
   m_loadingTasks.push_back(
       {"Model: Car Bus",
        loadModel(ModelName::CAR_BUS, ASSETS_PATH "/objects/car/bus.glb")});
-  m_loadingTasks.push_back(
-      {"Model: Car Monster Truck",
-       loadModel(ModelName::CAR_MONSTER_TRUCK,
-                 ASSETS_PATH "/objects/car/monsterTruck.glb")});
+  m_loadingTasks.push_back({"Model: Car Monster Truck",
+                            loadModel(ModelName::CAR_MONSTER_TRUCK, ASSETS_PATH
+                                      "/objects/car/monsterTruck.glb")});
   m_loadingTasks.push_back(
       {"Model: Sphere",
        loadModel(ModelName::SPHERE, ASSETS_PATH "/objects/sphere.obj")});
@@ -628,8 +636,11 @@ void App::_setupShaders() {
 void App::_handleProcessInput(double delta_time) {
   (void)delta_time;
 
-  const float step_amount = 0.8f;
+  const float step_amount = 1.0f;
   glm::vec3 direction(0.0f);
+
+  bool isRunning = glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                   glfwGetKey(m_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
 
   if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS ||
       glfwGetKey(m_window, GLFW_KEY_UP) == GLFW_PRESS) {
@@ -652,7 +663,7 @@ void App::_handleProcessInput(double delta_time) {
   }
 
   if (direction != glm::vec3(0.0f))
-    m_game.movePlayer(direction);
+    m_game.movePlayer(direction, isRunning);
 }
 
 void App::_handleKeyCallback(int key, int scancode, int action, int mods) {
@@ -668,6 +679,8 @@ void App::_handleKeyCallback(int key, int scancode, int action, int mods) {
       m_game.startGame();
       break;
     case GameState::PLAYING:
+      break;
+    case GameState::LEVEL_UP:
       break;
     case GameState::GAME_OVER:
       m_game.reset();

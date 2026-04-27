@@ -11,9 +11,7 @@
 #include "graphics/skybox.hpp"
 #include "map_manager.hpp"
 #include "scene/enemy/enemy.hpp"
-#include "scene/exp.hpp"
 #include "scene/game_object_manager.hpp"
-#include "scene/item.hpp"
 #include "scene/player.hpp"
 #include "ui/damage_text_manager.hpp"
 #include "utility/event_bus.hpp"
@@ -107,7 +105,7 @@ public:
 
   void startGame();
 
-  void movePlayer(glm::vec3 vec);
+  void movePlayer(glm::vec3 vec, bool isRunning);
 
   auto getClosestEnemies(float radius, uint32_t top_k) const;
 

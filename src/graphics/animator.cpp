@@ -49,6 +49,7 @@ void Animator::_calculatePose(Animation *animation, float animation_time,
 }
 
 void Animator::updateAnimation(float delta_time) {
+  delta_time *= m_speed;
   m_deltaTime = delta_time;
 
   if (m_currentAnimation == nullptr) {

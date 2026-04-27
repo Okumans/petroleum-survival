@@ -33,7 +33,8 @@ public:
 
   void startMove(const glm::vec3 &currentPosition,
                  const glm::vec3 &currentRotation,
-                 const glm::vec3 &targetOffset) {
+                 const glm::vec3 &targetOffset,
+                 float speedMultiplier = 1.0f) {
     float distance = glm::length(targetOffset);
     glm::vec3 new_target_pos = currentPosition + targetOffset;
     float target_yaw = glm::degrees(std::atan2(targetOffset.x, targetOffset.z));
@@ -42,10 +43,10 @@ public:
     float abs_yaw_delta = std::abs(yaw_delta);
 
     float position_duration =
-        std::max(m_minPositionDuration, distance * m_positionDurationPerUnit);
+        std::max(m_minPositionDuration, (distance * m_positionDurationPerUnit) / speedMultiplier);
     float rotate_duration =
         std::max(m_minRotateDuration,
-                 (abs_yaw_delta / 180.0f) * m_rotateDurationPer180Deg);
+                 ((abs_yaw_delta / 180.0f) * m_rotateDurationPer180Deg) / speedMultiplier);
 
     positionState.duration = position_duration;
     rotateState.duration = rotate_duration;

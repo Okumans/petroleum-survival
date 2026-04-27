@@ -1,6 +1,6 @@
 #pragma once
 
-#include "resource/model_manager.hpp"
+#include "scene/game_factories.hpp"
 #include "scene/weapon/weapon.hpp"
 #include "scene/weapons/melee_projectile.hpp"
 #include <glm/glm.hpp>
@@ -26,12 +26,13 @@ public:
     glm::vec3 spawnPos = playerPos + (playerForward * (m_meleeRange * 0.5f));
 
     std::shared_ptr<Projectile> proj = std::make_shared<MeleeProjectile>(
-        ModelManager::copy(ModelName::CUBE), spawnPos, playerForward,
-        0.0f, // 0 speed so it stays relative to the spawn area
-        getDamage(), m_lifetime);
-
-    // Make the cube wide to represent a sweep/block
-    proj->setScale(glm::vec3(m_meleeRange, 1.0f, m_meleeRange * 0.5f));
+        GameFactories::getMeleeProjectile().create([&](MeleeProjectile &p) {
+          p.setPosition(spawnPos);
+          p.setVelocity(playerForward * 0.0f); // stays relative
+          p.setDamage(getDamage());
+          p.setMaxLifetime(m_lifetime);
+          p.setScale(glm::vec3(m_meleeRange, 1.0f, m_meleeRange * 0.5f));
+        }));
 
     m_spawnProjectile(
         GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});

@@ -37,17 +37,17 @@ public:
       : BaseClass(model, pos, scale, rotation, defer_aabb_calculation) {}
 
   virtual void setup() = 0;
-  virtual void moveToWithAnimation(glm::vec3 target) {
-    moveWithAnimation(target - this->m_position);
+  virtual void moveToWithAnimation(glm::vec3 target, float speedMultiplier = 1.0f) {
+    moveWithAnimation(target - this->m_position, speedMultiplier);
   }
   virtual void moveTo(glm::vec3 target) { move(target - this->m_position); }
-  virtual void moveWithAnimation(glm::vec3 vec) {
+  virtual void moveWithAnimation(glm::vec3 vec, float speedMultiplier = 1.0f) {
     if (glm::length(vec) < 0.001f)
       return;
 
     _setAnimation(AnimationTypes::WALKING);
 
-    m_locomotion.startMove(this->m_position, this->m_rotation, vec);
+    m_locomotion.startMove(this->m_position, this->m_rotation, vec, speedMultiplier);
   }
 
   virtual void move(glm::vec3 vec) {

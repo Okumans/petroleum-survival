@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scene/game_object.hpp"
+#include "scene/game_object_factory.hpp"
 #include "utility/enum_map.hpp"
 
 #include <algorithm>
@@ -95,6 +96,39 @@ public:
   ObjectType &emplace(Args &&...args) {
     auto [object_ref, handle] =
         emplaceWithHandle<ObjectType>(std::forward<Args>(args)...);
+    (void)handle;
+    return object_ref;
+  }
+
+  template <typename ObjectType>
+    requires std::is_base_of_v<GameObject, ObjectType>
+  std::pair<ObjectType &, ObjectHandle>
+  createWithHandle(const GameObjectFactory<ObjectType> &factory) {
+    return emplaceWithHandle<ObjectType>(factory.create());
+  }
+
+  template <typename ObjectType>
+    requires std::is_base_of_v<GameObject, ObjectType>
+  std::pair<ObjectType &, ObjectHandle>
+  createWithHandle(const GameObjectFactory<ObjectType> &factory,
+                   std::invocable<ObjectType &> auto &&modifier) {
+    return emplaceWithHandle<ObjectType>(factory.create(modifier));
+  }
+
+  template <typename ObjectType>
+    requires std::is_base_of_v<GameObject, ObjectType>
+  ObjectType &create(const GameObjectFactory<ObjectType> &factory) {
+    auto [object_ref, handle] = createWithHandle<ObjectType>(factory);
+    (void)handle;
+    return object_ref;
+  }
+
+  template <typename ObjectType>
+    requires std::is_base_of_v<GameObject, ObjectType>
+  ObjectType &create(const GameObjectFactory<ObjectType> &factory,
+                     std::invocable<ObjectType &> auto &&modifier) {
+    auto [object_ref, handle] =
+        createWithHandle<ObjectType>(factory, modifier);
     (void)handle;
     return object_ref;
   }
