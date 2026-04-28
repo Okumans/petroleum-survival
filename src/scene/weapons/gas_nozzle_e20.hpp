@@ -10,15 +10,41 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
-class GasNozzle : public Weapon {
+class GasNozzleE20 : public Weapon {
 private:
   float m_coneRange = 5.5f;
   float m_coneHalfAngle = 35.0f;
   float m_tickInterval = 0.15f;
   AnimationState<void> m_tickCooldown{0.15f};
 
+protected:
+  [[nodiscard]] virtual GameEvents::ParticleEffectType getSprayEffect() const {
+    return GameEvents::ParticleEffectType::GAS_E20;
+  }
+
+  [[nodiscard]] virtual glm::vec3 getSprayForward() const {
+    return m_context.ensureInitialized()->getPlayerForward();
+  }
+
+  [[nodiscard]] bool hasLighterSynergy() const {
+    const Player *player = m_context.ensureInitialized()->getPlayer();
+    if (!player) {
+      return false;
+    }
+    for (const auto &w : player->getWeapons()) {
+      if (w && w->getId() == "lighter") {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  [[nodiscard]] float getSynergyDamageMultiplier() const {
+    return hasLighterSynergy() ? 1.35f : 1.0f;
+  }
+
 public:
-  GasNozzle() : Weapon(0.05f, 12.0f) {
+  GasNozzleE20() : Weapon(0.05f, 12.0f) {
     m_id = "gas_nozzle_e20";
     m_name = "Gas Nozzle (E20)";
     m_description = "Sprays E20 gas in a cone.";
@@ -86,8 +112,7 @@ public:
 
     if (m_tickCooldown.isFinished()) {
       glm::vec3 player_pos = m_context.ensureInitialized()->getPlayerPosition();
-      glm::vec3 player_forward =
-          m_context.ensureInitialized()->getPlayerForward();
+      glm::vec3 player_forward = getSprayForward();
 
       glm::vec3 normalized_forward = player_forward;
       float forward_length = glm::length(normalized_forward);
@@ -106,12 +131,17 @@ public:
       float cone_half_angle = m_coneHalfAngle + area_multiplier * 2.0f;
       float cos_cone_angle = std::cos(glm::radians(cone_half_angle));
 
+      const bool lighterSynergy = hasLighterSynergy();
+      const auto sprayEffect = lighterSynergy
+                                   ? GameEvents::ParticleEffectType::FLAME
+                                   : getSprayEffect();
+
       emitParticle(GameEvents::ParticleSpawnRequestedEvent{
           .position = player_pos + (normalized_forward * 1.0f),
           .direction = normalized_forward,
           .length = cone_range,
           .thickness = glm::max(0.18f, cone_range * 0.12f),
-          .effectId = GameEvents::ParticleEffectType::FLAME,
+          .effectId = sprayEffect,
       });
 
       m_context.ensureInitialized()->findTargets(
@@ -144,12 +174,13 @@ public:
             float falloff = 1.0f - (dist_to_enemy / cone_range);
             emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
                 .enemy = enemy,
-                .amount = getDamage() * (0.65f + falloff * 0.35f),
+                .amount = getDamage() * getSynergyDamageMultiplier() *
+                          (0.65f + falloff * 0.35f),
                 .isCritical = false,
                 .knockbackDirection = normalized_forward,
                 .knockbackStrength = 0.5f + falloff * 0.35f,
                 .hitPosition = closest_on_enemy + glm::vec3(0.0f, 1.0f, 0.0f),
-                .hitEffect = GameEvents::ParticleEffectType::FLAME,
+                .hitEffect = sprayEffect,
             });
           });
 

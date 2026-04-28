@@ -10,9 +10,11 @@
 
 class WaterBottle : public ProjectileWeapon {
 private:
+  float m_range = 15.0f;
   float m_projectileSpeed = 12.0f;
   float m_projectileLifetime = 2.5f;
-  float m_spreadAngleDegrees = 10.0f; // Random spread: ±10 degrees
+  float m_gravity = -18.0f;          // Units/s^2
+  float m_spreadAngleDegrees = 8.0f; // Small horizontal variance
 
 public:
   WaterBottle() : ProjectileWeapon(1.5f, 0.1f, 15.0f, 1) {
@@ -77,23 +79,45 @@ public:
 
   bool fire() override {
     glm::vec3 player_pos = m_context.ensureInitialized()->getPlayerPosition();
-    glm::vec3 player_forward =
-        m_context.ensureInitialized()->getPlayerForward();
 
-    float random_yaw_deg =
-        Random::randFloat(-m_spreadAngleDegrees, m_spreadAngleDegrees);
-    float random_yaw_rad = glm::radians(random_yaw_deg);
+    auto targets = acquireTargets(m_range, getAmount());
+    if (targets.empty()) {
+      return false;
+    }
 
-    glm::vec3 spread_forward;
-    spread_forward.x = player_forward.x * std::cos(random_yaw_rad) -
-                       player_forward.z * std::sin(random_yaw_rad);
-    spread_forward.y = player_forward.y;
-    spread_forward.z = player_forward.x * std::sin(random_yaw_rad) +
-                       player_forward.z * std::cos(random_yaw_rad);
-    spread_forward = glm::normalize(spread_forward);
+    Enemy *target =
+        targets[Random::randInt(0, static_cast<int>(targets.size()) - 1)];
 
-    glm::vec3 spawn_pos = player_pos + spread_forward * 0.5f;
-    glm::vec3 velocity = spread_forward * m_projectileSpeed;
+    AABB target_box = target->getHitboxAABB();
+    float center_y_offset = (target_box.max.y + target_box.min.y) * 0.5f;
+    glm::vec3 target_pos =
+        target->getPosition() + glm::vec3(0.0f, center_y_offset, 0.0f);
+
+    glm::vec3 to_target = target_pos - player_pos;
+    float dist = glm::length(to_target);
+    if (dist < 0.001f) {
+      return false;
+    }
+
+    glm::vec3 dir = to_target / dist;
+    float random_yaw_rad = glm::radians(
+        Random::randFloat(-m_spreadAngleDegrees, m_spreadAngleDegrees));
+
+    // Cleaner GLM rotation around the Y-axis
+    glm::vec3 spread_dir =
+        glm::angleAxis(random_yaw_rad, glm::vec3(0.0f, 1.0f, 0.0f)) * dir;
+
+    glm::vec3 spawn_pos = player_pos + spread_dir * 0.6f;
+
+    float up_boost = glm::clamp(dist * 0.18f, 2.0f, 6.0f);
+    glm::vec3 velocity =
+        (spread_dir * m_projectileSpeed) + glm::vec3(0.0f, up_boost, 0.0f);
+
+    const glm::vec3 spin_deg_per_sec =
+        glm::vec3(Random::randFloat(-90.0f, 90.0f),
+                  Random::randFloat(-1080.0f, 1080.0f), // Y-axis: Yaw spin
+                  Random::randFloat(-720.0f, 720.0f)    // Z-axis: Roll spin
+        );
 
     std::shared_ptr<Projectile> proj = std::make_shared<Projectile>(
         GameFactories::getProjectile(ModelName::WATER_BOTTLE)
@@ -102,15 +126,27 @@ public:
               p.setVelocity(velocity);
               p.setDamage(getDamage());
               p.setLifetime(m_projectileLifetime);
-              p.setUpdateLogic([](Projectile &p, double dt) {
-                p.translate(p.getVelocity() * static_cast<float>(dt));
-              });
+              p.setRotation(glm::vec3(Random::randFloat(0.0f, 360.0f),
+                                      Random::randFloat(0.0f, 360.0f),
+                                      Random::randFloat(0.0f, 360.0f)));
               p.setScale(glm::vec3(5.0f));
+
+              // Lighter capture payload to avoid heap allocations
+              p.setUpdateLogic([spin = spin_deg_per_sec,
+                                gravity = m_gravity](Projectile &p, double dt) {
+                float fdt = static_cast<float>(dt);
+                glm::vec3 vel = p.getVelocity();
+
+                vel.y += gravity * fdt;
+                p.setVelocity(vel);
+
+                p.translate(vel * fdt);
+                p.rotate(spin * fdt);
+              });
             }));
 
     emitProjectile(
         GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});
-
     return true;
   }
 };

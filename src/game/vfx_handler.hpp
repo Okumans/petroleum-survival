@@ -45,6 +45,12 @@ public:
     case ParticleEffectType::FLAME:
       _emitFlameBurst(evt);
       break;
+    case ParticleEffectType::GAS_E20:
+      _emitGasSpray(evt, false);
+      break;
+    case ParticleEffectType::GAS_E95:
+      _emitGasSpray(evt, true);
+      break;
     case ParticleEffectType::FUME_IDLE:
       _emitFumeCloud(evt, false);
       break;
@@ -198,6 +204,82 @@ private:
            .stretchVariation = 0.2f,
            .lifeTime = isCoreParticle ? Random::randFloat(0.15f, 0.3f)
                                       : Random::randFloat(0.25f, 0.45f)});
+    }
+  }
+
+  void _emitGasSpray(const GameEvents::ParticleSpawnRequestedEvent &evt,
+                    bool darker) {
+    glm::vec3 direction = evt.direction;
+
+    if (glm::length(direction) < 0.001f) {
+      direction = glm::vec3(0.0f, 0.0f, 1.0f);
+    } else {
+      direction = glm::normalize(direction);
+    }
+
+    float thickness = glm::max(0.12f, evt.thickness);
+
+    glm::vec3 basePosition = evt.position - (direction * 0.1f);
+
+    float coreSize = glm::max(0.06f, thickness * 0.55f);
+    float mistSize = glm::max(0.025f, thickness * 0.22f);
+
+    // Brown-ish gas palette, with E95 being darker.
+    glm::vec3 base = darker ? glm::vec3(0.28f, 0.16f, 0.06f)
+                            : glm::vec3(0.42f, 0.26f, 0.10f);
+
+    for (int i = 0; i < 70; ++i) {
+      bool isCoreParticle = (i % 5) != 0;
+
+      float travel = Random::randFloat(0.0f, 1.0f) * evt.length;
+      float spreadFactor = 0.06f + (travel * 0.28f);
+
+      glm::vec3 lateral = Random::randVec3(-spreadFactor, spreadFactor);
+      lateral -= direction * glm::dot(lateral, direction);
+
+      glm::vec3 spawnPos = basePosition + lateral + direction * travel;
+
+      float thrust = isCoreParticle ? Random::randFloat(1.2f, 2.8f)
+                                    : Random::randFloat(2.5f, 4.5f);
+      float buoyancy = isCoreParticle ? Random::randFloat(0.05f, 0.25f)
+                                      : Random::randFloat(0.15f, 0.45f);
+
+      glm::vec3 particleVelocity = direction * thrust +
+                                   lateral * Random::randFloat(0.8f, 2.2f) +
+                                   glm::vec3(0.0f, buoyancy, 0.0f);
+
+      float tint = isCoreParticle ? Random::randFloat(0.85f, 1.15f)
+                                  : Random::randFloat(0.7f, 1.05f);
+
+      glm::vec3 beginRgb =
+          glm::clamp(base * tint +
+                         glm::vec3(Random::randFloat(-0.03f, 0.03f),
+                                   Random::randFloat(-0.02f, 0.02f),
+                                   Random::randFloat(-0.015f, 0.015f)),
+                     0.0f, 1.0f);
+
+      glm::vec4 colorBegin = glm::vec4(beginRgb, isCoreParticle ? 0.85f : 0.65f);
+      glm::vec4 colorEnd =
+          glm::vec4(beginRgb * (darker ? 0.35f : 0.45f), 0.0f);
+
+      float pSizeBegin = isCoreParticle ? coreSize : mistSize;
+      float pSizeEnd = isCoreParticle ? (coreSize * Random::randFloat(2.0f, 3.2f))
+                                      : 0.0f;
+
+      m_particleSystem.emit(
+          {.position = spawnPos,
+           .velocity = particleVelocity,
+           .velocityVariation = glm::vec3(0.55f, 0.35f, 0.55f),
+           .direction = direction,
+           .colorBegin = colorBegin,
+           .colorEnd = colorEnd,
+           .sizeBegin = pSizeBegin,
+           .sizeEnd = pSizeEnd,
+           .sizeVariation = pSizeBegin * 0.35f,
+           .stretch = 1.35f,
+           .stretchVariation = 0.25f,
+           .lifeTime = isCoreParticle ? Random::randFloat(0.18f, 0.35f)
+                                      : Random::randFloat(0.28f, 0.55f)});
     }
   }
 

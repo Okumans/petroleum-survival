@@ -18,7 +18,7 @@
 #include "scene/item.hpp"
 #include "scene/player.hpp"
 #include "scene/projectile.hpp"
-#include "scene/weapons/gas_nozzle.hpp"
+#include "scene/weapons/gas_nozzle_e20.hpp"
 #include "scene/weapons/magic_wand.hpp"
 #include "scene/weapons/orbiting_cones.hpp"
 #include "scene/weapons/toxic_fumes.hpp"
@@ -484,7 +484,7 @@ void Game::_setupPlayer() {
   // m_player.ensureInitialized()->addWeapon(toxic_fumes);
 
   // Gas Nozzle Weapon
-  auto gas_nozzle = std::make_shared<GasNozzle>();
+  auto gas_nozzle = std::make_shared<GasNozzleE20>();
   gas_nozzle->setContext(this);
   // m_player.ensureInitialized()->addWeapon(gas_nozzle);
 }

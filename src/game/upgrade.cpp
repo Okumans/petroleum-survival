@@ -3,7 +3,7 @@
 #include "game/game.hpp"
 #include "scene/player.hpp"
 #include "scene/weapon/weapon.hpp"
-#include "scene/weapons/gas_nozzle.hpp"
+#include "scene/weapons/gas_nozzle_e20.hpp"
 #include "scene/weapons/gas_nozzle_e95.hpp"
 #include "scene/weapons/lighter.hpp"
 #include "scene/weapons/magic_wand.hpp"
@@ -26,7 +26,7 @@ struct WeaponOffer {
 const std::vector<WeaponOffer> &weaponPool() {
   static const std::vector<WeaponOffer> pool = {
       {[]() { return std::make_shared<ToxicFumes>(); }},
-      {[]() { return std::make_shared<GasNozzle>(); }},
+      {[]() { return std::make_shared<GasNozzleE20>(); }},
       {[]() { return std::make_shared<GasNozzleE95>(); }},
       {[]() { return std::make_shared<Lighter>(); }},
       {[]() { return std::make_shared<MagicWand>(); }},
