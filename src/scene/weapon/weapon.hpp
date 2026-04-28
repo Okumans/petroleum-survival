@@ -43,11 +43,17 @@ public:
                StatType::MIGHT);
   }
 
+  virtual bool canCrit() const { return true; }
+
   virtual CalculatedDamage calculateDamage() const {
     return calculateDamage(getDamage());
   }
 
   virtual CalculatedDamage calculateDamage(float baseDmg) const {
+    if (!canCrit()) {
+      return {baseDmg, false};
+    }
+
     auto stats = m_context.ensureInitialized()->getStats();
     float critChance = stats->getMultiplier(StatType::CRIT_CHANCE);
     float critMult = stats->getMultiplier(StatType::CRIT_MULTIPLIER);

@@ -11,15 +11,22 @@ DamageTextManager::~DamageTextManager() {
 
 void DamageTextManager::init(const BitmapFont *font) { m_font = font; }
 
-void DamageTextManager::addText(glm::vec3 pos, float damage, bool isCritical) {
+void DamageTextManager::addText(glm::vec3 pos, float damage, bool isCritical, bool isPlayerDamage) {
   DamageText dt;
   dt.worldPos = pos + glm::vec3(0.0f, 1.0f, 0.0f); // offset slightly up
   dt.text = std::to_string(static_cast<int>(damage));
-  dt.color = isCritical ? glm::vec4(1.0f, 0.8f, 0.0f, 1.0f) // Gold for crits
-                        : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+  
+  if (isPlayerDamage) {
+    dt.color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); // Red for player damage
+  } else {
+    dt.color = isCritical ? glm::vec4(1.0f, 0.8f, 0.0f, 1.0f) // Gold for crits
+                          : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+  }
+
   dt.maxLifetime = isCritical ? 1.0f : 0.8f;
   dt.lifetime = 0.0f;
   dt.scale = isCritical ? 0.35f : 0.15f;
+  dt.isPlayerDamage = isPlayerDamage;
   m_texts.push_back(dt);
 }
 
@@ -70,37 +77,67 @@ void DamageTextManager::render(const Camera &camera, int windowWidth,
     glm::vec2 screenPos =
         glm::vec2((ndcPos.x + 1.0f) / 2.0f, (1.0f - ndcPos.y) / 2.0f);
 
-    float x = screenPos.x * virtualWidth;
-    float y = screenPos.y * virtualHeight;
+    float startX = screenPos.x * virtualWidth;
+    float startY = screenPos.y * virtualHeight;
 
-    float alpha = 1.0f - (dt.lifetime / dt.maxLifetime);
-    glm::vec4 color = dt.color;
-    color.a *= alpha;
-    shader.setVec4("u_color", color);
-
-    // Center text
-    float textWidth = 0.0f;
-    for (char c : dt.text) {
-      textWidth += m_font->getCharacter(c).advance * dt.scale;
+    float t = dt.lifetime / dt.maxLifetime;
+    
+    // Animation phases
+    float alpha = 1.0f;
+    float currentScale = dt.scale;
+    
+    // Quick fade in and scale up (0% - 20%)
+    if (t < 0.2f) {
+      float p = t / 0.2f;
+      alpha = p;
+      currentScale = dt.scale * glm::mix(0.5f, 1.3f, p);
+    } 
+    // Scale back down (20% - 40%)
+    else if (t < 0.4f) {
+      float p = (t - 0.2f) / 0.2f;
+      currentScale = dt.scale * glm::mix(1.3f, 1.0f, p);
     }
-    x -= textWidth / 2.0f;
-
-    for (char c : dt.text) {
-      const Character &ch = m_font->getCharacter(c);
-      float w = ch.size.x * dt.scale;
-      float h = ch.size.y * dt.scale;
-
-      glm::mat4 model = glm::mat4(1.0f);
-      model = glm::translate(model, glm::vec3(x, y, 0.0f));
-      model = glm::scale(model, glm::vec3(w, h, 1.0f));
-
-      shader.setMat4("u_model", model);
-      shader.setVec2("u_uv_min", ch.uvMin);
-      shader.setVec2("u_uv_max", ch.uvMax);
-
-      glDrawArrays(GL_TRIANGLES, 0, 6);
-      x += ch.advance * dt.scale;
+    // Fade out (60% - 100%)
+    else if (t > 0.6f) {
+      float p = (t - 0.6f) / 0.4f;
+      alpha = 1.0f - p;
     }
+
+    auto drawString = [&](float x, float y, const glm::vec4& color) {
+        shader.setVec4("u_color", color);
+        float textWidth = 0.0f;
+        for (char c : dt.text) {
+          textWidth += m_font->getCharacter(c).advance * currentScale;
+        }
+        float cursorX = x - textWidth / 2.0f;
+
+        for (char c : dt.text) {
+          const Character &ch = m_font->getCharacter(c);
+          float w = ch.size.x * currentScale;
+          float h = ch.size.y * currentScale;
+
+          glm::mat4 model = glm::mat4(1.0f);
+          model = glm::translate(model, glm::vec3(cursorX, y, 0.0f));
+          model = glm::scale(model, glm::vec3(w, h, 1.0f));
+
+          shader.setMat4("u_model", model);
+          shader.setVec2("u_uv_min", ch.uvMin);
+          shader.setVec2("u_uv_max", ch.uvMax);
+
+          glDrawArrays(GL_TRIANGLES, 0, 6);
+          cursorX += ch.advance * currentScale;
+        }
+    };
+
+    // Draw border (dark shadow)
+    glm::vec4 borderColor = glm::vec4(0.0f, 0.0f, 0.0f, alpha * 0.8f);
+    float offset = 0.05f;
+    drawString(startX + offset, startY + offset, borderColor);
+
+    // Draw main text
+    glm::vec4 mainColor = dt.color;
+    mainColor.a *= alpha;
+    drawString(startX, startY, mainColor);
   }
 
   shader.setVec2("u_uv_min", glm::vec2(0.0f, 0.0f));

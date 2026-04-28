@@ -14,8 +14,8 @@ class GasNozzleE20 : public Weapon {
 private:
   float m_coneRange = 5.5f;
   float m_coneHalfAngle = 35.0f;
-  float m_tickInterval = 0.15f;
-  AnimationState<void> m_tickCooldown{0.15f};
+  float m_tickInterval = 0.3f;
+  AnimationState<void> m_tickCooldown{0.3f};
 
 protected:
   [[nodiscard]] virtual GameEvents::ParticleEffectType getSprayEffect() const {
@@ -47,13 +47,15 @@ protected:
   }
 
 public:
-  GasNozzleE20() : Weapon(0.05f, 12.0f) {
+  GasNozzleE20() : Weapon(0.05f, 4.0f) {
     m_id = "gas_nozzle_e20";
     m_name = "Gas Nozzle (E20)";
     m_description = "Sprays E20 gas in a cone.";
     m_iconName = "icon_e20_gas_nozzle";
     m_maxLevel = 8;
   }
+
+  virtual bool canCrit() const override { return false; }
 
   std::string getLevelDescription(uint32_t level) const override {
     switch (level) {

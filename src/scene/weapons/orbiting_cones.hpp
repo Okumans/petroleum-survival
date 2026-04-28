@@ -40,6 +40,8 @@ public:
     m_maxLevel = 8;
   }
 
+  virtual bool canCrit() const override { return false; }
+
   std::string getLevelDescription(uint32_t level) const override {
     switch (level) {
     case 1:

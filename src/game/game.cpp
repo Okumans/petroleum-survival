@@ -643,14 +643,10 @@ void Game::_runCollisionPass() {
 
     Enemy *enemy = static_cast<Enemy *>(object);
     if (enemy->collidesWith(*m_player.ensureInitialized())) {
-      bool isCrit = Random::randChance(enemy->getCritProbability());
-      float amount = isCrit ? enemy->getBaseDamage() * enemy->getCritMultiplier()
-                            : enemy->getBaseDamage();
-
       m_eventBus.emit(PlayerDamageRequestedEvent{
           .enemy = enemy,
-          .amount = amount,
-          .isCritical = isCrit,
+          .amount = enemy->getBaseDamage(),
+          .isCritical = false,
           .knockbackDirection =
               glm::normalize(m_player.ensureInitialized()->getPosition() -
                              enemy->getPosition()),
@@ -894,7 +890,7 @@ void Game::_registerGameplayEventHandlers() {
 
         m_damageTextManager.addText(
             m_player.ensureInitialized()->getPosition() + offset, evt.amount,
-            evt.isCritical);
+            false, true);
 
         m_eventBus.emit(ParticleSpawnRequestedEvent{
             .position = m_player.ensureInitialized()->getPosition() +

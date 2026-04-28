@@ -14,6 +14,7 @@ struct DamageText {
   float maxLifetime = 1.0f;
   glm::vec4 color;
   float scale = 0.15f;
+  bool isPlayerDamage = false;
 };
 
 class DamageTextManager {
@@ -29,7 +30,7 @@ public:
   ~DamageTextManager();
 
   void init(const BitmapFont *font);
-  void addText(glm::vec3 pos, float damage, bool isCritical);
+  void addText(glm::vec3 pos, float damage, bool isCritical, bool isPlayerDamage = false);
   void update(float dt);
 
   void render(const Camera &camera, int windowWidth, int windowHeight);

@@ -15,7 +15,7 @@ private:
   AnimationState<void> m_attackPulseTimer{0.15f};
 
 public:
-  ToxicFumes() : Weapon(0.8f, 15.0f) {
+  ToxicFumes() : Weapon(0.8f, 8.0f) {
     m_id = "toxic_fumes";
     m_name = "Toxic Fumes";
     m_description = "Emits toxic fumes in an aura.";
@@ -23,6 +23,8 @@ public:
     m_maxLevel = 8;
     m_visualPulseTimer.startAnimation();
   }
+
+  virtual bool canCrit() const override { return false; }
 
   std::string getLevelDescription(uint32_t level) const override {
     switch (level) {
