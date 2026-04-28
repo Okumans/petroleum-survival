@@ -25,7 +25,8 @@ enum class GameObjectType {
   WEAK_CAR_ENEMY,
   STANDARD_CAR_ENEMY,
   ARMORED_CAR_ENEMY,
-  BOSS_CAR_ENEMY
+  BOSS_CAR_ENEMY,
+  STATIC_PROP
 };
 
 class GameObject {

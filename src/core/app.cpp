@@ -205,6 +205,21 @@ void App::_setupResources() {
       {"Model: Traffic Cone",
        loadModel(ModelName::TRAFFIC_CONE,
                  ASSETS_PATH "/objects/traffic_cone/traffic_cone.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Tree 1",
+       loadModel(ModelName::TREE_1, ASSETS_PATH "/objects/tree/tree_1.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Tree 2",
+       loadModel(ModelName::TREE_2, ASSETS_PATH "/objects/tree/tree_2.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Bush 1",
+       loadModel(ModelName::BUSH_1, ASSETS_PATH "/objects/tree/bush_1.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Bush 2",
+       loadModel(ModelName::BUSH_2, ASSETS_PATH "/objects/tree/bush_2.glb")});
+  m_loadingTasks.push_back(
+      {"Model: Rock 1",
+       loadModel(ModelName::ROCK_1, ASSETS_PATH "/objects/rock/rock_1.glb")});
 
   // Animations
   m_loadingTasks.push_back({"Animation: Kasane Teto Idle",

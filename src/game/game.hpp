@@ -12,6 +12,7 @@
 #include "map_manager.hpp"
 #include "scene/enemy/enemy.hpp"
 #include "scene/game_object_manager.hpp"
+#include "scene/map_population_system.hpp"
 #include "scene/player.hpp"
 #include "ui/damage_text_manager.hpp"
 #include "utility/event_bus.hpp"
@@ -200,6 +201,7 @@ private:
   void _spawnInitialEnemies();
   void _spawnInitialExp();
   void _setupEnvironment();
+  void _populateMap();
 
   void _registerGameplayEventHandlers();
   void _updateCamera(double delta_time);

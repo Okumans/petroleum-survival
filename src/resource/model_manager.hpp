@@ -25,6 +25,11 @@ enum class ModelName {
   CUBE,
   WATER_BOTTLE,
   TRAFFIC_CONE,
+  TREE_1,
+  TREE_2,
+  BUSH_1,
+  BUSH_2,
+  ROCK_1,
 };
 
 class ModelManager {

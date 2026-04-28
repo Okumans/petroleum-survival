@@ -260,6 +260,7 @@ void Game::setup() {
   _resetGameplayState();
   _setupPlayer();
   _setupEnvironment();
+  _populateMap();
   reset();
 }
 
@@ -518,6 +519,11 @@ void Game::_setupEnvironment() {
   LightingManager::add({.type = LightType::POINT,
                         .position = glm::vec3(0.0f, -5.0f, 0.0f),
                         .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
+}
+
+void Game::_populateMap() {
+  MapPopulationSystem populationSystem;
+  populationSystem.populateMap(m_objects, m_mapManager);
 }
 
 void Game::reset() {
