@@ -729,7 +729,9 @@ void Game::_calculateClosestEnemies(glm::vec3 position) {
         Enemy *enemy = static_cast<Enemy *>(object);
 
         m_closestEnemies.emplace_back(
-            enemy, glm::distance2(position, object->getPosition()));
+            enemy,
+            glm::distance2(position,
+                           object->getHitboxAABB().getClosestPoint(position)));
       });
 
   std::ranges::sort(m_closestEnemies, {}, &EnemyDist::dist_sq);

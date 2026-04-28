@@ -11,7 +11,8 @@ private:
   float m_auraRadius = 3.5f;
   float m_knockbackStrength = 2.5f;
 
-  AnimationState<void> m_visualPulseTimer{0.25f};
+  AnimationState<void> m_visualPulseTimer{0.1f};
+  AnimationState<void> m_attackPulseTimer{0.15f};
 
 public:
   ToxicFumes() : Weapon(0.8f, 15.0f) { m_visualPulseTimer.startAnimation(); }
@@ -25,6 +26,7 @@ public:
   bool fire() override {
     auto &ctx = *m_context.ensureInitialized();
     glm::vec3 player_pos = ctx.getPlayerPosition();
+
     float radius = getRadius();
     float damage = getDamage();
 
@@ -52,7 +54,7 @@ public:
           .knockbackDirection = knockback_dir,
           .knockbackStrength = calculated_knockback,
           .hitPosition = enemy_pos + glm::vec3(0.0f, 1.0f, 0.0f),
-          .hitEffect = GameEvents::ParticleEffectType::FUME,
+          .hitEffect = GameEvents::ParticleEffectType::FUME_IDLE,
       });
     });
 
@@ -61,19 +63,36 @@ public:
 
   void update(double delta_time) override {
     auto &ctx = *m_context.ensureInitialized();
-    float dt = static_cast<float>(delta_time);
 
-    m_visualPulseTimer.updateTimer(dt);
+    m_visualPulseTimer.updateTimer(static_cast<float>(delta_time));
+    m_coolDownState.updateTimer(static_cast<float>(delta_time));
+
+    if (m_attackPulseTimer.isFinished()) {
+      m_coolDownState.reset();
+    }
+
     if (m_visualPulseTimer.isFinished()) {
       emitParticle(GameEvents::ParticleSpawnRequestedEvent{
           .position = ctx.getPlayerPosition(),
           .length = getRadius(),
           .thickness = 0.6f,
-          .effectId = GameEvents::ParticleEffectType::FUME,
+          .effectId = GameEvents::ParticleEffectType::FUME_IDLE,
       });
       m_visualPulseTimer.reset();
     }
 
-    Weapon::update(delta_time);
+    if (m_coolDownState.isFinished()) {
+      if (fire()) {
+        m_coolDownState.reset();
+        m_coolDownState.duration = getCooldown();
+
+        emitParticle(GameEvents::ParticleSpawnRequestedEvent{
+            .position = ctx.getPlayerPosition(),
+            .length = getRadius(),
+            .thickness = 0.6f,
+            .effectId = GameEvents::ParticleEffectType::FUME_ATTACk,
+        });
+      }
+    }
   }
 };

@@ -45,8 +45,11 @@ public:
     case ParticleEffectType::FLAME:
       _emitFlameBurst(evt);
       break;
-    case ParticleEffectType::FUME:
-      _emitFumeCloud(evt);
+    case ParticleEffectType::FUME_IDLE:
+      _emitFumeCloud(evt, false);
+      break;
+    case ParticleEffectType::FUME_ATTACk:
+      _emitFumeCloud(evt, true);
       break;
     }
   }
@@ -198,47 +201,65 @@ private:
     }
   }
 
-  void _emitFumeCloud(const GameEvents::ParticleSpawnRequestedEvent &evt) {
+  void _emitFumeCloud(const GameEvents::ParticleSpawnRequestedEvent &evt,
+                      bool is_attack) {
     float true_radius = glm::max(0.5f, evt.length);
     float thickness = glm::max(0.4f, evt.thickness);
 
-    // Number of particles to form a smooth ring
-    int ring_particle_count = 48;
+    const int ring_particle_count = is_attack ? 128 : 96;
+    const float shockwave_lifetime = 0.2f;
+    const float base_particle_size =
+        is_attack ? thickness * 1.8f : thickness * 1.2f;
 
-    // Visual pulse timer is 0.25s, so we make lifetime 0.2s for rapid shockwave effect
-    float shockwave_lifetime = 0.2f;
+    float spawn_radius =
+        glm::max(0.1f, true_radius - (base_particle_size * 0.45f));
 
-    // Maximum visual size of the particle at the end of its life
-    float max_particle_size = thickness * 2.0f;
-
-    // Pull the spawn radius inward so the outer edge hits the true radius at max size
-    float spawn_radius = true_radius - (max_particle_size * 0.45f);
-    if (spawn_radius < 0.1f) {
-      spawn_radius = 0.1f;
-    }
-
-    // 1. Outer Ring: Expanding shockwave
+    // 1. Outer Ring
     for (int i = 0; i < ring_particle_count; ++i) {
       float angle = (glm::two_pi<float>() / ring_particle_count) * i;
+      float jittered_radius = spawn_radius + Random::randFloat(-0.3f, 0.3f);
 
-      glm::vec3 ring_offset(std::cos(angle) * spawn_radius, 0.05f,
-                            std::sin(angle) * spawn_radius);
+      glm::vec3 ring_offset(std::cos(angle) * jittered_radius,
+                            Random::randFloat(0.0f, 0.15f),
+                            std::sin(angle) * jittered_radius);
 
-      // Pulse effect comes entirely from particle expansion (sizeBegin -> sizeEnd)
-      m_particleSystem.emit({.position = evt.position + ring_offset,
-                             .velocity = glm::vec3(0.0f),
-                             .velocityVariation = glm::vec3(0.0f),
-                             .colorBegin = glm::vec4(0.9f, 0.95f, 0.8f, 0.5f),
-                             .colorEnd = glm::vec4(1.0f, 1.0f, 0.9f, 0.0f),
-                             .sizeBegin = 0.1f, // Start tiny
-                             .sizeEnd = max_particle_size,
-                             .sizeVariation = 0.0f,
-                             .stretch = 1.0f,
-                             .lifeTime = shockwave_lifetime});
+      // Attack: Saturated, opaque toxic green. Passive: Pale, translucent
+      // yellow-green.
+      glm::vec4 color_begin =
+          is_attack
+              ? glm::vec4(Random::randFloat(0.1f, 0.3f), // R: Low
+                          Random::randFloat(0.8f, 1.0f), // G: Very High
+                          Random::randFloat(0.1f, 0.2f), // B: Low
+                          Random::randFloat(0.6f, 0.8f)) // Alpha: More opaque
+              : glm::vec4(0.8f + Random::randFloat(0.0f, 0.2f),
+                          0.9f + Random::randFloat(0.0f, 0.1f),
+                          0.7f + Random::randFloat(0.0f, 0.2f),
+                          Random::randFloat(0.4f, 0.6f));
+
+      // Attack fades to deep green, passive fades to pale yellow
+      glm::vec4 color_end = is_attack ? glm::vec4(0.1f, 0.8f, 0.1f, 0.0f)
+                                      : glm::vec4(1.0f, 1.0f, 0.9f, 0.0f);
+
+      // Attack particles burst upwards slightly faster
+      glm::vec3 velocity =
+          is_attack ? glm::vec3(0.0f, Random::randFloat(0.2f, 0.6f), 0.0f)
+                    : glm::vec3(0.0f, Random::randFloat(0.0f, 0.2f), 0.0f);
+
+      m_particleSystem.emit(
+          {.position = evt.position + ring_offset,
+           .velocity = velocity,
+           .velocityVariation = glm::vec3(0.15f),
+           .colorBegin = color_begin,
+           .colorEnd = color_end,
+           .sizeBegin = Random::randFloat(0.05f, 0.2f),
+           .sizeEnd = base_particle_size * Random::randFloat(0.6f, 1.4f),
+           .sizeVariation = Random::randFloat(0.0f, 0.2f),
+           .stretch = 1.0f,
+           .lifeTime = shockwave_lifetime * Random::randFloat(0.7f, 1.3f)});
     }
 
-    // 2. Inner Flash: Central filler loop
-    int filler_count = 12;
+    // 2. Inner Flash / Filler
+    int filler_count = is_attack ? 24 : 12; // Double the inner flash on attack
     for (int i = 0; i < filler_count; ++i) {
       float inner_radius = Random::randFloat(0.0f, spawn_radius * 0.7f);
       float inner_angle = Random::randFloat(0.0f, glm::two_pi<float>());
@@ -246,14 +267,22 @@ private:
       glm::vec3 inner_offset(std::cos(inner_angle) * inner_radius, 0.1f,
                              std::sin(inner_angle) * inner_radius);
 
+      // Bright neon green flash for attack, pale flash for passive
+      glm::vec4 inner_color_begin = is_attack
+                                        ? glm::vec4(0.4f, 1.0f, 0.3f, 0.5f)
+                                        : glm::vec4(0.95f, 1.0f, 0.85f, 0.25f);
+
+      glm::vec4 inner_color_end = is_attack ? glm::vec4(0.2f, 0.9f, 0.2f, 0.0f)
+                                            : glm::vec4(1.0f, 1.0f, 1.0f, 0.0f);
+
       m_particleSystem.emit(
           {.position = evt.position + inner_offset,
-           .velocity = glm::vec3(0.0f, 0.1f, 0.0f),
+           .velocity = glm::vec3(0.0f, is_attack ? 0.3f : 0.1f, 0.0f),
            .velocityVariation = glm::vec3(0.05f),
-           .colorBegin = glm::vec4(0.95f, 1.0f, 0.85f, 0.25f),
-           .colorEnd = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f),
-           .sizeBegin = thickness * 1.0f,
-           .sizeEnd = thickness * 2.2f,
+           .colorBegin = inner_color_begin,
+           .colorEnd = inner_color_end,
+           .sizeBegin = thickness * (is_attack ? 1.5f : 1.0f),
+           .sizeEnd = thickness * (is_attack ? 3.0f : 2.2f),
            .stretch = 1.0f,
            .lifeTime = shockwave_lifetime * Random::randFloat(1.2f, 2.0f)});
     }
