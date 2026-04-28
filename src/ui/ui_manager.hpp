@@ -70,6 +70,19 @@ public:
   void draw(class Shader &shader) override;
 };
 
+class TextBoxElement : public UIBase {
+public:
+  std::string text;
+  const BitmapFont &font;
+  glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f};
+  float scale = 1.0f;
+
+public:
+  TextBoxElement(std::string name, UIHitbox box, std::string text,
+                 const BitmapFont &font, glm::vec4 color, float scale = 1.0f);
+  void draw(class Shader &shader) override;
+};
+
 class UIManager {
 private:
   std::vector<std::unique_ptr<UIBase>> m_elements;
@@ -94,6 +107,9 @@ public:
   void addTextElement(std::string name, UIHitbox box, std::string text,
                       const BitmapFont &font, glm::vec4 color,
                       float scale = 1.0f);
+  void addTextBoxElement(std::string name, UIHitbox box, std::string text,
+                         const BitmapFont &font, glm::vec4 color,
+                         float scale = 1.0f);
 
   UIBase *getElement(const std::string &name);
 

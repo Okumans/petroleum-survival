@@ -1,9 +1,10 @@
 #pragma once
 
 #include "graphics/animation_state.hpp"
+#include "scene/enemy/i_enemy_context.hpp"
 #include "scene/game_object.hpp"
+#include "utility/not_initialized.hpp"
 #include <algorithm>
-#include <print>
 #include <vector>
 
 struct ItemDrop {
@@ -29,6 +30,8 @@ protected:
 
   AnimationState<void> m_iFrameState;
   AnimationState<float> m_damageFlashState;
+
+  NotInitialized<IEnemyContext *> m_context;
 
 public:
   Entity(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
@@ -82,9 +85,11 @@ public:
     m_knockbackResist = std::clamp(resist, 0.0f, 1.0f);
   }
 
-  virtual void takeDamage(float amount, bool isCritical,
-                          glm::vec3 knockbackDir = glm::vec3(0.0f),
-                          float knockbackForce = 0.0f) {
+  void setContext(IEnemyContext *context) { m_context.init(context); }
+
+  virtual void takeDamage(float amount, bool is_critical,
+                          glm::vec3 knockback_dir = glm::vec3(0.0f),
+                          float knockback_force = 0.0f) {
     if (m_isDead || m_removeRequested || !m_iFrameState.isFinished())
       return;
 
@@ -93,11 +98,10 @@ public:
     m_damageFlashState.startAnimation(0.0f, 1.0f);
 
     // Apply knockback
-    if (knockbackForce > 0.0f && m_knockbackResist < 1.0f) {
-      float actualKnockback = knockbackForce * (1.0f - m_knockbackResist);
-      translate(knockbackDir * actualKnockback);
+    if (knockback_force > 0.0f && m_knockbackResist < 1.0f) {
+      float actual_knockback = knockback_force * (1.0f - m_knockbackResist);
+      translate(knockback_dir * actual_knockback);
     }
-    // TODO: Emit damage number event for UI
 
     if (m_health <= 0.0f) {
       m_health = 0.0f;

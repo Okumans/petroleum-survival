@@ -100,4 +100,13 @@ public:
   }
 
   void onDeath() override { m_isDead = true; }
+
+  // Get weapons for upgrade/upgrade application
+  [[nodiscard]] const std::vector<std::shared_ptr<Weapon>> &getWeapons() const {
+    return m_weapons;
+  }
+
+  [[nodiscard]] std::vector<std::shared_ptr<Weapon>> &getWeapons() {
+    return m_weapons;
+  }
 };

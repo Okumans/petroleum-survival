@@ -36,6 +36,16 @@ public:
                StatType::COOLDOWN);
   }
 
+  // Setters for upgrade system
+  void setBaseDamage(float damage) { m_baseDamage = damage; }
+  void setBaseCooldown(float cooldown) {
+    m_baseCooldown = cooldown;
+    m_coolDownState.duration = cooldown;
+  }
+
+  [[nodiscard]] float getBaseDamage() const { return m_baseDamage; }
+  [[nodiscard]] float getBaseCooldown() const { return m_baseCooldown; }
+
   virtual void update(double delta_time) {
     m_coolDownState.updateTimer(static_cast<float>(delta_time));
     if (m_coolDownState.isFinished()) {

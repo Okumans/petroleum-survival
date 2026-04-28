@@ -32,11 +32,12 @@
 #endif
 
 #include "game/enemy_spawner.hpp"
+#include "game/upgrade.hpp"
 #include "scene/weapon/i_weapon_context.hpp"
 
 enum class GameState { LOADING, START_MENU, PLAYING, LEVEL_UP, GAME_OVER };
 
-class Game : public IWeaponContext {
+class Game : public IWeaponContext, public IEnemyContext {
 public:
   struct EnemyDist {
     Enemy *enemy;
@@ -64,6 +65,10 @@ private:
   int m_currentExp = 0;
   int m_expToNextLevel = 10;
   int m_currentLevel = 1;
+
+  // Level-up system
+  std::vector<Upgrade> m_levelUpCandidates;
+  int m_levelUpSelection = -1;
 
   NotInitialized<Player *, "Player"> m_player;
 
@@ -105,6 +110,34 @@ public:
       m_state = GameState::PLAYING;
   }
 
+  void selectLevelUpOption(int index) {
+    if (index >= 0 && index < static_cast<int>(m_levelUpCandidates.size())) {
+      m_levelUpSelection = index;
+    }
+  }
+
+  void confirmLevelUpSelection() {
+    if (m_levelUpSelection >= 0 &&
+        m_levelUpSelection < static_cast<int>(m_levelUpCandidates.size())) {
+      m_levelUpCandidates[m_levelUpSelection].apply(*this);
+    }
+    m_levelUpSelection = -1;
+    m_levelUpCandidates.clear();
+    resumePlaying();
+  }
+
+  void skipLevelUp() {
+    m_levelUpSelection = -1;
+    m_levelUpCandidates.clear();
+    resumePlaying();
+  }
+
+  const std::vector<Upgrade> &getLevelUpCandidates() const {
+    return m_levelUpCandidates;
+  }
+
+  int getLevelUpSelection() const { return m_levelUpSelection; }
+
   void update(double delta_time);
   void render(double delta_time);
 
@@ -142,6 +175,9 @@ public:
   void emit(const GameEvents::EnemyDamageRequestedEvent &event) override {
     m_eventBus.emit(event);
   }
+  void emit(const GameEvents::PlayerDamageRequestedEvent &event) override {
+    m_eventBus.emit(event);
+  }
 
   void findTargets(float range, uint32_t k,
                    EnemyCallback callback) const override;
@@ -168,6 +204,5 @@ private:
   void _registerGameplayEventHandlers();
   void _updateCamera(double delta_time);
   inline void _runCollisionPass();
-  inline void _updateEnemies();
   inline void _syncObjectsToTerrain();
 };

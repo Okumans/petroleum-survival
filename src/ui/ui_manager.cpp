@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <algorithm>
+#include <sstream>
 
 // StaticElement
 StaticElement::StaticElement(std::string name, UIHitbox box, glm::vec4 color)
@@ -91,6 +92,100 @@ void TextElement::draw(Shader &shader) {
   shader.setVec2("u_uv_max", glm::vec2(1.0f, 1.0f));
 }
 
+// TextBoxElement
+TextBoxElement::TextBoxElement(std::string name, UIHitbox box, std::string text,
+                               const BitmapFont &font, glm::vec4 color,
+                               float scale)
+    : text(std::move(text)), font(font), color(color), scale(scale) {
+  this->name = std::move(name);
+  this->bounds = box;
+}
+
+void TextBoxElement::draw(Shader &shader) {
+  shader.setVec4("u_color", color);
+  shader.setBool("u_hasTexture", true);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, font.getTexID());
+  shader.setInt("u_icon", 0);
+
+  float current_y = bounds.y;
+  float line_height = font.getLineHeight() * scale;
+
+  auto draw_line = [&](const std::string &line, float x, float y) {
+    float draw_x = x;
+    for (char c : line) {
+      const Character &ch = font.getCharacter(c);
+      float w = ch.size.x * scale;
+      float h = ch.size.y * scale;
+
+      glm::mat4 model = glm::mat4(1.0f);
+      model = glm::translate(model, glm::vec3(draw_x, y, 0.0f));
+      model = glm::scale(model, glm::vec3(w, h, 1.0f));
+
+      shader.setMat4("u_model", model);
+      shader.setVec2("u_uv_min", ch.uvMin);
+      shader.setVec2("u_uv_max", ch.uvMax);
+
+      glDrawArrays(GL_TRIANGLES, 0, 6);
+      draw_x += ch.advance * scale;
+    }
+  };
+
+  std::istringstream text_stream(text);
+  std::string paragraph;
+  bool out_of_bounds = false;
+
+  // 1. First, split the text by explicit '\n' characters
+  while (std::getline(text_stream, paragraph) && !out_of_bounds) {
+    if (paragraph.empty()) {
+      // Handles consecutive newlines (e.g. \n\n)
+      current_y += line_height;
+      if (current_y + line_height > bounds.y + bounds.h)
+        break;
+      continue;
+    }
+
+    std::string current_line;
+    std::string word;
+    std::stringstream ss(paragraph);
+
+    // 2. Apply word-wrapping logic only to this specific paragraph
+    while (ss >> word) {
+      std::string test_line =
+          current_line.empty() ? word : current_line + " " + word;
+      float test_width = font.getTextWidth(test_line, scale);
+
+      if (test_width > bounds.w && !current_line.empty()) {
+        // Wrap to next line
+        if (current_y + line_height > bounds.y + bounds.h) {
+          out_of_bounds = true;
+          break; // Out of vertical bounds
+        }
+        draw_line(current_line, bounds.x, current_y);
+        current_y += line_height;
+        current_line = word;
+      } else {
+        current_line = test_line;
+      }
+    }
+
+    // Draw the remaining words of this paragraph
+    if (!out_of_bounds && !current_line.empty()) {
+      if (current_y + line_height <= bounds.y + bounds.h) {
+        draw_line(current_line, bounds.x, current_y);
+        current_y += line_height; // Advance Y for the next explicit \n
+      } else {
+        break; // Out of vertical bounds
+      }
+    }
+  }
+
+  // Reset UVs
+  shader.setVec2("u_uv_min", glm::vec2(0.0f, 0.0f));
+  shader.setVec2("u_uv_max", glm::vec2(1.0f, 1.0f));
+}
+
 // UIManager
 UIManager::UIManager() { _setup_buffers(); }
 
@@ -132,6 +227,13 @@ void UIManager::addTextElement(std::string name, UIHitbox box, std::string text,
                                const BitmapFont &font, glm::vec4 color,
                                float scale) {
   m_elements.push_back(std::make_unique<TextElement>(
+      std::move(name), box, std::move(text), font, color, scale));
+}
+
+void UIManager::addTextBoxElement(std::string name, UIHitbox box,
+                                  std::string text, const BitmapFont &font,
+                                  glm::vec4 color, float scale) {
+  m_elements.push_back(std::make_unique<TextBoxElement>(
       std::move(name), box, std::move(text), font, color, scale));
 }
 

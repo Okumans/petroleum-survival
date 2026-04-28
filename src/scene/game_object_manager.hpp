@@ -15,14 +15,6 @@
 #include <utility>
 #include <vector>
 
-struct ObjectHandle {
-  uint32_t id = 0;
-  uint32_t generation = 0;
-
-  [[nodiscard]] bool isValid() const { return id != 0; }
-  bool operator==(const ObjectHandle &) const = default;
-};
-
 class GameObjectManager {
 private:
   EnumMap<GameObjectType, std::vector<std::unique_ptr<GameObject>>> m_objects;

@@ -21,6 +21,7 @@ public:
   GLuint getTexID() const { return texID; }
   const Character &getCharacter(char c) const;
   float getTextWidth(const std::string &text, float scale) const;
+  float getLineHeight() const { return 8.0f; }
 
 private:
   GLuint texID = 0;

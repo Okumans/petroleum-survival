@@ -21,6 +21,10 @@ struct AABB {
            glm::all(glm::lessThanEqual(point, max));
   }
 
+  glm::vec3 getClosestPoint(const glm::vec3 &point) const {
+    return glm::clamp(point, min, max);
+  }
+
   void grow(const glm::vec3 &point) {
     min = glm::min(min, point);
     max = glm::max(max, point);

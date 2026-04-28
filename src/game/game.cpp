@@ -1,5 +1,6 @@
 #include "game.hpp"
 
+#include "game/game_events.hpp"
 #include "game/map_manager.hpp"
 #include "graphics/debug_drawer.hpp"
 #include "graphics/ibl_generator.hpp"
@@ -45,7 +46,7 @@ void snapObjectToGround(MapManager &map_manager, GameObject &object) {
 }
 
 bool isDynamicBlockingObject(const GameObject &object) {
-  return object.getObjectType() == GameObjectType::ENEMY;
+  return object.isEnemy();
 }
 
 bool resolveDynamicOverlap(MapManager &map_manager, GameObject &lhs,
@@ -560,8 +561,6 @@ void Game::update(double delta_time) {
 
   m_mapManager.update(m_player.ensureInitialized()->getPosition());
 
-  _updateEnemies();
-
   _calculateClosestEnemies(m_player.ensureInitialized()->getPosition());
 
   // Update can be expensive
@@ -612,27 +611,22 @@ void Game::_runCollisionPass() {
     }
   }
 
-  for (GameObject *enemy_obj :
-       m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
-    if (!enemy_obj || enemy_obj->isRemovalRequested())
+  for (GameObject *object : m_objects.getObjects()) {
+    if (!object || object->isRemovalRequested() || !object->isEnemy())
       continue;
 
-    Enemy *enemy = static_cast<Enemy *>(enemy_obj);
+    Enemy *enemy = static_cast<Enemy *>(object);
     if (enemy->collidesWith(*m_player.ensureInitialized())) {
-      m_player.ensureInitialized()->takeDamage(enemy->getBaseDamage(), false);
-
-      glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
-                          Random::randFloat(-0.5f, 0.5f),
-                          Random::randFloat(-0.5f, 0.5f)};
-
-      m_damageTextManager.addText(m_player.ensureInitialized()->getPosition() +
-                                      offset,
-                                  enemy->getBaseDamage(), false);
-
-      m_eventBus.emit(ParticleSpawnRequestedEvent{
-          .position = m_player.ensureInitialized()->getPosition() +
-                      glm::vec3(0.0f, 1.0f, 0.0f),
-          .effectId = ParticleEffectType::PLAYER_BLOOD});
+      m_eventBus.emit(PlayerDamageRequestedEvent{
+          .enemy = enemy,
+          .amount = enemy->getBaseDamage(),
+          .isCritical = false,
+          .knockbackDirection =
+              glm::normalize(m_player.ensureInitialized()->getPosition() -
+                             enemy->getPosition()),
+          .knockbackStrength = 1.0f,
+          .hitPosition = m_player.ensureInitialized()->getPosition(),
+          .hitEffect = ParticleEffectType::PLAYER_BLOOD});
     }
   }
 
@@ -643,12 +637,11 @@ void Game::_runCollisionPass() {
 
     Projectile *proj = static_cast<Projectile *>(proj_obj);
 
-    for (GameObject *enemy_obj :
-         m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
-      if (!enemy_obj || enemy_obj->isRemovalRequested())
+    for (GameObject *object : m_objects.getObjects()) {
+      if (!object || object->isRemovalRequested() || !object->isEnemy())
         continue;
 
-      Enemy *enemy = static_cast<Enemy *>(enemy_obj);
+      Enemy *enemy = static_cast<Enemy *>(object);
       if (proj->collidesWith(*enemy)) {
         glm::vec3 velocity = proj->getVelocity();
         float velocity_len = glm::length(velocity);
@@ -730,8 +723,7 @@ void Game::_calculateClosestEnemies(glm::vec3 position) {
       [this, &position](const ObjectHandle &handle) {
         GameObject *object = m_objects.get(handle);
 
-        if (!object || object->isRemovalRequested() ||
-            object->getObjectType() != GameObjectType::ENEMY)
+        if (!object || object->isRemovalRequested() || !object->isEnemy())
           return;
 
         Enemy *enemy = static_cast<Enemy *>(object);
@@ -741,17 +733,6 @@ void Game::_calculateClosestEnemies(glm::vec3 position) {
       });
 
   std::ranges::sort(m_closestEnemies, {}, &EnemyDist::dist_sq);
-}
-
-void Game::_updateEnemies() {
-  const glm::vec3 player_position = m_player.ensureInitialized()->getPosition();
-
-  for (GameObject *enemy :
-       m_objects.getObjectsWithType(GameObjectType::ENEMY)) {
-    assert(enemy);
-
-    static_cast<Enemy *>(enemy)->setPlayerPosition(player_position);
-  }
 }
 
 void Game::_syncObjectsToTerrain() {
@@ -808,7 +789,10 @@ void Game::_registerGameplayEventHandlers() {
       m_currentLevel++;
       m_state = GameState::LEVEL_UP;
 
-      // TODO: Generate 3 random upgrades
+      // Generate 3 random upgrade candidates
+      m_levelUpCandidates =
+          UpgradeGenerator::generateUpgrades(3, m_currentLevel);
+      m_levelUpSelection = -1;
     }
 
     m_eventBus.emit(DespawnRequestedEvent{.object = evt.exp});
@@ -854,6 +838,33 @@ void Game::_registerGameplayEventHandlers() {
         }
       });
 
+  m_eventBus.subscribe<PlayerDamageRequestedEvent>(
+      [this](const PlayerDamageRequestedEvent &evt) {
+        Player &player = *m_player.ensureInitialized();
+
+        bool wasDead = player.isDead();
+
+        player.takeDamage(evt.amount, evt.isCritical);
+
+        glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
+                            Random::randFloat(-0.5f, 0.5f),
+                            Random::randFloat(-0.5f, 0.5f)};
+
+        m_damageTextManager.addText(
+            m_player.ensureInitialized()->getPosition() + offset, evt.amount,
+            false);
+
+        m_eventBus.emit(ParticleSpawnRequestedEvent{
+            .position = m_player.ensureInitialized()->getPosition() +
+                        glm::vec3(0.0f, 1.0f, 0.0f),
+            .effectId = ParticleEffectType::PLAYER_BLOOD});
+
+        if (!wasDead) {
+          m_eventBus.emit(EnemyKilledEvent{
+              .enemy = evt.enemy, .killerPosition = evt.enemy->getPosition()});
+        }
+      });
+
   m_eventBus.subscribe<ProjectileSpawnRequestedEvent>(
       [this](const ProjectileSpawnRequestedEvent &evt) {
         auto [object, handle] =
@@ -872,5 +883,9 @@ void Game::_registerGameplayEventHandlers() {
 
   m_eventBus.subscribe<EnemyKilledEvent>([this](const EnemyKilledEvent &evt) {
     m_vfxHandler.handleEnemyKilled(evt);
+  });
+
+  m_eventBus.subscribe<PlayerKilledEvent>([this](const PlayerKilledEvent &evt) {
+    // TODO: do something
   });
 }

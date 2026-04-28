@@ -70,4 +70,19 @@ struct EnemyKilledEvent {
   glm::vec3 killerPosition;
 };
 
+struct PlayerDamageRequestedEvent {
+  Enemy *enemy; // enemy that cause damage, player is known
+  float amount;
+  bool isCritical;
+  glm::vec3 knockbackDirection;
+  float knockbackStrength;
+  glm::vec3 hitPosition;
+  ParticleEffectType hitEffect;
+};
+
+struct PlayerKilledEvent {
+  Enemy *enemy; // enemy that kill player, player is known
+  glm::vec3 killerPosition;
+};
+
 } // namespace GameEvents

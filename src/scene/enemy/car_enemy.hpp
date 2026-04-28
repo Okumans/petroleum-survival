@@ -9,8 +9,6 @@
 class CarEnemy : public Enemy {
 private:
   HumanoidLocomotionState m_locomotion;
-  glm::vec3 m_playerPosition = glm::vec3(0.0f);
-  bool m_hasPlayerPosition = false;
 
   float m_aggroRange = 25.0f;
   glm::vec3 m_knockbackVelocity = glm::vec3(0.0f);
@@ -31,11 +29,6 @@ public:
     m_locomotion.setup(0.05f, 0.5f);
   }
 
-  void setPlayerPosition(const glm::vec3 &player_position) override {
-    m_playerPosition = player_position;
-    m_hasPlayerPosition = true;
-  }
-
   void moveWithAnimation(glm::vec3 vec) {
     if (glm::length(vec) < 0.001f)
       return;
@@ -46,9 +39,7 @@ public:
   void update(double delta_time) override {
     Enemy::update(delta_time);
 
-    if (m_hasPlayerPosition) {
-      _updateChaseState();
-    }
+    _updateChaseState();
 
     _updateRotateAnimationState(delta_time);
     _updatePositionAnimationState(delta_time);
@@ -83,12 +74,16 @@ public:
 
 private:
   void _updateChaseState() {
-    float distance_to_player = glm::distance(m_position, m_playerPosition);
+
+    glm::vec3 player_position =
+        m_context.ensureInitialized()->getPlayerPosition();
+    float distance_to_player = glm::distance(m_position, player_position);
+
     if (distance_to_player > m_aggroRange) {
       return;
     }
 
-    glm::vec3 to_player = m_playerPosition - m_position;
+    glm::vec3 to_player = player_position - m_position;
     to_player.y = 0.0f;
 
     float distance = glm::length(to_player);
@@ -153,7 +148,8 @@ public:
 
 class StandardCarEnemy : public CarEnemy {
 public:
-  StandardCarEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f))
+  StandardCarEnemy(std::shared_ptr<Model> model,
+                   glm::vec3 pos = glm::vec3(0.0f))
       : CarEnemy(model, pos) {
     m_health = 250.0f;
     m_maxHealth = 250.0f;
@@ -195,4 +191,3 @@ public:
     return GameObjectType::BOSS_CAR_ENEMY;
   }
 };
-

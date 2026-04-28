@@ -6,6 +6,15 @@
 
 #include <glm/glm.hpp>
 #include <memory>
+#include <cstdint>
+
+struct ObjectHandle {
+  uint32_t id = 0;
+  uint32_t generation = 0;
+
+  [[nodiscard]] bool isValid() const { return id != 0; }
+  bool operator==(const ObjectHandle &) const = default;
+};
 
 enum class GameObjectType {
   PLAYER,
@@ -76,6 +85,15 @@ public:
   [[nodiscard]] bool isType(GameObjectType type) const {
     return getObjectType() == type;
   }
+
+  [[nodiscard]] static bool isEnemyType(GameObjectType type) {
+    return type == GameObjectType::ENEMY || type == GameObjectType::WEAK_CAR_ENEMY ||
+           type == GameObjectType::STANDARD_CAR_ENEMY ||
+           type == GameObjectType::ARMORED_CAR_ENEMY ||
+           type == GameObjectType::BOSS_CAR_ENEMY;
+  }
+
+  [[nodiscard]] bool isEnemy() const { return isEnemyType(getObjectType()); }
 
   [[nodiscard]] const Model &getModel() const { return *m_model; }
   [[nodiscard]] std::shared_ptr<Model> copyModel() const { return m_model; }

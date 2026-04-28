@@ -33,7 +33,7 @@ public:
         return;
       }
 
-      glm::vec3 enemy_pos = enemy->getPosition();
+      glm::vec3 enemy_pos = enemy->getHitboxAABB().getClosestPoint(player_pos);
       glm::vec3 to_enemy = enemy_pos - player_pos;
       float dist = glm::length(to_enemy);
 

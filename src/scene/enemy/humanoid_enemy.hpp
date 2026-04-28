@@ -15,10 +15,6 @@
 enum class EnemyAnimation { IDLE, WALKING };
 
 class HumanoidEnemy : public HumaniodEntity<Enemy, EnemyAnimation> {
-private:
-  glm::vec3 m_playerPosition = glm::vec3(0.0f);
-  bool m_hasPlayerPosition = false;
-
 public:
   HumanoidEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
                 glm::vec3 scale = glm::vec3(1.0f),
@@ -30,11 +26,6 @@ public:
     m_baseDamage = 5.0f;
     m_baseSpeed = 0.8f;
     m_knockbackResist = 0.0f;
-  }
-
-  void setPlayerPosition(const glm::vec3 &player_position) override {
-    m_playerPosition = player_position;
-    m_hasPlayerPosition = true;
   }
 
   void setup() override {
@@ -67,11 +58,8 @@ public:
 
 private:
   void _updateChaseState() {
-    if (!m_hasPlayerPosition) {
-      return;
-    }
-
-    glm::vec3 to_player = m_playerPosition - m_position;
+    glm::vec3 to_player =
+        m_context.ensureInitialized()->getPlayerPosition() - m_position;
     to_player.y = 0.0f;
 
     float distance = glm::length(to_player);
