@@ -199,34 +199,63 @@ private:
   }
 
   void _emitFumeCloud(const GameEvents::ParticleSpawnRequestedEvent &evt) {
-    glm::vec3 direction = evt.direction;
-    if (glm::length(direction) < 0.001f) {
-      direction = glm::vec3(0.0f, 1.0f, 0.0f);
-    } else {
-      direction = glm::normalize(direction);
+    float true_radius = glm::max(0.5f, evt.length);
+    float thickness = glm::max(0.4f, evt.thickness);
+
+    // Number of particles to form a smooth ring
+    int ring_particle_count = 48;
+
+    // Visual pulse timer is 0.25s, so we make lifetime 0.2s for rapid shockwave effect
+    float shockwave_lifetime = 0.2f;
+
+    // Maximum visual size of the particle at the end of its life
+    float max_particle_size = thickness * 2.0f;
+
+    // Pull the spawn radius inward so the outer edge hits the true radius at max size
+    float spawn_radius = true_radius - (max_particle_size * 0.45f);
+    if (spawn_radius < 0.1f) {
+      spawn_radius = 0.1f;
     }
 
-    float radius = glm::max(0.5f, evt.length);
-    float thickness = glm::max(0.2f, evt.thickness);
+    // 1. Outer Ring: Expanding shockwave
+    for (int i = 0; i < ring_particle_count; ++i) {
+      float angle = (glm::two_pi<float>() / ring_particle_count) * i;
 
-    for (int i = 0; i < 18; ++i) {
-      float angle = Random::randFloat(0.0f, glm::two_pi<float>());
-      float radialScale = Random::randFloat(0.65f, 1.0f) * radius;
-      glm::vec3 ringOffset(std::cos(angle) * radialScale,
-                           Random::randFloat(-0.2f, 0.2f),
-                           std::sin(angle) * radialScale);
-      glm::vec3 drift = ringOffset * 0.2f + glm::vec3(0.0f, 0.9f, 0.0f);
+      glm::vec3 ring_offset(std::cos(angle) * spawn_radius, 0.05f,
+                            std::sin(angle) * spawn_radius);
 
-      m_particleSystem.emit({.position = evt.position + ringOffset,
-                             .velocity = drift * 1.2f + direction * 0.15f,
-                             .velocityVariation = glm::vec3(0.5f, 0.7f, 0.5f),
-                             .colorBegin = glm::vec4(0.45f, 0.72f, 0.20f, 0.6f),
-                             .colorEnd = glm::vec4(0.10f, 0.18f, 0.05f, 0.0f),
-                             .sizeBegin = thickness,
-                             .sizeEnd = thickness * 0.35f,
-                             .sizeVariation = 0.3f,
-                             .stretch = 1.8f,
-                             .lifeTime = 0.45f});
+      // Pulse effect comes entirely from particle expansion (sizeBegin -> sizeEnd)
+      m_particleSystem.emit({.position = evt.position + ring_offset,
+                             .velocity = glm::vec3(0.0f),
+                             .velocityVariation = glm::vec3(0.0f),
+                             .colorBegin = glm::vec4(0.9f, 0.95f, 0.8f, 0.5f),
+                             .colorEnd = glm::vec4(1.0f, 1.0f, 0.9f, 0.0f),
+                             .sizeBegin = 0.1f, // Start tiny
+                             .sizeEnd = max_particle_size,
+                             .sizeVariation = 0.0f,
+                             .stretch = 1.0f,
+                             .lifeTime = shockwave_lifetime});
+    }
+
+    // 2. Inner Flash: Central filler loop
+    int filler_count = 12;
+    for (int i = 0; i < filler_count; ++i) {
+      float inner_radius = Random::randFloat(0.0f, spawn_radius * 0.7f);
+      float inner_angle = Random::randFloat(0.0f, glm::two_pi<float>());
+
+      glm::vec3 inner_offset(std::cos(inner_angle) * inner_radius, 0.1f,
+                             std::sin(inner_angle) * inner_radius);
+
+      m_particleSystem.emit(
+          {.position = evt.position + inner_offset,
+           .velocity = glm::vec3(0.0f, 0.1f, 0.0f),
+           .velocityVariation = glm::vec3(0.05f),
+           .colorBegin = glm::vec4(0.95f, 1.0f, 0.85f, 0.25f),
+           .colorEnd = glm::vec4(1.0f, 1.0f, 1.0f, 0.0f),
+           .sizeBegin = thickness * 1.0f,
+           .sizeEnd = thickness * 2.2f,
+           .stretch = 1.0f,
+           .lifeTime = shockwave_lifetime * Random::randFloat(1.2f, 2.0f)});
     }
   }
 };

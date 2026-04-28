@@ -331,8 +331,7 @@ glm::vec3 Game::getPlayerForward() const {
   return glm::vec3(std::sin(rad), 0.0f, std::cos(rad));
 }
 
-void Game::findTargets(float range, uint32_t k,
-                       EnemyCallback callback) const {
+void Game::findTargets(float range, uint32_t k, EnemyCallback callback) const {
   for (auto &ed : getClosestEnemies(range, k)) {
     callback(ed.enemy);
   }
@@ -350,21 +349,21 @@ void Game::_setupPlayer() {
 
   auto magic_wand = std::make_shared<MagicWand>();
   magic_wand->setContext(this);
-  m_player.ensureInitialized()->addWeapon(magic_wand);
+  // m_player.ensureInitialized()->addWeapon(magic_wand);
 
   auto wood_block = std::make_shared<SolidWoodBlock>();
   wood_block->setContext(this);
-  m_player.ensureInitialized()->addWeapon(wood_block);
+  // m_player.ensureInitialized()->addWeapon(wood_block);
 
   // Water Bottle Weapon
   auto water_bottle = std::make_shared<WaterBottle>();
   water_bottle->setContext(this);
-  m_player.ensureInitialized()->addWeapon(water_bottle);
+  // m_player.ensureInitialized()->addWeapon(water_bottle);
 
   // Orbiting Cones Weapon
   auto orbiting_cones = std::make_shared<OrbitingCones>();
   orbiting_cones->setContext(this);
-  m_player.ensureInitialized()->addWeapon(orbiting_cones);
+  // m_player.ensureInitialized()->addWeapon(orbiting_cones);
 
   // Toxic Fumes Weapon
   auto toxic_fumes = std::make_shared<ToxicFumes>();
@@ -374,7 +373,7 @@ void Game::_setupPlayer() {
   // Gas Nozzle Weapon
   auto gas_nozzle = std::make_shared<GasNozzle>();
   gas_nozzle->setContext(this);
-  m_player.ensureInitialized()->addWeapon(gas_nozzle);
+  // m_player.ensureInitialized()->addWeapon(gas_nozzle);
 }
 
 void Game::_setupEnvironment() {
