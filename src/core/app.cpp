@@ -127,9 +127,6 @@ void App::_setupResources() {
                TextureManager::generateStaticPBRDefaultTexture());
        }});
 
-  // Materials
-  ;
-
   // Models
   m_loadingTasks.push_back(
       {"Model: Car Sedan",
@@ -201,7 +198,7 @@ void App::_setupResources() {
   m_loadingTasks.push_back(
       {"Model: Water Bottle",
        loadModel(ModelName::WATER_BOTTLE, ASSETS_PATH
-                 "/objects/projectiles/water_bottle/fiji_water_bottle.glb")});
+                 "/objects/projectiles/water_bottle/water_bottle.glb")});
   m_loadingTasks.push_back(
       {"Model: Traffic Cone",
        loadModel(ModelName::TRAFFIC_CONE,
@@ -305,6 +302,31 @@ void App::_setupResources() {
                                 TextureType::AO,
                                 ASSETS_PATH "/textures/grass/1/ao.jpg");
          }
+       }});
+
+  // This need to exists
+  TextureManager::load(TextureName("icon_no_icon"), TextureType::UI,
+                       ASSETS_PATH "/icons/no_icon.png");
+  // Icons
+  m_loadingTasks.push_back(
+      {"Icons", []() {
+         TextureManager::load(TextureName("icon_cone"), TextureType::UI,
+                              ASSETS_PATH "/icons/cone.png");
+         TextureManager::load(TextureName("icon_e20_gas_nozzle"),
+                              TextureType::UI,
+                              ASSETS_PATH "/icons/e20_gas_nozzle.png");
+         TextureManager::load(TextureName("icon_e95_gas_nozzle"),
+                              TextureType::UI,
+                              ASSETS_PATH "/icons/e95_gas_nozzle.png");
+         TextureManager::load(TextureName("icon_gas_fume"), TextureType::UI,
+                              ASSETS_PATH "/icons/gas_fume.png");
+         TextureManager::load(TextureName("icon_lighter"), TextureType::UI,
+                              ASSETS_PATH "/icons/lighter.png");
+         TextureManager::load(TextureName("icon_solid_wood_block"),
+                              TextureType::UI,
+                              ASSETS_PATH "/icons/solid_wood_block.png");
+         TextureManager::load(TextureName("icon_water_bottle"), TextureType::UI,
+                              ASSETS_PATH "/icons/water_bottle.png");
        }});
 
   // Skybox
@@ -637,6 +659,22 @@ void App::_handleKeyCallback(int key, int scancode, int action, int mods) {
 
   if (action != GLFW_PRESS)
     return;
+
+  if (m_game.getState() == GameState::LEVEL_UP) {
+    if (key == GLFW_KEY_A || key == GLFW_KEY_LEFT || key == GLFW_KEY_UP) {
+      m_game.selectPrevLevelUpOption();
+      return;
+    }
+    if (key == GLFW_KEY_D || key == GLFW_KEY_RIGHT || key == GLFW_KEY_DOWN) {
+      m_game.selectNextLevelUpOption();
+      return;
+    }
+    if (key == GLFW_KEY_SPACE || key == GLFW_KEY_ENTER ||
+        key == GLFW_KEY_KP_ENTER) {
+      m_game.confirmLevelUpSelection();
+      return;
+    }
+  }
 
   if (key == GLFW_KEY_SPACE) {
     switch (m_game.getState()) {

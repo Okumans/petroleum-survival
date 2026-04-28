@@ -51,3 +51,4 @@ cmake-*
 # Assets folder (for now)
 assets/objects/
 assets/textures/
+assets/icons/

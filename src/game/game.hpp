@@ -68,6 +68,7 @@ private:
   int m_currentLevel = 1;
 
   // Level-up system
+  int m_pendingLevelUps = 0;
   std::vector<Upgrade> m_levelUpCandidates;
   int m_levelUpSelection = -1;
 
@@ -111,6 +112,25 @@ public:
       m_state = GameState::PLAYING;
   }
 
+  void selectPrevLevelUpOption() {
+    if (m_levelUpCandidates.empty())
+      return;
+    if (m_levelUpSelection < 0)
+      m_levelUpSelection = 0;
+    m_levelUpSelection =
+        (m_levelUpSelection - 1 + static_cast<int>(m_levelUpCandidates.size())) %
+        static_cast<int>(m_levelUpCandidates.size());
+  }
+
+  void selectNextLevelUpOption() {
+    if (m_levelUpCandidates.empty())
+      return;
+    if (m_levelUpSelection < 0)
+      m_levelUpSelection = 0;
+    m_levelUpSelection =
+        (m_levelUpSelection + 1) % static_cast<int>(m_levelUpCandidates.size());
+  }
+
   void selectLevelUpOption(int index) {
     if (index >= 0 && index < static_cast<int>(m_levelUpCandidates.size())) {
       m_levelUpSelection = index;
@@ -118,18 +138,47 @@ public:
   }
 
   void confirmLevelUpSelection() {
+    if (m_levelUpCandidates.empty())
+      return;
+
+    if (m_levelUpSelection < 0)
+      m_levelUpSelection = 0;
+
     if (m_levelUpSelection >= 0 &&
         m_levelUpSelection < static_cast<int>(m_levelUpCandidates.size())) {
       m_levelUpCandidates[m_levelUpSelection].apply(*this);
     }
+
     m_levelUpSelection = -1;
     m_levelUpCandidates.clear();
+
+    if (m_pendingLevelUps > 0)
+      m_pendingLevelUps--;
+
+    if (m_pendingLevelUps > 0) {
+      m_state = GameState::LEVEL_UP;
+      m_levelUpCandidates = UpgradeGenerator::generateUpgrades(*this, 3);
+      m_levelUpSelection = 0;
+      return;
+    }
+
     resumePlaying();
   }
 
   void skipLevelUp() {
     m_levelUpSelection = -1;
     m_levelUpCandidates.clear();
+
+    if (m_pendingLevelUps > 0)
+      m_pendingLevelUps--;
+
+    if (m_pendingLevelUps > 0) {
+      m_state = GameState::LEVEL_UP;
+      m_levelUpCandidates = UpgradeGenerator::generateUpgrades(*this, 3);
+      m_levelUpSelection = 0;
+      return;
+    }
+
     resumePlaying();
   }
 

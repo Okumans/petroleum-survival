@@ -1,7 +1,7 @@
 #pragma once
 
-#include "scene/game_factories.hpp"
 #include "scene/enemy/enemy.hpp"
+#include "scene/game_factories.hpp"
 #include "scene/projectile.hpp"
 #include "scene/weapon/projectile_weapon.hpp"
 #include "utility/random.hpp"
@@ -16,7 +16,66 @@ private:
   float m_projectileLifetime = 2.0f;
 
 public:
-  MagicWand() : ProjectileWeapon(1.0f, 0.05f, 25.0f, 3) {}
+  MagicWand() : ProjectileWeapon(1.0f, 0.05f, 25.0f, 3) {
+    m_id = "magic_wand";
+    m_name = "Magic Wand";
+    m_description = "Fires magic missiles at the nearest enemies.";
+    m_iconName =
+        "icon_cone"; // Placeholder icon for now, since we don't have magic wand
+    m_maxLevel = 8;
+  }
+
+  std::string getLevelDescription(uint32_t level) const override {
+    switch (level) {
+    case 1:
+      return "Fires magic missiles at nearby enemies.";
+    case 2:
+      return "Cooldown -10%.";
+    case 3:
+      return "+1 projectile.";
+    case 4:
+      return "Damage +5.";
+    case 5:
+      return "Cooldown -10%.";
+    case 6:
+      return "+1 projectile.";
+    case 7:
+      return "Damage +5.";
+    case 8:
+      return "+1 projectile.";
+    default:
+      return "Upgrade " + m_name + " to level " + std::to_string(level) + ".";
+    }
+  }
+
+  void onLevelUp(uint32_t newLevel) override {
+    switch (newLevel) {
+    case 2:
+      setBaseCooldown(getBaseCooldown() * 0.9f);
+      break;
+    case 3:
+      m_amount += 1;
+      break;
+    case 4:
+      m_baseDamage += 5.0f;
+      break;
+    case 5:
+      setBaseCooldown(getBaseCooldown() * 0.9f);
+      break;
+    case 6:
+      m_amount += 1;
+      break;
+    case 7:
+      m_baseDamage += 5.0f;
+      break;
+    case 8:
+      m_amount += 1;
+      break;
+    default:
+      m_baseDamage *= 1.1f;
+      break;
+    }
+  }
 
   bool fire() override {
     auto targets = acquireTargets(m_range, getAmount());

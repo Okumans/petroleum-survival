@@ -6,6 +6,7 @@
 #include "scene/player.hpp"
 #include "scene/weapon/weapon.hpp"
 #include <cmath>
+#include <cstdint>
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
@@ -17,7 +18,65 @@ private:
   AnimationState<void> m_tickCooldown{0.15f};
 
 public:
-  GasNozzle() : Weapon(0.05f, 12.0f) {}
+  GasNozzle() : Weapon(0.05f, 12.0f) {
+    m_id = "gas_nozzle_e20";
+    m_name = "Gas Nozzle (E20)";
+    m_description = "Sprays E20 gas in a cone.";
+    m_iconName = "icon_e20_gas_nozzle";
+    m_maxLevel = 8;
+  }
+
+  std::string getLevelDescription(uint32_t level) const override {
+    switch (level) {
+    case 1:
+      return "Sprays E20 gas in a cone.";
+    case 2:
+      return "Cooldown -10%.";
+    case 3:
+      return "Area +10%.";
+    case 4:
+      return "Damage +3.";
+    case 5:
+      return "Cooldown -10%.";
+    case 6:
+      return "Area +10%.";
+    case 7:
+      return "Damage +3.";
+    case 8:
+      return "Area +15%.";
+    default:
+      return "Upgrade " + m_name + " to level " + std::to_string(level) + ".";
+    }
+  }
+
+  void onLevelUp(uint32_t newLevel) override {
+    switch (newLevel) {
+    case 2:
+      setBaseCooldown(getBaseCooldown() * 0.9f);
+      break;
+    case 3:
+      m_coneRange *= 1.1f;
+      break;
+    case 4:
+      m_baseDamage += 3.0f;
+      break;
+    case 5:
+      setBaseCooldown(getBaseCooldown() * 0.9f);
+      break;
+    case 6:
+      m_coneRange *= 1.1f;
+      break;
+    case 7:
+      m_baseDamage += 3.0f;
+      break;
+    case 8:
+      m_coneRange *= 1.15f;
+      break;
+    default:
+      m_baseDamage *= 1.1f;
+      break;
+    }
+  }
 
   bool fire() override { return true; }
 

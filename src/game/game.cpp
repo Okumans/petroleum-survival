@@ -471,7 +471,7 @@ void Game::_setupPlayer() {
   // Water Bottle Weapon
   auto water_bottle = std::make_shared<WaterBottle>();
   water_bottle->setContext(this);
-  // m_player.ensureInitialized()->addWeapon(water_bottle);
+  m_player.ensureInitialized()->addWeapon(water_bottle);
 
   // Orbiting Cones Weapon
   auto orbiting_cones = std::make_shared<OrbitingCones>();
@@ -481,7 +481,7 @@ void Game::_setupPlayer() {
   // Toxic Fumes Weapon
   auto toxic_fumes = std::make_shared<ToxicFumes>();
   toxic_fumes->setContext(this);
-  m_player.ensureInitialized()->addWeapon(toxic_fumes);
+  // m_player.ensureInitialized()->addWeapon(toxic_fumes);
 
   // Gas Nozzle Weapon
   auto gas_nozzle = std::make_shared<GasNozzle>();
@@ -539,6 +539,11 @@ void Game::startGame() {
 }
 
 void Game::update(double delta_time) {
+  if (m_state == GameState::LEVEL_UP) {
+    // Pause gameplay simulation while the player is picking upgrades.
+    return;
+  }
+
   if (m_state == GameState::PLAYING) {
     m_gameTime += static_cast<float>(delta_time);
     m_spawner.update(m_gameTime, static_cast<float>(delta_time));
@@ -790,17 +795,18 @@ void Game::_registerGameplayEventHandlers() {
     m_score += static_cast<int>(evt.amount);
     m_currentExp += static_cast<int>(evt.amount);
 
-    if (m_currentExp >= m_expToNextLevel) {
+    while (m_currentExp >= m_expToNextLevel) {
       m_currentExp -= m_expToNextLevel;
       m_expToNextLevel =
           static_cast<int>(m_expToNextLevel * 1.5f); // Scale requirement
       m_currentLevel++;
-      m_state = GameState::LEVEL_UP;
+      m_pendingLevelUps++;
+    }
 
-      // Generate 3 random upgrade candidates
-      m_levelUpCandidates =
-          UpgradeGenerator::generateUpgrades(3, m_currentLevel);
-      m_levelUpSelection = -1;
+    if (m_pendingLevelUps > 0 && m_state != GameState::LEVEL_UP) {
+      m_state = GameState::LEVEL_UP;
+      m_levelUpCandidates = UpgradeGenerator::generateUpgrades(*this, 3);
+      m_levelUpSelection = 0;
     }
 
     m_eventBus.emit(DespawnRequestedEvent{.object = evt.exp});

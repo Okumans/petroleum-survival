@@ -13,6 +13,13 @@ protected:
   float m_baseCooldown;
   float m_baseDamage;
 
+  uint32_t m_level = 1;
+  uint32_t m_maxLevel = 8;
+  std::string m_id = "unknown_weapon";
+  std::string m_name = "Unknown Weapon";
+  std::string m_description = "A mysterious weapon.";
+  std::string m_iconName = "icon_cone"; // Default icon
+
   NotInitialized<IWeaponContext *> m_context;
 
 public:
@@ -45,6 +52,30 @@ public:
 
   [[nodiscard]] float getBaseDamage() const { return m_baseDamage; }
   [[nodiscard]] float getBaseCooldown() const { return m_baseCooldown; }
+
+  [[nodiscard]] uint32_t getLevel() const { return m_level; }
+  [[nodiscard]] uint32_t getMaxLevel() const { return m_maxLevel; }
+  [[nodiscard]] std::string getId() const { return m_id; }
+  [[nodiscard]] std::string getName() const { return m_name; }
+  [[nodiscard]] std::string getDescription() const { return m_description; }
+  [[nodiscard]] std::string getIconName() const { return m_iconName; }
+
+  // Virtual methods for weapon-specific upgrade logic and descriptions
+  virtual std::string getLevelDescription(uint32_t level) const {
+    return std::format("Upgrade {} to level {}", m_name, level);
+  }
+
+  virtual void onLevelUp(uint32_t newLevel) {
+    (void)newLevel;
+    m_baseDamage *= 1.1f; // small generic boost as fallback
+  }
+
+  void upgrade() {
+    if (m_level < m_maxLevel) {
+      m_level++;
+      onLevelUp(m_level);
+    }
+  }
 
   virtual void update(double delta_time) {
     m_coolDownState.updateTimer(static_cast<float>(delta_time));

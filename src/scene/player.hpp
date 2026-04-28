@@ -19,6 +19,8 @@ private:
   float m_currentSpeedMultiplier = 1.0f;
 
 public:
+  static constexpr size_t MAX_WEAPONS = 6;
+
   Player(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
          glm::vec3 scale = glm::vec3(1.0f),
          glm::vec3 rotation = glm::vec3(0.0f))
@@ -26,8 +28,12 @@ public:
     m_iFrameState.duration = 0.2f;
   }
 
-  void addWeapon(std::shared_ptr<Weapon> weapon) {
+  bool addWeapon(std::shared_ptr<Weapon> weapon) {
+    if (m_weapons.size() >= MAX_WEAPONS) {
+      return false;
+    }
     m_weapons.push_back(weapon);
+    return true;
   }
 
   void setRunning(bool running) { m_isRunning = running; }

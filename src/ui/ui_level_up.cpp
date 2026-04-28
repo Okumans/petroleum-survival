@@ -1,5 +1,6 @@
 #include "ui/ui_level_up.hpp"
 #include "game/game.hpp"
+#include "resource/texture_manager.hpp"
 #include "ui/font.hpp"
 #include <string>
 
@@ -29,7 +30,7 @@ void LevelUI::_setupHUD() {
 
 void LevelUI::_setupLevelUpOverlay(Game &game) {
   // Level Up Overlay
-  m_uiManager.addStaticElement("level_up_bg", {0.0f, 5.0f, 40.0f, 30.0f},
+  m_uiManager.addStaticElement("level_up_bg", {0.0f, 5.0f, 52.0f, 30.0f},
                                {0.1f, 0.1f, 0.1f, 0.9f});
   m_uiManager.addTextElement("level_up_title", {0.0f, 7.0f, 0.0f, 0.0f},
                              "LEVEL UP!", m_font, {1.0f, 0.8f, 0.0f, 1.0f},
@@ -42,10 +43,11 @@ void LevelUI::_setupLevelUpOverlay(Game &game) {
   for (int i = 0; i < 3; ++i) {
     float btnX = 0.0f; // Handled dynamically in update loop
     float btnY = 18.0f;
-    float btnW = 12.0f;
-    float btnH = 5.0f;
+    float btnW = 16.0f;
+    float btnH = 6.5f;
 
     std::string btnName = "upgrade_option_" + std::to_string(i);
+    std::string iconName = "upgrade_option_icon_" + std::to_string(i);
     std::string titleName = "upgrade_option_title_" + std::to_string(i);
     std::string descName = "upgrade_option_desc_" + std::to_string(i);
 
@@ -56,16 +58,23 @@ void LevelUI::_setupLevelUpOverlay(Game &game) {
                                         game.confirmLevelUpSelection();
                                       });
 
+    // Option Icon
+    GLuint defaultIcon =
+        TextureManager::get(TextureName("icon_no_icon")).getTexID();
+    m_uiManager.addStaticElement(
+        iconName, {btnX + (btnW - 2.8f) * 0.5f, btnY + 0.3f, 2.8f, 2.8f},
+        defaultIcon);
+
     // Option Title (Standard TextElement)
     m_uiManager.addTextElement(titleName,
-                               {btnX + 0.5f, btnY + 0.5f, 0.0f, 0.0f},
+                               {btnX + 0.5f, btnY + 3.25f, 0.0f, 0.0f},
                                "Option " + std::to_string(i + 1), m_font,
-                               {1.0f, 1.0f, 1.0f, 1.0f}, 0.1f);
+                               {1.0f, 1.0f, 1.0f, 1.0f}, 0.08f);
 
     // Option Description (Wrapping TextBoxElement)
     m_uiManager.addTextBoxElement(
-        descName, {btnX + 0.5f, btnY + 2.0f, btnW - 1.0f, btnH - 2.5f},
-        "Description...", m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.07f);
+        descName, {btnX + 0.6f, btnY + 4.15f, btnW - 1.2f, btnH - 4.55f},
+        "Description...", m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.05f);
   }
 
   // Level Up Skip Button
@@ -112,11 +121,14 @@ void LevelUI::_updateLevelUpOverlay(const Game &game, float virtualWidth) {
   // Toggle Visibility for Options
   for (int i = 0; i < 3; ++i) {
     std::string btnName = "upgrade_option_" + std::to_string(i);
+    std::string iconName = "upgrade_option_icon_" + std::to_string(i);
     std::string titleName = "upgrade_option_title_" + std::to_string(i);
     std::string descName = "upgrade_option_desc_" + std::to_string(i);
 
     if (auto *btn = m_uiManager.getElement(btnName))
       btn->visible = isLevelUp;
+    if (auto *icon = m_uiManager.getElement(iconName))
+      icon->visible = isLevelUp;
     if (auto *titleTxt = m_uiManager.getElement(titleName))
       titleTxt->visible = isLevelUp;
     if (auto *descTxt = m_uiManager.getElement(descName))
@@ -127,7 +139,7 @@ void LevelUI::_updateLevelUpOverlay(const Game &game, float virtualWidth) {
     float center_x = virtualWidth / 2.0f;
 
     // Center Background & Main Title
-    m_uiManager.getElement("level_up_bg")->bounds.x = center_x - 20.0f;
+    m_uiManager.getElement("level_up_bg")->bounds.x = center_x - 26.0f;
     if (auto *title = dynamic_cast<TextElement *>(
             m_uiManager.getElement("level_up_title"))) {
       title->bounds.x =
@@ -136,17 +148,20 @@ void LevelUI::_updateLevelUpOverlay(const Game &game, float virtualWidth) {
 
     // Update Upgrade Options (Buttons, Titles, Descriptions)
     const auto &upgrades = game.getLevelUpCandidates();
-    float btn_w = 12.0f;
+    float btn_w = 16.0f;
     float spacing = 2.0f;
     float total_w = (3.0f * btn_w) + (2.0f * spacing);
     float start_x = center_x - (total_w / 2.0f);
 
     for (int i = 0; i < 3; ++i) {
       std::string btnName = "upgrade_option_" + std::to_string(i);
+      std::string iconName = "upgrade_option_icon_" + std::to_string(i);
       std::string titleName = "upgrade_option_title_" + std::to_string(i);
       std::string descName = "upgrade_option_desc_" + std::to_string(i);
 
       auto *btn = m_uiManager.getElement(btnName);
+      auto *icon =
+          dynamic_cast<StaticElement *>(m_uiManager.getElement(iconName));
       auto *titleTxt =
           dynamic_cast<TextElement *>(m_uiManager.getElement(titleName));
       auto *descTxt =
@@ -162,12 +177,25 @@ void LevelUI::_updateLevelUpOverlay(const Game &game, float virtualWidth) {
                                          ? glm::vec4{1.0f, 1.0f, 0.0f, 1.0f}
                                          : glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
 
+          if (icon) {
+            icon->bounds.w = 2.8f;
+            icon->bounds.h = 2.8f;
+            icon->bounds.x = btn->bounds.x + (btn_w - icon->bounds.w) * 0.5f;
+            icon->bounds.y = btn->bounds.y + 0.3f;
+            icon->textureID =
+                TextureManager::get(TextureName(upgrades[i].iconName))
+                    .getTexID();
+            icon->hasTexture = true;
+            icon->color = highlightColor;
+          }
+
           // Position & Format Option Title
           if (titleTxt) {
             titleTxt->text = upgrades[i].title;
             titleTxt->color = highlightColor;
             float tw = m_font.getTextWidth(titleTxt->text, titleTxt->scale);
-            titleTxt->bounds.x = btn->bounds.x + (btn_w - tw) / 2.0f;
+            titleTxt->bounds.x = btn->bounds.x + (btn_w - tw) * 0.5f;
+            titleTxt->bounds.y = btn->bounds.y + 3.25f;
           }
 
           // Position & Format Option Description (TextBox)
@@ -177,6 +205,7 @@ void LevelUI::_updateLevelUpOverlay(const Game &game, float virtualWidth) {
             float padding = 0.5f;
             descTxt->bounds.x = btn->bounds.x + padding;
             descTxt->bounds.w = btn_w - (padding * 2.0f);
+            descTxt->bounds.y = btn->bounds.y + 4.15f;
           }
         }
       }

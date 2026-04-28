@@ -142,9 +142,7 @@ Texture *TextureManager::tryGet(TextureName name) {
   return it->second.get();
 }
 
-Texture &TextureManager::get(TextureName name) {
-  return *copy(name);
-}
+Texture &TextureManager::get(TextureName name) { return *copy(name); }
 
 std::shared_ptr<Texture> TextureManager::copy(TextureName name) {
   if (TextureManager::textures.find(name) == TextureManager::textures.end()) {

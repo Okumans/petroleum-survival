@@ -32,7 +32,65 @@ private:
   AnimationState<void> m_spawnCooldown{0.5f}; // Cooldown for spawning
 
 public:
-  OrbitingCones() : Weapon(0.5f, 18.0f) {}
+  OrbitingCones() : Weapon(0.5f, 18.0f) {
+    m_id = "orbiting_cones";
+    m_name = "Orbiting Cones";
+    m_description = "Traffic cones orbit around you.";
+    m_iconName = "icon_cone";
+    m_maxLevel = 8;
+  }
+
+  std::string getLevelDescription(uint32_t level) const override {
+    switch (level) {
+    case 1:
+      return "Traffic cones orbit around you.";
+    case 2:
+      return "Cooldown -10%.";
+    case 3:
+      return "Damage +5.";
+    case 4:
+      return "+1 cone.";
+    case 5:
+      return "Cooldown -10%.";
+    case 6:
+      return "Damage +5.";
+    case 7:
+      return "Area +10%.";
+    case 8:
+      return "+1 cone.";
+    default:
+      return "Upgrade " + m_name + " to level " + std::to_string(level) + ".";
+    }
+  }
+
+  void onLevelUp(uint32_t newLevel) override {
+    switch (newLevel) {
+    case 2:
+      setBaseCooldown(getBaseCooldown() * 0.9f);
+      break;
+    case 3:
+      m_baseDamage += 5.0f;
+      break;
+    case 4:
+      m_coneCount += 1;
+      break;
+    case 5:
+      setBaseCooldown(getBaseCooldown() * 0.9f);
+      break;
+    case 6:
+      m_baseDamage += 5.0f;
+      break;
+    case 7:
+      m_orbitRadius *= 1.1f;
+      break;
+    case 8:
+      m_coneCount += 1;
+      break;
+    default:
+      m_baseDamage *= 1.1f;
+      break;
+    }
+  }
 
   bool fire() override {
     glm::vec3 player_pos = m_context.ensureInitialized()->getPlayerPosition();

@@ -15,7 +15,66 @@ private:
   AnimationState<void> m_attackPulseTimer{0.15f};
 
 public:
-  ToxicFumes() : Weapon(0.8f, 15.0f) { m_visualPulseTimer.startAnimation(); }
+  ToxicFumes() : Weapon(0.8f, 15.0f) {
+    m_id = "toxic_fumes";
+    m_name = "Toxic Fumes";
+    m_description = "Emits toxic fumes in an aura.";
+    m_iconName = "icon_gas_fume";
+    m_maxLevel = 8;
+    m_visualPulseTimer.startAnimation();
+  }
+
+  std::string getLevelDescription(uint32_t level) const override {
+    switch (level) {
+    case 1:
+      return "Emits toxic fumes in an aura.";
+    case 2:
+      return "Cooldown -10%.";
+    case 3:
+      return "Area +10%.";
+    case 4:
+      return "Damage +5.";
+    case 5:
+      return "Cooldown -10%.";
+    case 6:
+      return "Area +10%.";
+    case 7:
+      return "Damage +5.";
+    case 8:
+      return "Area +15%.";
+    default:
+      return "Upgrade " + m_name + " to level " + std::to_string(level) + ".";
+    }
+  }
+
+  void onLevelUp(uint32_t newLevel) override {
+    switch (newLevel) {
+    case 2:
+      setBaseCooldown(getBaseCooldown() * 0.9f);
+      break;
+    case 3:
+      m_auraRadius *= 1.1f;
+      break;
+    case 4:
+      m_baseDamage += 5.0f;
+      break;
+    case 5:
+      setBaseCooldown(getBaseCooldown() * 0.9f);
+      break;
+    case 6:
+      m_auraRadius *= 1.1f;
+      break;
+    case 7:
+      m_baseDamage += 5.0f;
+      break;
+    case 8:
+      m_auraRadius *= 1.15f;
+      break;
+    default:
+      m_baseDamage *= 1.1f;
+      break;
+    }
+  }
 
   [[nodiscard]] float getRadius() const {
     auto &ctx = *m_context.ensureInitialized();

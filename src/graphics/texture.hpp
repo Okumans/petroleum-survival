@@ -14,6 +14,7 @@ enum class TextureType : uint8_t {
   AO,
   HDR_CUBEMAP,
   IRRADIANCE_MAP,
+  UI,
   UNDEFINED
 };
 
