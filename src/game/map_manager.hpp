@@ -72,7 +72,7 @@ public:
   [[nodiscard]] glm::vec3 snapToGround(const glm::vec3 &position,
                                        float base_offset = 0.0f) const;
   [[nodiscard]] glm::vec3 snapToGroundNoCache(const glm::vec3 &position,
-                                               float base_offset = 0.0f) const;
+                                              float base_offset = 0.0f) const;
   [[nodiscard]] bool isPositionInLoadedChunk(const glm::vec3 &position) const;
 
   void registerObject(const ObjectHandle &handle, const glm::vec3 &position,

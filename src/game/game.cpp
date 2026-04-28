@@ -16,14 +16,10 @@
 #include "scene/game_object.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/item.hpp"
+#include "scene/map_population_system.hpp"
 #include "scene/player.hpp"
 #include "scene/projectile.hpp"
-#include "scene/weapons/gas_nozzle_e20.hpp"
-#include "scene/weapons/magic_wand.hpp"
-#include "scene/weapons/orbiting_cones.hpp"
-#include "scene/weapons/toxic_fumes.hpp"
 #include "scene/weapons/water_bottle.hpp"
-#include "scene/weapons/wood_block.hpp"
 #include "utility/random.hpp"
 
 #include <cstdlib>
@@ -288,14 +284,17 @@ void Game::render(double delta_time) {
 
   m_particleSystem.update(delta_time);
 
-  m_mapManager.foreachLoadedChunkHandles([this](const ObjectHandle &handle) {
+  static std::vector<ObjectHandle> handles;
+  m_mapManager.collectLoadedChunkHandles(handles);
+
+  for (const auto &handle : handles) {
     GameObject *object = m_objects.get(handle);
     if (!object || object->isRemovalRequested())
-      return;
+      continue;
     object->ensureTransformUpdated();
     m_renderer.submit(&object->getModel(), object->getModelMatrix(),
                       object->getAnimator(), object->getEmissionColor());
-  });
+  }
 
   m_mapManager.submitToRenderer(m_renderer);
 
@@ -582,11 +581,11 @@ void Game::update(double delta_time) {
 
   _runCollisionPass();
   m_eventBus.flush();
-  
+
   if (m_state == GameState::PLAYING) {
     _updatePlayerRegen(delta_time);
   }
-  
+
   m_objects.collectGarbage();
 }
 
@@ -749,50 +748,69 @@ void Game::_runCollisionPass() {
 void Game::_calculateClosestEnemies(glm::vec3 position) {
   m_closestEnemies.clear();
 
-  m_mapManager.foreachLoadedChunkHandles(
-      [this, &position](const ObjectHandle &handle) {
-        GameObject *object = m_objects.get(handle);
+  static std::vector<ObjectHandle> handles;
+  m_mapManager.collectLoadedChunkHandles(handles,
+                                         MapManager::ObjectFilter::Dynamic);
 
-        if (!object || object->isRemovalRequested() || !object->isEnemy())
-          return;
+  for (const auto &handle : handles) {
+    GameObject *object = m_objects.get(handle);
 
-        Enemy *enemy = static_cast<Enemy *>(object);
+    if (!object || object->isRemovalRequested() || !object->isEnemy())
+      continue;
 
-        m_closestEnemies.emplace_back(
-            enemy,
-            glm::distance2(position,
-                           object->getHitboxAABB().getClosestPoint(position)));
-      });
+    Enemy *enemy = static_cast<Enemy *>(object);
+
+    m_closestEnemies.emplace_back(
+        enemy, glm::distance2(position, object->getHitboxAABB().getClosestPoint(
+                                            position)));
+  }
 
   std::ranges::sort(m_closestEnemies, {}, &EnemyDist::dist_sq);
 }
 
 void Game::_syncObjectsToTerrain() {
-  for (GameObject *object : m_objects.getObjects()) {
-    assert(object);
+  snapObjectToGround(m_mapManager, *m_player.ensureInitialized());
 
-    if (!object->isRemovalRequested()) {
-      if (object->getObjectType() == GameObjectType::EXP) {
-        Exp *exp = static_cast<Exp *>(object);
-        const float base_offset =
-            exp->getPosition().y - exp->getWorldAABB().min.y;
-        glm::vec3 snapped =
-            m_mapManager.snapToGround(exp->getPosition(), base_offset);
-        exp->setGroundY(snapped.y);
-      } else if (object->getObjectType() != GameObjectType::PLAYER_PROJECTILE) {
-        snapObjectToGround(m_mapManager, *object);
-      }
+  static std::vector<ObjectHandle> handles;
 
-      if (auto handle = m_objects.getHandle(*object); handle.has_value()) {
-        m_mapManager.updateObjectChunk(*handle, object->getPosition());
-      }
+  m_mapManager.collectLoadedChunkHandles(handles,
+                                         MapManager::ObjectFilter::Dynamic);
 
+  // Because EXP isn't static
+  for (GameObject *object : m_objects.getObjectsWithType(GameObjectType::EXP)) {
+    auto handle = m_objects.getHandle(*object);
+    if (handle)
+      handles.push_back(handle.value());
+  }
+
+  for (const auto &handle : handles) {
+    GameObject *object = m_objects.get(handle);
+
+    if (!object)
+      continue;
+
+    if (object->isRemovalRequested()) {
+      m_mapManager.unregisterObject(handle);
       continue;
     }
 
-    if (auto handle = m_objects.getHandle(*object); handle.has_value()) {
-      m_mapManager.unregisterObject(*handle);
+    if (object->getObjectType() == GameObjectType::EXP) {
+      Exp *exp = static_cast<Exp *>(object);
+
+      const float base_offset =
+          exp->getPosition().y - exp->getWorldAABB().min.y;
+
+      glm::vec3 snapped =
+          m_mapManager.snapToGround(exp->getPosition(), base_offset);
+
+      exp->setGroundY(snapped.y);
     }
+
+    else if (object->getObjectType() != GameObjectType::PLAYER_PROJECTILE) {
+      snapObjectToGround(m_mapManager, *object);
+    }
+
+    m_mapManager.updateObjectChunk(handle, object->getPosition());
   }
 }
 
@@ -851,7 +869,7 @@ void Game::_registerGameplayEventHandlers() {
           return;
 
         bool wasDead = evt.enemy->isDead();
-        
+
         bool isCritical = evt.isCritical;
         float amount = evt.amount;
         Player *player = m_player.ensureInitialized();
@@ -860,15 +878,15 @@ void Game::_registerGameplayEventHandlers() {
           amount *= player->getCritMultiplier();
         }
 
-        evt.enemy->takeDamage(amount, isCritical,
-                              evt.knockbackDirection, evt.knockbackStrength);
+        evt.enemy->takeDamage(amount, isCritical, evt.knockbackDirection,
+                              evt.knockbackStrength);
 
         glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
                             Random::randFloat(-0.5f, 0.5f),
                             Random::randFloat(-0.5f, 0.5f)};
 
-        m_damageTextManager.addText(evt.enemy->getPosition() + offset,
-                                    amount, isCritical);
+        m_damageTextManager.addText(evt.enemy->getPosition() + offset, amount,
+                                    isCritical);
 
         m_eventBus.emit(ParticleSpawnRequestedEvent{.position = evt.hitPosition,
                                                     .effectId = evt.hitEffect});

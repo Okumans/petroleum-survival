@@ -126,7 +126,7 @@ float MapManager::sampleHeightNoCache(float world_x, float world_z) const {
 }
 
 glm::vec3 MapManager::snapToGroundNoCache(const glm::vec3 &position,
-                                         float base_offset) const {
+                                          float base_offset) const {
   glm::vec3 snapped = position;
   snapped.y = sampleHeightNoCache(position.x, position.z) + base_offset;
   return snapped;
