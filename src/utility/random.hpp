@@ -61,6 +61,11 @@ public:
     return {randFloat(min, max), randFloat(min, max), randFloat(min, max)};
   }
 
+  static glm::vec3 randVec3Circle(float radius) {
+    float angle = randFloat(0.0f, 2.0f * 3.14159265f);
+    return {std::cos(angle) * radius, 0.0f, std::sin(angle) * radius};
+  }
+
   static void setSeed(unsigned int seed) { s_engine.seed(seed); }
 
 private:

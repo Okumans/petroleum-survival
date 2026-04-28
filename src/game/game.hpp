@@ -98,6 +98,8 @@ public:
   int getExpToNextLevel() const { return m_expToNextLevel; }
   int getCurrentLevel() const { return m_currentLevel; }
 
+  EnemySpawner &getSpawner() { return m_spawner; }
+
   void resumePlaying() {
     if (m_state == GameState::LEVEL_UP)
       m_state = GameState::PLAYING;

@@ -113,37 +113,148 @@ Game::Game()
 
 Game::~Game() {}
 
-void Game::setup() {
-  // m_spawner.addWave({
-  //     .timeStart = 0.0f,
-  //     .timeEnd = 50.0f,
-  //     .spawnLogic =
-  //         [](Game &game, float current_time, float delta_time) {
-  //           static AnimationState<void> cool_down(0.1f);
-  //           static uint32_t enemies_spawn = 0;
-  //
-  //           cool_down.updateTimer(delta_time);
-  //
-  //           if (enemies_spawn >= 50 || !cool_down.isFinished())
-  //             return;
-  //
-  //           glm::vec3 pos = game.m_player.ensureInitialized()->getPosition();
-  //           glm::vec3 offset = {
-  //               Random::randFloat(-5.0f, 5.0f),
-  //               Random::randFloat(-5.0f, 5.0f),
-  //               Random::randFloat(-5.0f, 5.0f),
-  //           };
-  //
-  //           game.m_spawner.spawnEnemy(pos + offset, 3);
-  //           cool_down.reset();
-  //         },
-  // });
+void setupWaves(EnemySpawner &spawner) {
+  // Wave 1 (0-60s): Humanoids every 1.5s.
+  spawner.addWave({
+      .timeStart = 0.0f,
+      .timeEnd = 60.0f,
+      .spawnLogic =
+          [timer = 0.0f](Game &game, float current_time,
+                         float delta_time) mutable {
+            timer += delta_time;
+            if (timer >= 1.5f) {
+              timer = 0.0f;
+              glm::vec3 pos = game.getPlayer()->getPosition() +
+                              Random::randVec3Circle(25.0f);
+              game.getSpawner().spawnSpecificEnemy(GameObjectType::ENEMY, pos);
+            }
+          },
+  });
 
+  // Wave 2 (60-120s): Humanoids every 0.6s with linear health scaling.
+  // Introduce WeakCarEnemy every 15s.
+  spawner.addWave({
+      .timeStart = 60.0f,
+      .timeEnd = 120.0f,
+      .spawnLogic =
+          [h_timer = 0.0f, c_timer = 0.0f](Game &game, float current_time,
+                                           float delta_time) mutable {
+            h_timer += delta_time;
+            c_timer += delta_time;
+
+            if (h_timer >= 0.6f) {
+              h_timer = 0.0f;
+              glm::vec3 pos = game.getPlayer()->getPosition() +
+                              Random::randVec3Circle(25.0f);
+              // Linear scaling: e.g., 1.0 at 60s, 2.0 at 120s
+              float health_scale = 1.0f + (current_time - 60.0f) / 60.0f;
+              game.getSpawner().spawnSpecificEnemy(GameObjectType::ENEMY, pos,
+                                                   health_scale);
+            }
+
+            if (c_timer >= 15.0f) {
+              c_timer = 0.0f;
+              glm::vec3 pos = game.getPlayer()->getPosition() +
+                              Random::randVec3Circle(25.0f);
+              game.getSpawner().spawnSpecificEnemy(
+                  GameObjectType::WEAK_CAR_ENEMY, pos);
+            }
+          },
+  });
+
+  // Wave 3 (120-180s): Humanoids every 0.8s. StandardCarEnemy every 10s.
+  spawner.addWave({
+      .timeStart = 120.0f,
+      .timeEnd = 180.0f,
+      .spawnLogic =
+          [h_timer = 0.0f, c_timer = 0.0f](Game &game, float current_time,
+                                           float delta_time) mutable {
+            h_timer += delta_time;
+            c_timer += delta_time;
+
+            if (h_timer >= 0.8f) {
+              h_timer = 0.0f;
+              glm::vec3 pos = game.getPlayer()->getPosition() +
+                              Random::randVec3Circle(25.0f);
+              game.getSpawner().spawnSpecificEnemy(GameObjectType::ENEMY, pos);
+            }
+
+            if (c_timer >= 10.0f) {
+              c_timer = 0.0f;
+              glm::vec3 pos = game.getPlayer()->getPosition() +
+                              Random::randVec3Circle(25.0f);
+              game.getSpawner().spawnSpecificEnemy(
+                  GameObjectType::STANDARD_CAR_ENEMY, pos);
+            }
+          },
+  });
+
+  // Wave 4 (180-240s): Humanoids spawned in circles of 15 every 15s.
+  // ArmoredCarEnemy every 12s.
+  spawner.addWave({
+      .timeStart = 180.0f,
+      .timeEnd = 240.0f,
+      .spawnLogic =
+          [h_timer = 0.0f, c_timer = 0.0f](Game &game, float current_time,
+                                           float delta_time) mutable {
+            h_timer += delta_time;
+            c_timer += delta_time;
+
+            if (h_timer >= 15.0f) {
+              h_timer = 0.0f;
+              for (int i = 0; i < 15; ++i) {
+                glm::vec3 pos = game.getPlayer()->getPosition() +
+                                Random::randVec3Circle(25.0f);
+                game.getSpawner().spawnSpecificEnemy(GameObjectType::ENEMY,
+                                                     pos);
+              }
+            }
+
+            if (c_timer >= 12.0f) {
+              c_timer = 0.0f;
+              glm::vec3 pos = game.getPlayer()->getPosition() +
+                              Random::randVec3Circle(25.0f);
+              game.getSpawner().spawnSpecificEnemy(
+                  GameObjectType::ARMORED_CAR_ENEMY, pos);
+            }
+          },
+  });
+
+  // Wave 5 (240s+): Spawn one BossCarEnemy immediately, maintain heavy
+  // humanoid spawns.
+  spawner.addWave({
+      .timeStart = 240.0f,
+      .timeEnd = 999999.0f,
+      .spawnLogic =
+          [boss_spawned = false, h_timer = 0.0f](Game &game, float current_time,
+                                                 float delta_time) mutable {
+            if (!boss_spawned) {
+              boss_spawned = true;
+              glm::vec3 pos = game.getPlayer()->getPosition() +
+                              Random::randVec3Circle(30.0f);
+              game.getSpawner().spawnSpecificEnemy(
+                  GameObjectType::BOSS_CAR_ENEMY, pos);
+            }
+
+            h_timer += delta_time;
+            if (h_timer >= 0.5f) {
+              h_timer = 0.0f;
+              glm::vec3 pos = game.getPlayer()->getPosition() +
+                              Random::randVec3Circle(25.0f);
+              game.getSpawner().spawnSpecificEnemy(GameObjectType::ENEMY, pos);
+            }
+          },
+  });
+}
+
+void Game::setup() {
   _initializeManagers();
 
   m_renderer.setup();
   m_particleSystem.setup();
   m_spawner.init(this);
+
+  setupWaves(m_spawner);
 
   _resetGameplayState();
   _setupPlayer();

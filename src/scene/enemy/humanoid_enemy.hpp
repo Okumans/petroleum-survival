@@ -25,6 +25,11 @@ public:
                 glm::vec3 rotation = glm::vec3(0.0f))
       : HumaniodEntity<Enemy, EnemyAnimation>(model, pos, scale, rotation) {
     m_iFrameState.duration = 0.0f;
+    m_health = 25.0f;
+    m_maxHealth = 25.0f;
+    m_baseDamage = 5.0f;
+    m_baseSpeed = 0.8f;
+    m_knockbackResist = 0.0f;
   }
 
   void setPlayerPosition(const glm::vec3 &player_position) override {

@@ -135,3 +135,64 @@ private:
     this->setPosition(current_pos);
   }
 };
+
+class WeakCarEnemy : public CarEnemy {
+public:
+  WeakCarEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f))
+      : CarEnemy(model, pos) {
+    m_health = 100.0f;
+    m_maxHealth = 100.0f;
+    m_baseDamage = 10.0f;
+    m_baseSpeed = 0.1f;
+    m_knockbackResist = 0.2f;
+  }
+  [[nodiscard]] GameObjectType getObjectType() const override {
+    return GameObjectType::WEAK_CAR_ENEMY;
+  }
+};
+
+class StandardCarEnemy : public CarEnemy {
+public:
+  StandardCarEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f))
+      : CarEnemy(model, pos) {
+    m_health = 250.0f;
+    m_maxHealth = 250.0f;
+    m_baseDamage = 15.0f;
+    m_baseSpeed = 0.15f;
+    m_knockbackResist = 0.4f;
+  }
+  [[nodiscard]] GameObjectType getObjectType() const override {
+    return GameObjectType::STANDARD_CAR_ENEMY;
+  }
+};
+
+class ArmoredCarEnemy : public CarEnemy {
+public:
+  ArmoredCarEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f))
+      : CarEnemy(model, pos) {
+    m_health = 500.0f;
+    m_maxHealth = 500.0f;
+    m_baseDamage = 25.0f;
+    m_baseSpeed = 0.08f;
+    m_knockbackResist = 0.8f;
+  }
+  [[nodiscard]] GameObjectType getObjectType() const override {
+    return GameObjectType::ARMORED_CAR_ENEMY;
+  }
+};
+
+class BossCarEnemy : public CarEnemy {
+public:
+  BossCarEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f))
+      : CarEnemy(model, pos, glm::vec3(1.5f)) {
+    m_health = 1500.0f;
+    m_maxHealth = 1500.0f;
+    m_baseDamage = 40.0f;
+    m_baseSpeed = 0.12f;
+    m_knockbackResist = 1.0f;
+  }
+  [[nodiscard]] GameObjectType getObjectType() const override {
+    return GameObjectType::BOSS_CAR_ENEMY;
+  }
+};
+

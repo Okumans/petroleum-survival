@@ -1,12 +1,11 @@
 #include "game/enemy_spawner.hpp"
 #include "game/game.hpp"
-#include "scene/enemy/enemy.hpp"
-#include "scene/game_object_factory.hpp"
 #include "utility/random.hpp"
 
+#include "resource/model_manager.hpp"
+#include "scene/enemy/car_enemy.hpp"
+#include "scene/enemy/humanoid_enemy.hpp"
 #include "scene/game_factories.hpp"
-
-// We need access to createEnemyFactory, which is in game.cpp.
 
 void EnemySpawner::init(Game *game) { m_game = game; }
 
@@ -28,7 +27,6 @@ void EnemySpawner::update(float currentTime, float delta_time) {
     }
   }
 
-  // Default wave logic if no specific wave is active
   if (!waveActive) {
     m_defaultTimer += delta_time;
     if (m_defaultTimer >= 1.0f) { // spawn roughly every 1 second
@@ -42,31 +40,82 @@ void EnemySpawner::update(float currentTime, float delta_time) {
 }
 
 void EnemySpawner::spawnEnemy(glm::vec3 position, float healthMultiplier) {
-  // 20% chance to spawn a vehicle instead of a humanoid
-  if (Random::randFloat() < 0.2f) {
-    ModelName carModels[] = {ModelName::CAR_SEDAN,        ModelName::CAR_MUSCLE,
-                             ModelName::CAR_PICKUP,       ModelName::CAR_TAXI,
-                             ModelName::CAR_POLICE,       ModelName::CAR_BUS,
-                             ModelName::CAR_MONSTER_TRUCK};
+  (void)healthMultiplier;
+  spawnSpecificEnemy(GameObjectType::ENEMY, position);
+}
 
-    int randIdx = Random::randInt(0, 6);
-    const auto &factory = GameFactories::getCar(carModels[randIdx]);
+void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
+                                      float health_multiplier) {
+  if (!m_game)
+    return;
 
-    auto [enemy, enemy_handle] =
-        m_game->getObjects().createWithHandle<CarEnemy>(
-            factory, [&](CarEnemy &car) { car.moveWithAnimation(position); });
-
-    m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
-                                           false);
-  } else {
+  switch (type) {
+  case GameObjectType::ENEMY: {
     const auto &factory = GameFactories::getHumanoidEnemy();
-
     auto [enemy, enemy_handle] =
         m_game->getObjects().createWithHandle<HumanoidEnemy>(
-            factory, [&](HumanoidEnemy &enemy) { enemy.move(position); });
-
+            factory, [&](HumanoidEnemy &enemy) {
+              enemy.move(pos);
+              enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
+              enemy.setHealth(enemy.getMaxHealth());
+            });
     m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
                                            false);
+    break;
+  }
+  case GameObjectType::WEAK_CAR_ENEMY: {
+    ModelName model = (Random::randFloat() < 0.5f) ? ModelName::CAR_SEDAN
+                                                   : ModelName::CAR_TAXI;
+    auto model_ptr = ModelManager::copy(model);
+    auto [enemy, enemy_handle] =
+        m_game->getObjects().emplaceWithHandle<WeakCarEnemy>(model_ptr, pos);
+    enemy.setScale(0.8f);
+    enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
+    enemy.setHealth(enemy.getMaxHealth());
+    m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
+                                           false);
+    break;
+  }
+  case GameObjectType::STANDARD_CAR_ENEMY: {
+    ModelName model = (Random::randFloat() < 0.5f) ? ModelName::CAR_MUSCLE
+                                                   : ModelName::CAR_PICKUP;
+    auto model_ptr = ModelManager::copy(model);
+    auto [enemy, enemy_handle] =
+        m_game->getObjects().emplaceWithHandle<StandardCarEnemy>(model_ptr,
+                                                                 pos);
+    enemy.setScale(0.8f);
+    enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
+    enemy.setHealth(enemy.getMaxHealth());
+    m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
+                                           false);
+    break;
+  }
+  case GameObjectType::ARMORED_CAR_ENEMY: {
+    ModelName model = (Random::randFloat() < 0.5f) ? ModelName::CAR_POLICE
+                                                   : ModelName::CAR_BUS;
+    auto model_ptr = ModelManager::copy(model);
+    auto [enemy, enemy_handle] =
+        m_game->getObjects().emplaceWithHandle<ArmoredCarEnemy>(model_ptr, pos);
+    enemy.setScale(0.8f);
+    enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
+    enemy.setHealth(enemy.getMaxHealth());
+    m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
+                                           false);
+    break;
+  }
+  case GameObjectType::BOSS_CAR_ENEMY: {
+    auto model_ptr = ModelManager::copy(ModelName::CAR_MONSTER_TRUCK);
+    auto [enemy, enemy_handle] =
+        m_game->getObjects().emplaceWithHandle<BossCarEnemy>(model_ptr, pos);
+    enemy.setScale(1.5f);
+    enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
+    enemy.setHealth(enemy.getMaxHealth());
+    m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
+                                           false);
+    break;
+  }
+  default:
+    break;
   }
 }
 
