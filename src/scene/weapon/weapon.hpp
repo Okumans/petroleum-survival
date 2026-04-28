@@ -5,7 +5,13 @@
 #include "graphics/animation_state.hpp"
 #include "scene/weapon/i_weapon_context.hpp"
 #include "utility/not_initialized.hpp"
+#include "utility/random.hpp"
 #include <glm/glm.hpp>
+
+struct CalculatedDamage {
+  float amount;
+  bool isCritical;
+};
 
 class Weapon {
 protected:
@@ -35,6 +41,21 @@ public:
     return m_baseDamage *
            m_context.ensureInitialized()->getStats()->getMultiplier(
                StatType::MIGHT);
+  }
+
+  virtual CalculatedDamage calculateDamage() const {
+    return calculateDamage(getDamage());
+  }
+
+  virtual CalculatedDamage calculateDamage(float baseDmg) const {
+    auto stats = m_context.ensureInitialized()->getStats();
+    float critChance = stats->getMultiplier(StatType::CRIT_CHANCE);
+    float critMult = stats->getMultiplier(StatType::CRIT_MULTIPLIER);
+
+    bool isCrit = Random::randChance(critChance);
+    float finalDmg = isCrit ? baseDmg * critMult : baseDmg;
+
+    return {finalDmg, isCrit};
   }
 
   virtual float getCooldown() const {

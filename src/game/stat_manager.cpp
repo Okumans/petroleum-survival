@@ -10,6 +10,8 @@ StatManager::StatManager() {
       0.0f; // Amount is usually additive, not a multiplier (e.g. +1 projectile)
   m_stats[StatType::MAGNET] = 1.0f;
   m_stats[StatType::HEALTH_REGEN] = 0.0f;
+  m_stats[StatType::CRIT_CHANCE] = 0.05f;
+  m_stats[StatType::CRIT_MULTIPLIER] = 2.0f;
 }
 
 float StatManager::getMultiplier(StatType type) const { return m_stats[type]; }

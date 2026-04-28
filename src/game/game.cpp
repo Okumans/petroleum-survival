@@ -266,7 +266,8 @@ void Game::setup() {
 
 void Game::movePlayer(glm::vec3 vec, bool isRunning) {
   m_player.ensureInitialized()->setRunning(isRunning);
-  m_player.ensureInitialized()->moveWithAnimation(vec);
+  m_player.ensureInitialized()->moveWithAnimation(
+      vec, m_statManager.getMultiplier(StatType::SPEED));
 
   GameObject *player_object = m_player.ensureInitialized();
   snapObjectToGround(m_mapManager, *player_object);
@@ -508,6 +509,17 @@ void Game::_populateMap() {
 }
 
 void Game::reset() {
+  _resetGameplayState();
+  _setupPlayer();
+  _populateMap();
+
+  m_gameTime = 0.0f;
+  m_currentExp = 0;
+  m_expToNextLevel = 10;
+  m_currentLevel = 1;
+  m_pendingLevelUps = 0;
+  m_score = 0;
+
   m_state = GameState::START_MENU;
   m_cameraController.setTarget(glm::vec3(0.0f, 0.0f, 0.0f), true);
 }
@@ -528,6 +540,8 @@ void Game::update(double delta_time) {
   if (m_state == GameState::PLAYING) {
     m_gameTime += static_cast<float>(delta_time);
     m_spawner.update(m_gameTime, static_cast<float>(delta_time));
+  } else if (m_state == GameState::GAME_OVER) {
+    // Optionally slow down time or show game over screen
   }
 
   m_damageTextManager.update(static_cast<float>(delta_time));
@@ -564,7 +578,11 @@ void Game::update(double delta_time) {
 
   _runCollisionPass();
   m_eventBus.flush();
-  _updatePlayerRegen(delta_time);
+  
+  if (m_state == GameState::PLAYING) {
+    _updatePlayerRegen(delta_time);
+  }
+  
   m_objects.collectGarbage();
 }
 
@@ -625,10 +643,14 @@ void Game::_runCollisionPass() {
 
     Enemy *enemy = static_cast<Enemy *>(object);
     if (enemy->collidesWith(*m_player.ensureInitialized())) {
+      bool isCrit = Random::randChance(enemy->getCritProbability());
+      float amount = isCrit ? enemy->getBaseDamage() * enemy->getCritMultiplier()
+                            : enemy->getBaseDamage();
+
       m_eventBus.emit(PlayerDamageRequestedEvent{
           .enemy = enemy,
-          .amount = enemy->getBaseDamage(),
-          .isCritical = false,
+          .amount = amount,
+          .isCritical = isCrit,
           .knockbackDirection =
               glm::normalize(m_player.ensureInitialized()->getPosition() -
                              enemy->getPosition()),
@@ -660,7 +682,7 @@ void Game::_runCollisionPass() {
         m_eventBus.emit(EnemyDamageRequestedEvent{
             .enemy = enemy,
             .amount = proj->getDamage(),
-            .isCritical = false,
+            .isCritical = proj->isCritical(),
             .knockbackDirection = knockback_dir,
             .knockbackStrength = 2.0f,
             .hitPosition = enemy->getPosition() + glm::vec3(0.0f, 1.0f, 0.0f),
@@ -829,7 +851,16 @@ void Game::_registerGameplayEventHandlers() {
           return;
 
         bool wasDead = evt.enemy->isDead();
-        evt.enemy->takeDamage(evt.amount, evt.isCritical,
+        
+        bool isCritical = evt.isCritical;
+        float amount = evt.amount;
+        Player *player = m_player.ensureInitialized();
+        if (Random::randFloat(0.0f, 1.0f) <= player->getCritProbability()) {
+          isCritical = true;
+          amount *= player->getCritMultiplier();
+        }
+
+        evt.enemy->takeDamage(amount, isCritical,
                               evt.knockbackDirection, evt.knockbackStrength);
 
         glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
@@ -837,7 +868,7 @@ void Game::_registerGameplayEventHandlers() {
                             Random::randFloat(-0.5f, 0.5f)};
 
         m_damageTextManager.addText(evt.enemy->getPosition() + offset,
-                                    evt.amount, evt.isCritical);
+                                    amount, isCritical);
 
         m_eventBus.emit(ParticleSpawnRequestedEvent{.position = evt.hitPosition,
                                                     .effectId = evt.hitEffect});
@@ -863,15 +894,15 @@ void Game::_registerGameplayEventHandlers() {
 
         m_damageTextManager.addText(
             m_player.ensureInitialized()->getPosition() + offset, evt.amount,
-            false);
+            evt.isCritical);
 
         m_eventBus.emit(ParticleSpawnRequestedEvent{
             .position = m_player.ensureInitialized()->getPosition() +
                         glm::vec3(0.0f, 1.0f, 0.0f),
             .effectId = ParticleEffectType::PLAYER_BLOOD});
 
-        if (!wasDead) {
-          m_eventBus.emit(EnemyKilledEvent{
+        if (!wasDead && player.isDead()) {
+          m_eventBus.emit(PlayerKilledEvent{
               .enemy = evt.enemy, .killerPosition = evt.enemy->getPosition()});
         }
       });
@@ -897,6 +928,6 @@ void Game::_registerGameplayEventHandlers() {
   });
 
   m_eventBus.subscribe<PlayerKilledEvent>([this](const PlayerKilledEvent &evt) {
-    // TODO: do something
+    m_state = GameState::GAME_OVER;
   });
 }

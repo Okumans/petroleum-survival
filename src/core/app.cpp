@@ -320,8 +320,14 @@ void App::_setupResources() {
                               ASSETS_PATH "/icons/e95_gas_nozzle.png");
          TextureManager::load(TextureName("icon_gas_fume"), TextureType::UI,
                               ASSETS_PATH "/icons/gas_fume.png");
+         TextureManager::load(TextureName("icon_heart"), TextureType::UI,
+                              ASSETS_PATH "/icons/heart.png");
+         TextureManager::load(TextureName("icon_golden_heart"), TextureType::UI,
+                              ASSETS_PATH "/icons/golden_heart.png");
          TextureManager::load(TextureName("icon_lighter"), TextureType::UI,
                               ASSETS_PATH "/icons/lighter.png");
+         TextureManager::load(TextureName("icon_running_shoe"), TextureType::UI,
+                              ASSETS_PATH "/icons/running_shoe.png");
          TextureManager::load(TextureName("icon_solid_wood_block"),
                               TextureType::UI,
                               ASSETS_PATH "/icons/solid_wood_block.png");

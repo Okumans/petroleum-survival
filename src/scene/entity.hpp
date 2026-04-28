@@ -77,6 +77,12 @@ public:
   [[nodiscard]] float getBaseDamage() const { return m_baseDamage; }
   void setBaseDamage(float dmg) { m_baseDamage = dmg; }
 
+  [[nodiscard]] float getCritMultiplier() const { return m_critMultiplier; }
+  void setCritMultiplier(float mult) { m_critMultiplier = mult; }
+
+  [[nodiscard]] float getCritProbability() const { return m_critProbability; }
+  void setCritProbability(float prob) { m_critProbability = prob; }
+
   [[nodiscard]] float getExpDropAmount() const { return m_expDropAmount; }
   void setExpDropAmount(float exp) { m_expDropAmount = exp; }
 

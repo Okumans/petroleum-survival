@@ -15,11 +15,11 @@ void DamageTextManager::addText(glm::vec3 pos, float damage, bool isCritical) {
   DamageText dt;
   dt.worldPos = pos + glm::vec3(0.0f, 1.0f, 0.0f); // offset slightly up
   dt.text = std::to_string(static_cast<int>(damage));
-  dt.color = isCritical ? glm::vec4(1.0f, 0.2f, 0.2f, 1.0f)
+  dt.color = isCritical ? glm::vec4(1.0f, 0.8f, 0.0f, 1.0f) // Gold for crits
                         : glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-  dt.maxLifetime = 0.8f;
+  dt.maxLifetime = isCritical ? 1.0f : 0.8f;
   dt.lifetime = 0.0f;
-  dt.scale = isCritical ? 0.3f : 0.15f;
+  dt.scale = isCritical ? 0.35f : 0.15f;
   m_texts.push_back(dt);
 }
 

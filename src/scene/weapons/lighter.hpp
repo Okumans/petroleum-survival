@@ -103,11 +103,13 @@ public:
     glm::vec3 spawn_pos = player_pos + dir * 0.8f + glm::vec3(0.0f, 0.2f, 0.0f);
     glm::vec3 velocity = dir * m_projectileSpeed;
 
+    auto dmg = calculateDamage();
     std::shared_ptr<Projectile> proj = std::make_shared<Projectile>(
         GameFactories::getProjectile().create([&](Projectile &p) {
           p.setPosition(spawn_pos);
           p.setVelocity(velocity);
-          p.setDamage(getDamage());
+          p.setDamage(dmg.amount);
+          p.setCritical(dmg.isCritical);
           p.setLifetime(m_projectileLifetime);
           p.setScale(glm::vec3(0.18f));
           p.copyModel()->setEmissionColor(glm::vec3(8.0f, 4.0f, 1.0f) * 0.5f);

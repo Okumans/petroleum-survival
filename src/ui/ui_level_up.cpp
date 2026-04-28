@@ -13,11 +13,13 @@ LevelUI::~LevelUI() {}
 void LevelUI::setup(Game &game) {
   _setupHUD();
   _setupLevelUpOverlay(game);
+  _setupGameOverOverlay(game);
 }
 
 void LevelUI::update(const Game &game, float virtualWidth) {
   _updateHUD(game, virtualWidth);
   _updateLevelUpOverlay(game, virtualWidth);
+  _updateGameOverOverlay(game, virtualWidth);
 }
 
 void LevelUI::_setupHUD() {
@@ -271,6 +273,63 @@ void LevelUI::_updateLevelUpOverlay(const Game &game, float virtualWidth) {
     m_uiManager.getElement("level_up_btn")->bounds.x = center_x - 5.0f;
     if (auto *btnText = dynamic_cast<TextElement *>(
             m_uiManager.getElement("level_up_btn_text"))) {
+      btnText->bounds.x =
+          center_x - m_font.getTextWidth(btnText->text, btnText->scale) / 2.0f;
+    }
+  }
+}
+
+void LevelUI::_setupGameOverOverlay(Game &game) {
+  m_uiManager.addStaticElement("game_over_bg", {0.0f, 0.0f, 100.0f, 100.0f},
+                               {0.0f, 0.0f, 0.0f, 0.7f});
+  m_uiManager.addTextElement("game_over_title", {0.0f, 15.0f, 0.0f, 0.0f},
+                             "GAME OVER", m_font, {1.0f, 0.2f, 0.2f, 1.0f},
+                             0.3f);
+  m_uiManager.addTextElement("game_over_score", {0.0f, 20.0f, 0.0f, 0.0f},
+                             "Score: 0", m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.15f);
+
+  m_uiManager.addInteractiveElement("game_over_retry", {0.0f, 28.0f, 12.0f, 3.5f},
+                                    {0.2f, 0.5f, 0.2f, 1.0f},
+                                    [&game]() { 
+                                      game.reset(); 
+                                      game.startGame(); 
+                                    });
+  m_uiManager.addTextElement("game_over_retry_text", {0.0f, 28.75f, 0.0f, 0.0f},
+                             "RETRY", m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.12f);
+}
+
+void LevelUI::_updateGameOverOverlay(const Game &game, float virtualWidth) {
+  GameState state = game.getState();
+  bool isGameOver = state == GameState::GAME_OVER;
+
+  m_uiManager.getElement("game_over_bg")->visible = isGameOver;
+  m_uiManager.getElement("game_over_title")->visible = isGameOver;
+  m_uiManager.getElement("game_over_score")->visible = isGameOver;
+  m_uiManager.getElement("game_over_retry")->visible = isGameOver;
+  m_uiManager.getElement("game_over_retry_text")->visible = isGameOver;
+
+  if (isGameOver) {
+    float center_x = virtualWidth / 2.0f;
+
+    m_uiManager.getElement("game_over_bg")->bounds.w = virtualWidth;
+    m_uiManager.getElement("game_over_bg")->bounds.h = 40.0f; // virtual height
+
+    if (auto *title = dynamic_cast<TextElement *>(
+            m_uiManager.getElement("game_over_title"))) {
+      title->bounds.x =
+          center_x - m_font.getTextWidth(title->text, title->scale) / 2.0f;
+    }
+
+    if (auto *scoreTxt = dynamic_cast<TextElement *>(
+            m_uiManager.getElement("game_over_score"))) {
+      scoreTxt->text = "Score: " + std::to_string(game.getScore());
+      scoreTxt->bounds.x =
+          center_x - m_font.getTextWidth(scoreTxt->text, scoreTxt->scale) / 2.0f;
+    }
+
+    m_uiManager.getElement("game_over_retry")->bounds.x = center_x - 6.0f;
+    if (auto *btnText = dynamic_cast<TextElement *>(
+            m_uiManager.getElement("game_over_retry_text"))) {
       btnText->bounds.x =
           center_x - m_font.getTextWidth(btnText->text, btnText->scale) / 2.0f;
     }

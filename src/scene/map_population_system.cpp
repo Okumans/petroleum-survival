@@ -29,19 +29,33 @@ std::vector<MapPopulator::PropInstance> MapPopulator::_getMapProps() {
     return glm::vec3(base_scale * Random::randFloat(min_mul, max_mul));
   };
 
-  const int PROPS_PER_GROVE_MIN = 8;
-  const int PROPS_PER_GROVE_MAX = 26;
-  const float GROVE_RADIUS = 22.0f; // Max spread of a single cluster
-  const float SPAWN_AREA_EXTENT =
-      460.0f; // Keep inside MapManager world half-size
+  // Helper function to heavily favor spawning trees (60% trees, 20% bushes, 20%
+  // rocks)
+  auto getRandomPropType = []() {
+    int r = Random::randInt(0, 9);
+    if (r < 3)
+      return 0; // 30% chance TREE_1
+    if (r < 6)
+      return 1; // 30% chance TREE_2
+    if (r < 7)
+      return 2; // 10% chance BUSH_1
+    if (r < 8)
+      return 3; // 10% chance BUSH_2
+    return 4;   // 20% chance ROCK_1
+  };
 
-  // Baseline scatter so the world never feels empty.
-  // We place a few props per grid cell with jitter, then add groves for variety.
-  const float GRID_STEP = 55.0f;
-  const int GRID_PROPS_MIN = 1;
-  const int GRID_PROPS_MAX = 4;
+  const int PROPS_PER_GROVE_MIN = 15; // Increased from 8
+  const int PROPS_PER_GROVE_MAX = 45; // Increased from 26
+  const float GROVE_RADIUS = 25.0f; // Slightly wider spread for larger clusters
+  const float SPAWN_AREA_EXTENT = 460.0f;
 
-  for (float gx = -SPAWN_AREA_EXTENT; gx <= SPAWN_AREA_EXTENT; gx += GRID_STEP) {
+  // Baseline scatter: tighter grid, more props
+  const float GRID_STEP = 35.0f; // Decreased from 55.0f (more grid cells)
+  const int GRID_PROPS_MIN = 3;  // Increased from 1
+  const int GRID_PROPS_MAX = 7;  // Increased from 4
+
+  for (float gx = -SPAWN_AREA_EXTENT; gx <= SPAWN_AREA_EXTENT;
+       gx += GRID_STEP) {
     for (float gz = -SPAWN_AREA_EXTENT; gz <= SPAWN_AREA_EXTENT;
          gz += GRID_STEP) {
       int props_in_cell = Random::randInt(GRID_PROPS_MIN, GRID_PROPS_MAX);
@@ -49,7 +63,7 @@ std::vector<MapPopulator::PropInstance> MapPopulator::_getMapProps() {
         float x = gx + Random::randFloat(-GRID_STEP * 0.45f, GRID_STEP * 0.45f);
         float z = gz + Random::randFloat(-GRID_STEP * 0.45f, GRID_STEP * 0.45f);
 
-        switch (Random::randInt(0, 4)) {
+        switch (getRandomPropType()) { // Using weighted random
         case 0:
           props.push_back({ModelName::TREE_1, glm::vec3(x, 0.0f, z),
                            glm::vec3(0.0f, Random::randFloat() * 360.0f, 0.0f),
@@ -80,8 +94,8 @@ std::vector<MapPopulator::PropInstance> MapPopulator::_getMapProps() {
     }
   }
 
-  // Add groves (clusters) for density variation.
-  const int GROVE_COUNT = 140;
+  // Add groves: massively increased count for a forest feel
+  const int GROVE_COUNT = 350; // Increased from 140
 
   for (int g = 0; g < GROVE_COUNT; ++g) {
     float center_x = Random::randFloat(-SPAWN_AREA_EXTENT, SPAWN_AREA_EXTENT);
@@ -99,7 +113,7 @@ std::vector<MapPopulator::PropInstance> MapPopulator::_getMapProps() {
       float x = center_x + r * glm::cos(angle);
       float z = center_z + r * glm::sin(angle);
 
-      switch (Random::randInt(0, 4)) {
+      switch (getRandomPropType()) { // Using weighted random
       case 0:
         props.push_back({ModelName::TREE_1, glm::vec3(x, 0.0f, z),
                          glm::vec3(0.0f, Random::randFloat() * 360.0f, 0.0f),

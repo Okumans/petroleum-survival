@@ -102,11 +102,13 @@ public:
 
     glm::vec3 velocity = glm::normalize(to_target) * m_projectileSpeed;
 
+    auto dmg = calculateDamage();
     std::shared_ptr<Projectile> proj = std::make_shared<Projectile>(
         GameFactories::getProjectile().create([&](Projectile &p) {
           p.setPosition(spawn_pos);
           p.setVelocity(velocity);
-          p.setDamage(getDamage());
+          p.setDamage(dmg.amount);
+          p.setCritical(dmg.isCritical);
           p.setLifetime(m_projectileLifetime);
           p.setUpdateLogic([](Projectile &p, double dt) {
             p.translate(p.getVelocity() * static_cast<float>(dt));

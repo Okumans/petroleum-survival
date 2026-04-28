@@ -20,7 +20,9 @@ public:
 private:
   void _setupHUD();
   void _setupLevelUpOverlay(Game &game);
+  void _setupGameOverOverlay(Game &game);
   void _updateHUD(const Game &game, float virtualWidth);
   void _updateLevelUpOverlay(const Game &game, float virtualWidth);
+  void _updateGameOverOverlay(const Game &game, float virtualWidth);
   void _updateHealthBar(const Game &game, float virtualWidth);
 };

@@ -119,12 +119,14 @@ public:
                   Random::randFloat(-720.0f, 720.0f)    // Z-axis: Roll spin
         );
 
+    auto dmg = calculateDamage();
     std::shared_ptr<Projectile> proj = std::make_shared<Projectile>(
         GameFactories::getProjectile(ModelName::WATER_BOTTLE)
             .create([&](Projectile &p) {
               p.setPosition(spawn_pos);
               p.setVelocity(velocity);
-              p.setDamage(getDamage());
+              p.setDamage(dmg.amount);
+              p.setCritical(dmg.isCritical);
               p.setLifetime(m_projectileLifetime);
               p.setRotation(glm::vec3(Random::randFloat(0.0f, 360.0f),
                                       Random::randFloat(0.0f, 360.0f),

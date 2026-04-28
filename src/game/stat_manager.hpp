@@ -11,7 +11,9 @@ enum class StatType {
   SPEED,    // Projectile/Player speed multiplier
   AMOUNT,   // Extra projectiles
   MAGNET,   // Pickup radius multiplier
-  HEALTH_REGEN
+  HEALTH_REGEN,
+  CRIT_CHANCE,
+  CRIT_MULTIPLIER
 };
 
 class StatManager {

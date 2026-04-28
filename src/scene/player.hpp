@@ -65,8 +65,6 @@ public:
 
   void moveWithAnimation(glm::vec3 vec,
                          float speed_multiplier = 1.0f) override {
-    (void)speed_multiplier;
-
     if (glm::length(vec) < 0.001f)
       return;
 
@@ -77,7 +75,7 @@ public:
     }
 
     m_locomotion.startMove(this->m_position, this->m_rotation, vec,
-                           m_currentSpeedMultiplier);
+                           m_currentSpeedMultiplier * speed_multiplier);
   }
 
   void update(double delta_time) override {

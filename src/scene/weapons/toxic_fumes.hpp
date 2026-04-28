@@ -106,10 +106,11 @@ public:
 
       float calculated_knockback = m_knockbackStrength * falloff_multiplier;
 
+      auto dmg = calculateDamage();
       emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
           .enemy = enemy,
-          .amount = damage,
-          .isCritical = false,
+          .amount = dmg.amount,
+          .isCritical = dmg.isCritical,
           .knockbackDirection = knockback_dir,
           .knockbackStrength = calculated_knockback,
           .hitPosition = enemy_pos + glm::vec3(0.0f, 1.0f, 0.0f),

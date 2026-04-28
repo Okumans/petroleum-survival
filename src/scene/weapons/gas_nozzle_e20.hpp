@@ -175,11 +175,13 @@ public:
               return;
 
             float falloff = 1.0f - (dist_to_enemy / cone_range);
+            float baseDmg = getDamage() * getSynergyDamageMultiplier() *
+                            (0.65f + falloff * 0.35f);
+            auto dmg = calculateDamage(baseDmg);
             emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
                 .enemy = enemy,
-                .amount = getDamage() * getSynergyDamageMultiplier() *
-                          (0.65f + falloff * 0.35f),
-                .isCritical = false,
+                .amount = dmg.amount,
+                .isCritical = dmg.isCritical,
                 .knockbackDirection = normalized_forward,
                 .knockbackStrength = 0.5f + falloff * 0.35f,
                 .hitPosition = closest_on_enemy + glm::vec3(0.0f, 1.0f, 0.0f),

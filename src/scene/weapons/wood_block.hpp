@@ -198,10 +198,11 @@ public:
 
       m_sweepHit.insert(enemy);
 
+      auto dmg = calculateDamage();
       emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
           .enemy = enemy,
-          .amount = getDamage(),
-          .isCritical = false,
+          .amount = dmg.amount,
+          .isCritical = dmg.isCritical,
           .knockbackDirection = dir,
           .knockbackStrength = m_knockbackStrength,
           .hitPosition = closest + glm::vec3(0.0f, 0.8f, 0.0f),

@@ -8,6 +8,7 @@ class Projectile : public GameObject {
 protected:
   glm::vec3 m_velocity;
   float m_damage;
+  bool m_isCritical = false;
   float m_lifetime;
   std::function<void(Projectile &, double)> m_behaviorCallback;
 
@@ -41,10 +42,12 @@ public:
   }
 
   [[nodiscard]] float getDamage() const { return m_damage; }
+  [[nodiscard]] bool isCritical() const { return m_isCritical; }
   [[nodiscard]] glm::vec3 getVelocity() const { return m_velocity; }
 
   void setVelocity(const glm::vec3 &velocity) { m_velocity = velocity; }
   void setDamage(float damage) { m_damage = damage; }
+  void setCritical(bool isCritical) { m_isCritical = isCritical; }
   void setLifetime(float lifetime) { m_lifetime = lifetime; }
   void setUpdateLogic(std::function<void(Projectile &, double)> logic) {
     m_behaviorCallback = logic;

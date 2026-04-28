@@ -176,10 +176,11 @@ public:
                                           ? glm::vec3(0.0f, 0.0f, 1.0f)
                                           : glm::normalize(to_enemy);
 
+            auto dmg = calculateDamage();
             emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
                 .enemy = enemy,
-                .amount = getDamage(),
-                .isCritical = false,
+                .amount = dmg.amount,
+                .isCritical = dmg.isCritical,
                 .knockbackDirection = knockback_dir,
                 .knockbackStrength = 1.0f,
                 .hitPosition =

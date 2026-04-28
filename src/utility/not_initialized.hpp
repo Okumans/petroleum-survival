@@ -66,12 +66,12 @@ public:
    * @param args Arguments to forward to T's constructor.
    */
   template <typename... Args> void init(Args &&...args) {
-    if (storage.has_value()) {
-      throw std::runtime_error(std::format(
-          "Initialization Error: The object \"{}\" is already initialized. "
-          "Multiple calls to init() are not allowed.",
-          Name.data));
-    }
+    // if (storage.has_value()) {
+    //   throw std::runtime_error(std::format(
+    //       "Initialization Error: The object \"{}\" is already initialized. "
+    //       "Multiple calls to init() are not allowed.",
+    //       Name.data));
+    // }
     storage.emplace(std::forward<Args>(args)...);
   }
 };
