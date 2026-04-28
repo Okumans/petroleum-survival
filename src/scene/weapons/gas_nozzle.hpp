@@ -61,31 +61,26 @@ public:
               return;
             }
 
-            // Get player AABB for cone origin
             const Player *player = m_context.ensureInitialized()->getPlayer();
-            AABB player_box = player->getHitboxAABB();
 
-            // Get closest point on enemy AABB to player AABB
+            AABB player_box = player->getHitboxAABB();
             AABB enemy_box = enemy->getHitboxAABB();
 
-            // Closest point on player AABB to enemy
             glm::vec3 closest_on_player = glm::clamp(
                 enemy_box.getCenter(), player_box.min, player_box.max);
-            // Closest point on enemy AABB to player
             glm::vec3 closest_on_enemy =
                 glm::clamp(closest_on_player, enemy_box.min, enemy_box.max);
 
             glm::vec3 to_closest = closest_on_enemy - closest_on_player;
             float dist_to_enemy = glm::length(to_closest);
-            if (dist_to_enemy < 0.001f || dist_to_enemy > cone_range) {
+
+            if (dist_to_enemy > cone_range)
               return;
-            }
 
             glm::vec3 direction_to_closest = glm::normalize(to_closest);
             if (glm::dot(normalized_forward, direction_to_closest) <
-                cos_cone_angle) {
+                cos_cone_angle)
               return;
-            }
 
             float falloff = 1.0f - (dist_to_enemy / cone_range);
             emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
