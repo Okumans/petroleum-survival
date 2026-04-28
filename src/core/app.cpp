@@ -66,7 +66,7 @@ void App::render(double delta_time) {
 }
 
 App::App(GLFWwindow *window)
-    : m_window(window), m_levelUI(m_uiManager, m_font) {
+    : m_window(window), m_levelUI(m_uiManager, m_font), m_menuUI(m_uiManager, m_font) {
   glfwSetWindowUserPointer(m_window, (void *)this);
 
   glfwSetKeyCallback(m_window, _glfwKeyCallback);
@@ -374,21 +374,12 @@ void App::_setupUIElements() {
   m_uiManager.addInteractiveElement(
       "darken_screen", {0.0f, 0.0f, 100.0f, 40.0f}, {0.0f, 0.0f, 0.0f, 0.5f},
       [this]() {
-        if (m_game.getState() == GameState::START_MENU)
-          m_game.startGame();
-        else if (m_game.getState() == GameState::GAME_OVER)
+        if (m_game.getState() == GameState::GAME_OVER)
           m_game.reset();
       });
 
   m_levelUI.setup(m_game);
-
-  // Start Screen
-  m_uiManager.addTextElement("start_title", {0.0f, 15.0f, 0.0f, 0.0f},
-                             "VAMPIRE SURVIVOR", m_font,
-                             {1.0f, 0.0f, 0.0f, 1.0f}, 0.3f);
-  m_uiManager.addTextElement("start_hint", {0.0f, 20.0f, 0.0f, 0.0f},
-                             "CLICK TO START", m_font, {1.0f, 1.0f, 1.0f, 1.0f},
-                             0.15f);
+  m_menuUI.setup(m_game);
 
   m_game.getDamageTextManager().init(&m_font);
 }
@@ -437,24 +428,8 @@ void App::_updateUIElements(double delta_time) {
       isMenu || state == GameState::LEVEL_UP;
   m_uiManager.getElement("darken_screen")->bounds.w = vWidth;
 
-  // Handle Start Menu
-  if (auto *title =
-          dynamic_cast<TextElement *>(m_uiManager.getElement("start_title"))) {
-    title->visible = (state == GameState::START_MENU);
-    float w = m_font.getTextWidth(title->text, title->scale);
-    title->bounds.x = (vWidth - w) / 2.0f;
-  }
-
-  if (auto *hint =
-          dynamic_cast<TextElement *>(m_uiManager.getElement("start_hint"))) {
-    hint->visible = (state == GameState::START_MENU);
-    float w = m_font.getTextWidth(hint->text, hint->scale);
-    hint->bounds.x = (vWidth - w) / 2.0f;
-    hint->color.a =
-        0.3f + 0.7f * (0.5f * (std::cos(glfwGetTime() * 4.0) + 1.0f));
-  }
-
   m_levelUI.update(m_game, vWidth);
+  m_menuUI.update(m_game, vWidth);
 }
 
 void App::_setupShaders() {
