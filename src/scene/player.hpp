@@ -86,15 +86,7 @@ public:
         (1.0f - std::exp(-k * static_cast<float>(delta_time)));
 
     for (auto &w : m_weapons) {
-      AABB box = getHitboxAABB();
-      glm::vec3 spawnPos =
-          m_position + glm::vec3(0.0f, (box.max.y - box.min.y) * 0.5f, 0.0f);
-
-      // Calculate forward vector based on Y rotation (assuming Y is up)
-      float rad = glm::radians(m_rotation.y);
-      glm::vec3 forward = glm::vec3(sin(rad), 0.0f, cos(rad));
-
-      w->update(delta_time, spawnPos, forward);
+      w->update(delta_time);
     }
 
     _updateRotateAnimationState(delta_time);

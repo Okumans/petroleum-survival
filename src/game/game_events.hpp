@@ -39,11 +39,15 @@ enum class ParticleEffectType {
   ENEMY_DEATH,
   PLAYER_BLOOD,
   MAGIC_HIT,
-  FLAME
+  FLAME,
+  FUME
 };
 
 struct ParticleSpawnRequestedEvent {
   glm::vec3 position;
+  glm::vec3 direction{0.0f, 1.0f, 0.0f};
+  float length{1.0f};
+  float thickness{1.0f};
   ParticleEffectType effectId;
 };
 struct ProjectileSpawnRequestedEvent {

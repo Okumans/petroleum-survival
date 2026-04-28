@@ -127,8 +127,7 @@ public:
     requires std::is_base_of_v<GameObject, ObjectType>
   ObjectType &create(const GameObjectFactory<ObjectType> &factory,
                      std::invocable<ObjectType &> auto &&modifier) {
-    auto [object_ref, handle] =
-        createWithHandle<ObjectType>(factory, modifier);
+    auto [object_ref, handle] = createWithHandle<ObjectType>(factory, modifier);
     (void)handle;
     return object_ref;
   }

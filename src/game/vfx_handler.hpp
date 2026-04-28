@@ -43,7 +43,10 @@ public:
       _emitMagicHit(evt.position);
       break;
     case ParticleEffectType::FLAME:
-      _emitFlameBurst(evt.position);
+      _emitFlameBurst(evt);
+      break;
+    case ParticleEffectType::FUME:
+      _emitFumeCloud(evt);
       break;
     }
   }
@@ -130,17 +133,100 @@ private:
     }
   }
 
-  void _emitFlameBurst(const glm::vec3 &position) {
-    for (int i = 0; i < 12; ++i) {
-      m_particleSystem.emit({.position = position,
-                             .velocity = glm::vec3(0.0f, 8.0f, 0.0f),
-                             .velocityVariation = glm::vec3(2.5f, 3.5f, 2.5f),
-                             .colorBegin = glm::vec4(1.0f, 0.65f, 0.15f, 0.95f),
-                             .colorEnd = glm::vec4(0.8f, 0.15f, 0.0f, 0.0f),
-                             .sizeBegin = 1.0f,
-                             .sizeEnd = 0.0f,
-                             .sizeVariation = 0.1f,
-                             .lifeTime = 0.18f});
+  void _emitFlameBurst(const GameEvents::ParticleSpawnRequestedEvent &evt) {
+    glm::vec3 direction = evt.direction;
+
+    if (glm::length(direction) < 0.001f) {
+      direction = glm::vec3(0.0f, 0.0f, 1.0f);
+    } else {
+      direction = glm::normalize(direction);
+    }
+
+    float thickness = glm::max(0.12f, evt.thickness);
+
+    glm::vec3 basePosition = evt.position - (direction * 0.1f);
+
+    float coreSize = glm::max(0.06f, thickness * 0.5f);
+    float emberSize = glm::max(0.02f, thickness * 0.15f);
+
+    for (int i = 0; i < 65; ++i) {
+      bool isCoreParticle = (i % 4) != 0;
+
+      float travel = Random::randFloat(0.0f, 1.0f) * evt.length;
+      float spreadFactor = 0.05f + (travel * 0.25f);
+
+      glm::vec3 lateral = Random::randVec3(-spreadFactor, spreadFactor);
+      lateral -= direction * glm::dot(lateral, direction);
+
+      glm::vec3 spawnPos = basePosition + lateral + direction * travel;
+
+      float thrust = isCoreParticle ? Random::randFloat(2.0f, 4.5f)
+                                    : Random::randFloat(4.5f, 8.0f);
+      float buoyancy = isCoreParticle ? Random::randFloat(0.2f, 0.8f)
+                                      : Random::randFloat(1.5f, 3.5f);
+
+      glm::vec3 particleVelocity = direction * thrust +
+                                   lateral * Random::randFloat(1.0f, 3.0f) +
+                                   glm::vec3(0.0f, buoyancy, 0.0f);
+
+      glm::vec4 colorBegin =
+          isCoreParticle
+              ? glm::vec4(1.0f, Random::randFloat(0.25f, 0.45f), 0.0f, 1.0f)
+              : glm::vec4(1.0f, Random::randFloat(0.1f, 0.2f), 0.0f, 0.9f);
+
+      glm::vec4 colorEnd = isCoreParticle ? glm::vec4(0.6f, 0.05f, 0.0f, 0.0f)
+                                          : glm::vec4(0.3f, 0.02f, 0.0f, 0.0f);
+
+      float pSizeBegin = isCoreParticle ? coreSize : emberSize;
+      float pSizeEnd =
+          isCoreParticle ? (coreSize * Random::randFloat(1.5f, 2.5f)) : 0.0f;
+
+      m_particleSystem.emit(
+          {.position = spawnPos,
+           .velocity = particleVelocity,
+           .velocityVariation = glm::vec3(0.4f, 0.4f, 0.4f),
+           .direction = direction,
+           .colorBegin = colorBegin,
+           .colorEnd = colorEnd,
+           .sizeBegin = pSizeBegin,
+           .sizeEnd = pSizeEnd,
+           .sizeVariation = pSizeBegin * 0.3f,
+           .stretch = 1.5f,
+           .stretchVariation = 0.2f,
+           .lifeTime = isCoreParticle ? Random::randFloat(0.15f, 0.3f)
+                                      : Random::randFloat(0.25f, 0.45f)});
+    }
+  }
+
+  void _emitFumeCloud(const GameEvents::ParticleSpawnRequestedEvent &evt) {
+    glm::vec3 direction = evt.direction;
+    if (glm::length(direction) < 0.001f) {
+      direction = glm::vec3(0.0f, 1.0f, 0.0f);
+    } else {
+      direction = glm::normalize(direction);
+    }
+
+    float radius = glm::max(0.5f, evt.length);
+    float thickness = glm::max(0.2f, evt.thickness);
+
+    for (int i = 0; i < 18; ++i) {
+      float angle = Random::randFloat(0.0f, glm::two_pi<float>());
+      float radialScale = Random::randFloat(0.65f, 1.0f) * radius;
+      glm::vec3 ringOffset(std::cos(angle) * radialScale,
+                           Random::randFloat(-0.2f, 0.2f),
+                           std::sin(angle) * radialScale);
+      glm::vec3 drift = ringOffset * 0.2f + glm::vec3(0.0f, 0.9f, 0.0f);
+
+      m_particleSystem.emit({.position = evt.position + ringOffset,
+                             .velocity = drift * 1.2f + direction * 0.15f,
+                             .velocityVariation = glm::vec3(0.5f, 0.7f, 0.5f),
+                             .colorBegin = glm::vec4(0.45f, 0.72f, 0.20f, 0.6f),
+                             .colorEnd = glm::vec4(0.10f, 0.18f, 0.05f, 0.0f),
+                             .sizeBegin = thickness,
+                             .sizeEnd = thickness * 0.35f,
+                             .sizeVariation = 0.3f,
+                             .stretch = 1.8f,
+                             .lifeTime = 0.45f});
     }
   }
 };

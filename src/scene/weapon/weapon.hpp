@@ -3,8 +3,8 @@
 #include "game/game_events.hpp"
 #include "game/stat_manager.hpp"
 #include "graphics/animation_state.hpp"
+#include "scene/weapon/i_weapon_context.hpp"
 #include "utility/not_initialized.hpp"
-#include <functional>
 #include <glm/glm.hpp>
 
 class Weapon {
@@ -12,14 +12,8 @@ protected:
   AnimationState<void> m_coolDownState;
   float m_baseCooldown;
   float m_baseDamage;
-  NotInitialized<const StatManager *> m_stats;
 
-  std::function<void(const GameEvents::ProjectileSpawnRequestedEvent &)>
-      m_spawnProjectile;
-    std::function<void(const GameEvents::ParticleSpawnRequestedEvent &)>
-      m_spawnParticle;
-  std::function<void(const GameEvents::EnemyDamageRequestedEvent &)>
-      m_requestEnemyDamage;
+  NotInitialized<IWeaponContext *> m_context;
 
 public:
   Weapon(float cooldown, float damage)
@@ -28,61 +22,42 @@ public:
 
   virtual ~Weapon() = default;
 
-  void setStats(const StatManager *stats) { m_stats.init(stats); }
+  void setContext(IWeaponContext *context) { m_context.init(context); }
 
   virtual float getDamage() const {
     return m_baseDamage *
-           m_stats.ensureInitialized()->getMultiplier(StatType::MIGHT);
+           m_context.ensureInitialized()->getStats()->getMultiplier(
+               StatType::MIGHT);
   }
 
   virtual float getCooldown() const {
     return m_baseCooldown *
-           m_stats.ensureInitialized()->getMultiplier(StatType::COOLDOWN);
+           m_context.ensureInitialized()->getStats()->getMultiplier(
+               StatType::COOLDOWN);
   }
 
-  void setContext(
-      std::function<void(const GameEvents::ProjectileSpawnRequestedEvent &)>
-          spawnProjectile) {
-    m_spawnProjectile = spawnProjectile;
-  }
-
-  void setParticleContext(
-      std::function<void(const GameEvents::ParticleSpawnRequestedEvent &)>
-          spawnParticle) {
-    m_spawnParticle = spawnParticle;
-  }
-
-  void setDamageContext(
-      std::function<void(const GameEvents::EnemyDamageRequestedEvent &)>
-          requestEnemyDamage) {
-    m_requestEnemyDamage = requestEnemyDamage;
-  }
-
-  void emitEnemyDamage(const GameEvents::EnemyDamageRequestedEvent &evt) const {
-    if (m_requestEnemyDamage) {
-      m_requestEnemyDamage(evt);
-    }
-  }
-
-  void emitParticle(const GameEvents::ParticleSpawnRequestedEvent &evt) const {
-    if (m_spawnParticle) {
-      m_spawnParticle(evt);
-    }
-  }
-
-  virtual void update(double delta_time, const glm::vec3 &playerPos,
-                      const glm::vec3 &playerForward) {
+  virtual void update(double delta_time) {
     m_coolDownState.updateTimer(static_cast<float>(delta_time));
-
     if (m_coolDownState.isFinished()) {
-      if (fire(playerPos, playerForward)) {
+      if (fire()) {
         m_coolDownState.reset();
         m_coolDownState.duration = getCooldown();
       }
     }
   }
 
-  // Returns true if successfully fired
-  virtual bool fire(const glm::vec3 &playerPos,
-                    const glm::vec3 &playerForward) = 0;
+  virtual bool fire() = 0;
+
+protected:
+  void emitProjectile(const GameEvents::ProjectileSpawnRequestedEvent &event) {
+    m_context.ensureInitialized()->emit(event);
+  }
+
+  void emitParticle(const GameEvents::ParticleSpawnRequestedEvent &event) {
+    m_context.ensureInitialized()->emit(event);
+  }
+
+  void emitEnemyDamage(const GameEvents::EnemyDamageRequestedEvent &event) {
+    m_context.ensureInitialized()->emit(event);
+  }
 };

@@ -17,24 +17,24 @@ public:
       : Weapon(cooldown, damage), m_meleeRange(range),
         m_lifetime(sweep_duration) {}
 
-  bool fire(const glm::vec3 &playerPos,
-            const glm::vec3 &playerForward) override {
-    if (!m_spawnProjectile)
-      return false;
+  bool fire() override {
+    glm::vec3 player_pos = m_context.ensureInitialized()->getPlayerPosition();
+    glm::vec3 player_forward =
+        m_context.ensureInitialized()->getPlayerForward();
 
     // Spawn the hitbox just in front of the player
-    glm::vec3 spawnPos = playerPos + (playerForward * (m_meleeRange * 0.5f));
+    glm::vec3 spawn_pos = player_pos + (player_forward * (m_meleeRange * 0.5f));
 
     std::shared_ptr<Projectile> proj = std::make_shared<MeleeProjectile>(
         GameFactories::getMeleeProjectile().create([&](MeleeProjectile &p) {
-          p.setPosition(spawnPos);
-          p.setVelocity(playerForward * 0.0f); // stays relative
+          p.setPosition(spawn_pos);
+          p.setVelocity(player_forward * 0.0f); // stays relative
           p.setDamage(getDamage());
           p.setMaxLifetime(m_lifetime);
           p.setScale(glm::vec3(m_meleeRange, 1.0f, m_meleeRange * 0.5f));
         }));
 
-    m_spawnProjectile(
+    emitProjectile(
         GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});
 
     return true;

@@ -318,6 +318,26 @@ void Game::_resetGameplayState() {
   m_score = 0;
 }
 
+glm::vec3 Game::getPlayerPosition() const {
+  Player *player = m_player.ensureInitialized();
+  AABB box = player->getHitboxAABB();
+  return player->getPosition() +
+         glm::vec3(0.0f, (box.max.y - box.min.y) * 0.5f, 0.0f);
+}
+
+glm::vec3 Game::getPlayerForward() const {
+  Player *player = m_player.ensureInitialized();
+  float rad = glm::radians(player->getRotation().y);
+  return glm::vec3(std::sin(rad), 0.0f, std::cos(rad));
+}
+
+void Game::findTargets(float range, uint32_t k,
+                       EnemyCallback callback) const {
+  for (auto &ed : getClosestEnemies(range, k)) {
+    callback(ed.enemy);
+  }
+}
+
 void Game::_setupPlayer() {
   auto [player_object, player_handle] =
       m_objects.createWithHandle<Player>(GameFactories::getPlayer());
@@ -329,80 +349,31 @@ void Game::_setupPlayer() {
       player_handle, m_player.ensureInitialized()->getPosition(), false);
 
   auto magic_wand = std::make_shared<MagicWand>();
-  magic_wand->setContext(
-      [this](const GameEvents::ProjectileSpawnRequestedEvent &evt) {
-        m_eventBus.emit(evt);
-      });
-  magic_wand->setTargetingContext(
-      [this](float range, uint32_t k,
-             ProjectileWeapon::EnemyCallback callback) {
-        for (auto &ed : getClosestEnemies(range, k)) {
-          callback(ed.enemy);
-        }
-      });
-
-  magic_wand->setStats(&m_statManager);
+  magic_wand->setContext(this);
   m_player.ensureInitialized()->addWeapon(magic_wand);
 
   auto wood_block = std::make_shared<SolidWoodBlock>();
-  wood_block->setStats(&m_statManager);
-  wood_block->setContext([this](const auto &evt) { m_eventBus.emit(evt); });
+  wood_block->setContext(this);
   m_player.ensureInitialized()->addWeapon(wood_block);
 
   // Water Bottle Weapon
   auto water_bottle = std::make_shared<WaterBottle>();
-  water_bottle->setContext([this](const auto &evt) { m_eventBus.emit(evt); });
-  water_bottle->setDamageContext(
-      [this](const auto &evt) { m_eventBus.emit(evt); });
-  water_bottle->setStats(&m_statManager);
+  water_bottle->setContext(this);
   m_player.ensureInitialized()->addWeapon(water_bottle);
 
   // Orbiting Cones Weapon
   auto orbiting_cones = std::make_shared<OrbitingCones>();
-  orbiting_cones->setContext([this](const auto &evt) { m_eventBus.emit(evt); });
-  orbiting_cones->setDamageContext(
-      [this](const auto &evt) { m_eventBus.emit(evt); });
-  orbiting_cones->setTargetingContext(
-      [this](float range, uint32_t k, std::function<void(Enemy *)> callback) {
-        for (auto &ed : getClosestEnemies(range, k)) {
-          callback(ed.enemy);
-        }
-      });
-  orbiting_cones->setProjectileResolver(
-      [this](const ObjectHandle &handle) -> Projectile * {
-        GameObject *obj = m_objects.get(handle);
-        if (!obj || obj->getObjectType() != GameObjectType::PLAYER_PROJECTILE) {
-          return nullptr;
-        }
-        return static_cast<Projectile *>(obj);
-      });
-  orbiting_cones->setStats(&m_statManager);
+  orbiting_cones->setContext(this);
   m_player.ensureInitialized()->addWeapon(orbiting_cones);
 
   // Toxic Fumes Weapon
   auto toxic_fumes = std::make_shared<ToxicFumes>();
-  toxic_fumes->setDamageContext(
-      [this](const auto &evt) { m_eventBus.emit(evt); });
-  toxic_fumes->setStats(&m_statManager);
-  toxic_fumes->setTargetingContext(
-      [this](float range, uint32_t k, std::function<void(Enemy *)> callback) {
-        for (auto &ed : getClosestEnemies(range, k)) {
-          callback(ed.enemy);
-        }
-      });
+  toxic_fumes->setContext(this);
   m_player.ensureInitialized()->addWeapon(toxic_fumes);
 
   // Gas Nozzle Weapon
   auto gas_nozzle = std::make_shared<GasNozzle>();
-  gas_nozzle->setDamageContext(
-      [this](const auto &evt) { m_eventBus.emit(evt); });
-  gas_nozzle->setStats(&m_statManager);
-  gas_nozzle->setTargetingContext(
-      [this](float range, uint32_t k, std::function<void(Enemy *)> callback) {
-        for (auto &ed : getClosestEnemies(range, k)) {
-          callback(ed.enemy);
-        }
-      });
+  gas_nozzle->setContext(this);
   m_player.ensureInitialized()->addWeapon(gas_nozzle);
 }
 

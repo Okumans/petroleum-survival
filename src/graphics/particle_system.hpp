@@ -12,11 +12,14 @@ struct ParticleProps {
   glm::vec3 position;
   glm::vec3 velocity;
   glm::vec3 velocityVariation{0.0f};
+  glm::vec3 direction{0.0f, 1.0f, 0.0f};
   glm::vec4 colorBegin;
   glm::vec4 colorEnd;
   float sizeBegin;
   float sizeEnd;
   float sizeVariation{0.0f};
+  float stretch{1.0f};
+  float stretchVariation{0.0f};
   float lifeTime;
 };
 
@@ -25,8 +28,10 @@ private:
   struct Particle {
     glm::vec3 position;
     glm::vec3 velocity;
+    glm::vec3 direction;
     glm::vec4 colorBegin, colorEnd;
     float sizeBegin, sizeEnd;
+    float stretch = 1.0f;
     float lifeTime = 0.0f;
     float lifeRemaining = 0.0f;
 
@@ -34,7 +39,8 @@ private:
   };
 
   struct ParticleGPUData {
-    glm::vec4 positionAndSize;
+    glm::vec4 positionSize;
+    glm::vec4 directionStretch;
     glm::vec4 color;
   };
 

@@ -111,8 +111,10 @@ void ParticleSystem::render(const RenderContext &ctx) {
     float size = glm::mix(particle.sizeBegin, particle.sizeEnd, t);
     glm::vec4 color = glm::mix(particle.colorBegin, particle.colorEnd, t);
 
-    m_ssboMapped[activeParticleCount].positionAndSize =
-        glm::vec4(particle.position, size);
+    m_ssboMapped[activeParticleCount].positionSize =
+      glm::vec4(particle.position, size);
+    m_ssboMapped[activeParticleCount].directionStretch =
+      glm::vec4(particle.direction, particle.stretch);
     m_ssboMapped[activeParticleCount].color = color;
 
     activeParticleCount++;
@@ -164,9 +166,19 @@ void ParticleSystem::emit(const ParticleProps &particleProps) {
   particle.lifeTime = particleProps.lifeTime;
   particle.lifeRemaining = particleProps.lifeTime;
 
+  particle.direction = particleProps.direction;
+  if (glm::length(particle.direction) < 0.001f) {
+    particle.direction = glm::vec3(0.0f, 1.0f, 0.0f);
+  } else {
+    particle.direction = glm::normalize(particle.direction);
+  }
+
   particle.sizeBegin = particleProps.sizeBegin +
                        particleProps.sizeVariation * (_randomFloat() - 0.5f);
   particle.sizeEnd = particleProps.sizeEnd;
+  particle.stretch =
+      glm::max(1.0f, particleProps.stretch +
+                         particleProps.stretchVariation * (_randomFloat() - 0.5f));
 
   m_poolIndex =
       (m_poolIndex == 0) ? m_particlePool.size() - 1 : m_poolIndex - 1;

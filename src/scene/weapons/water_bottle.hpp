@@ -19,30 +19,30 @@ public:
       : ProjectileWeapon(0.8f, 0.05f, 12.0f, 1) {
   } // 0.8s cooldown, 0.05s sub-cooldown, 12 damage, 1 projectile per shot
 
-  bool fire(const glm::vec3 &playerPos,
-            const glm::vec3 &playerForward) override {
-    if (!m_spawnProjectile)
-      return false;
+  bool fire() override {
+    glm::vec3 player_pos = m_context.ensureInitialized()->getPlayerPosition();
+    glm::vec3 player_forward =
+        m_context.ensureInitialized()->getPlayerForward();
 
-    float randomYawDeg =
+    float random_yaw_deg =
         Random::randFloat(-m_spreadAngleDegrees, m_spreadAngleDegrees);
-    float randomYawRad = glm::radians(randomYawDeg);
+    float random_yaw_rad = glm::radians(random_yaw_deg);
 
-    glm::vec3 spreadForward;
-    spreadForward.x = playerForward.x * std::cos(randomYawRad) -
-                      playerForward.z * std::sin(randomYawRad);
-    spreadForward.y = playerForward.y;
-    spreadForward.z = playerForward.x * std::sin(randomYawRad) +
-                      playerForward.z * std::cos(randomYawRad);
-    spreadForward = glm::normalize(spreadForward);
+    glm::vec3 spread_forward;
+    spread_forward.x = player_forward.x * std::cos(random_yaw_rad) -
+                       player_forward.z * std::sin(random_yaw_rad);
+    spread_forward.y = player_forward.y;
+    spread_forward.z = player_forward.x * std::sin(random_yaw_rad) +
+                       player_forward.z * std::cos(random_yaw_rad);
+    spread_forward = glm::normalize(spread_forward);
 
-    glm::vec3 spawnPos = playerPos + spreadForward * 0.5f;
-    glm::vec3 velocity = spreadForward * m_projectileSpeed;
+    glm::vec3 spawn_pos = player_pos + spread_forward * 0.5f;
+    glm::vec3 velocity = spread_forward * m_projectileSpeed;
 
     std::shared_ptr<Projectile> proj = std::make_shared<Projectile>(
         GameFactories::getProjectile(ModelName::WATER_BOTTLE)
             .create([&](Projectile &p) {
-              p.setPosition(spawnPos);
+              p.setPosition(spawn_pos);
               p.setVelocity(velocity);
               p.setDamage(getDamage());
               p.setLifetime(m_projectileLifetime);
@@ -52,7 +52,7 @@ public:
               p.setScale(glm::vec3(0.005f));
             }));
 
-    m_spawnProjectile(
+    emitProjectile(
         GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});
 
     return true;

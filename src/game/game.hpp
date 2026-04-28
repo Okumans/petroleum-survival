@@ -32,10 +32,11 @@
 #endif
 
 #include "game/enemy_spawner.hpp"
+#include "scene/weapon/i_weapon_context.hpp"
 
 enum class GameState { LOADING, START_MENU, PLAYING, LEVEL_UP, GAME_OVER };
 
-class Game {
+class Game : public IWeaponContext {
 public:
   struct EnemyDist {
     Enemy *enemy;
@@ -43,8 +44,6 @@ public:
   };
 
 private:
-  // Events are now in GameEvents namespace
-
   Camera m_camera;
   CameraController m_cameraController;
   MapManager m_mapManager;
@@ -81,9 +80,16 @@ public:
 
   GameObjectManager &getObjects() { return m_objects; }
   MapManager &getMapManager() { return m_mapManager; }
-  Player *getPlayer() {
+
+  Player *getPlayer() override {
     return m_player.isInitialized() ? m_player.ensureInitialized() : nullptr;
   }
+
+  const Player *getPlayer() const override {
+    return m_player.isInitialized() ? m_player.ensureInitialized() : nullptr;
+  }
+
+  const StatManager *getStats() const override { return &m_statManager; }
   StatManager &getStats() { return m_statManager; }
   DamageTextManager &getDamageTextManager() { return m_damageTextManager; }
   const Camera &getCamera() const { return m_camera; }
@@ -119,6 +125,32 @@ public:
   [[nodiscard]] GameState getState() const { return m_state; }
   [[nodiscard]] uint32_t getScore() const {
     return static_cast<uint32_t>(m_score);
+  }
+
+  // IWeaponContext implementation
+  [[nodiscard]] glm::vec3 getPlayerPosition() const override;
+  [[nodiscard]] glm::vec3 getPlayerForward() const override;
+
+  void emit(const GameEvents::ProjectileSpawnRequestedEvent &event) override {
+    m_eventBus.emit(event);
+  }
+  void emit(const GameEvents::ParticleSpawnRequestedEvent &event) override {
+    m_eventBus.emit(event);
+  }
+  void emit(const GameEvents::EnemyDamageRequestedEvent &event) override {
+    m_eventBus.emit(event);
+  }
+
+  void findTargets(float range, uint32_t k,
+                   EnemyCallback callback) const override;
+
+  [[nodiscard]] const GameObject *
+  resolveHandle(const ObjectHandle &handle) const override {
+    return m_objects.get(handle);
+  }
+
+  [[nodiscard]] GameObject *resolveHandle(const ObjectHandle &handle) override {
+    return m_objects.get(handle);
   }
 
 private:

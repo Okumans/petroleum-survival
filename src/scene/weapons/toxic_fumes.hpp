@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game/game_events.hpp"
 #include "glm/fwd.hpp"
 #include "scene/enemy/enemy.hpp"
 #include "scene/weapon/weapon.hpp"
@@ -9,34 +10,37 @@
 
 class ToxicFumes : public Weapon {
 private:
-  float m_auraRadius = 10.5f;
-  std::vector<Enemy *> m_enemiesHitThisTick;
-
-  NotInitialized<std::function<void(float range, uint32_t k,
-                                    std::function<void(Enemy *)>)>>
-      m_findTargets;
+  float m_auraRadius = 3.5f;
 
 public:
   ToxicFumes() : Weapon(0.8f, 6.0f) {}
 
-  bool fire(const glm::vec3 &playerPos,
-            const glm::vec3 &playerForward) override {
-    (void)playerPos;
-    (void)playerForward;
+  bool fire() override {
+    glm::vec3 player_pos = m_context.ensureInitialized()->getPlayerPosition();
 
-    m_findTargets.ensureInitialized()(getRadius(), 100, [this](Enemy *enemy) {
-      if (!enemy)
-        return;
+    m_context.ensureInitialized()->findTargets(
+        getRadius(), 100, [this](Enemy *enemy) {
+          if (!enemy) {
+            return;
+          }
 
-      emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
-          .enemy = enemy,
-          .amount = getDamage(),
-          .isCritical = false,
-          .knockbackDirection = glm::vec3(0.0f),
-          .knockbackStrength = 0.0f,
-          .hitPosition = enemy->getPosition() + glm::vec3(0.0f, 1.0f, 0.0f),
-          .hitEffect = GameEvents::ParticleEffectType::MAGIC_HIT,
-      });
+          emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
+              .enemy = enemy,
+              .amount = getDamage(),
+              .isCritical = false,
+              .knockbackDirection = glm::vec3(0.0f),
+              .knockbackStrength = 0.0f,
+              .hitPosition = enemy->getPosition() + glm::vec3(0.0f, 1.0f, 0.0f),
+              .hitEffect = GameEvents::ParticleEffectType::MAGIC_HIT,
+          });
+        });
+
+    emitParticle(GameEvents::ParticleSpawnRequestedEvent{
+        .position = player_pos,
+        .direction = glm::vec3(0.0f, 1.0f, 0.0f),
+        .length = getRadius(),
+        .thickness = glm::max(0.35f, getRadius() * 0.12f),
+        .effectId = GameEvents::ParticleEffectType::FUME,
     });
 
     return true;
@@ -44,13 +48,8 @@ public:
 
   float getRadius() const {
     return m_auraRadius *
-           (1.0f +
-            m_stats.ensureInitialized()->getMultiplier(StatType::AREA) * 0.1f);
-  }
-
-  void setTargetingContext(
-      std::function<void(float range, uint32_t k, std::function<void(Enemy *)>)>
-          find_targets) {
-    m_findTargets.init(find_targets);
+           (1.0f + m_context.ensureInitialized()->getStats()->getMultiplier(
+                       StatType::AREA) *
+                       0.1f);
   }
 };
