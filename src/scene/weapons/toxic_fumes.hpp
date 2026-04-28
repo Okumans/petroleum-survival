@@ -89,7 +89,6 @@ public:
     glm::vec3 player_pos = ctx.getPlayerPosition();
 
     float radius = getRadius();
-    float damage = getDamage();
 
     ctx.findTargets(radius, 1000, [&](Enemy *enemy) {
       if (!enemy || enemy->isRemovalRequested()) {

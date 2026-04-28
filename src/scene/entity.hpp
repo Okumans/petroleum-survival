@@ -96,6 +96,7 @@ public:
   virtual void takeDamage(float amount, bool is_critical,
                           glm::vec3 knockback_dir = glm::vec3(0.0f),
                           float knockback_force = 0.0f) {
+    (void)is_critical;
     if (m_isDead || m_removeRequested || !m_iFrameState.isFinished())
       return;
 

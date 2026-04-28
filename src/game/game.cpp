@@ -122,6 +122,7 @@ void setupWaves(EnemySpawner &spawner) {
       .spawnLogic =
           [timer = 0.0f](Game &game, float current_time,
                          float delta_time) mutable {
+            (void)current_time;
             timer += delta_time;
             if (timer >= 1.5f) {
               timer = 0.0f;
@@ -170,6 +171,7 @@ void setupWaves(EnemySpawner &spawner) {
       .spawnLogic =
           [h_timer = 0.0f, c_timer = 0.0f](Game &game, float current_time,
                                            float delta_time) mutable {
+            (void)current_time;
             h_timer += delta_time;
             c_timer += delta_time;
 
@@ -198,6 +200,7 @@ void setupWaves(EnemySpawner &spawner) {
       .spawnLogic =
           [h_timer = 0.0f, c_timer = 0.0f](Game &game, float current_time,
                                            float delta_time) mutable {
+            (void)current_time;
             h_timer += delta_time;
             c_timer += delta_time;
 
@@ -229,6 +232,7 @@ void setupWaves(EnemySpawner &spawner) {
       .spawnLogic =
           [boss_spawned = false, h_timer = 0.0f](Game &game, float current_time,
                                                  float delta_time) mutable {
+            (void)current_time;
             if (!boss_spawned) {
               boss_spawned = true;
               glm::vec3 pos = game.getPlayer()->getPosition() +
@@ -924,6 +928,7 @@ void Game::_registerGameplayEventHandlers() {
   });
 
   m_eventBus.subscribe<PlayerKilledEvent>([this](const PlayerKilledEvent &evt) {
+    (void)evt;
     m_state = GameState::GAME_OVER;
   });
 }
