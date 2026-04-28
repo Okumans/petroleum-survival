@@ -27,16 +27,17 @@ The `EnemySpawner` now supports configurable mixed spawning:
 
 Enemies are classified into 4 tiers with corresponding experience drops:
 
-| Tier | Type | Base XP | Multiplier | Final XP |
-|------|------|---------|------------|----------|
-| 0 (Common) | HumanoidEnemy | 20 | 1.0 + (tier × 0.5) | 20 |
-| 1 (Elite) | WeakCarEnemy | 100 | 1.5 | 150 |
-| 2 (Boss) | StandardCarEnemy | 500 | 2.0 | 1000 |
-| 3 (Legendary) | BossCarEnemy | 1000 | 2.5 | 2500 |
+| Tier          | Type             | Base XP | Multiplier         | Final XP |
+| ------------- | ---------------- | ------- | ------------------ | -------- |
+| 0 (Common)    | HumanoidEnemy    | 20      | 1.0 + (tier × 0.5) | 20       |
+| 1 (Elite)     | WeakCarEnemy     | 100     | 1.5                | 150      |
+| 2 (Boss)      | StandardCarEnemy | 500     | 2.0                | 1000     |
+| 3 (Legendary) | BossCarEnemy     | 1000    | 2.5                | 2500     |
 
 ### Factory Integration
 
 All enemy types now use the factory system:
+
 - **HumanoidEnemy**: `GameFactories::getHumanoidEnemy()`
 - **CarEnemy variants**: `GameFactories::getCar(ModelName)`
 - Factories copy prototypes and apply modifiers via lambdas
@@ -47,12 +48,14 @@ All enemy types now use the factory system:
 ### Getters & Setters
 
 **New Player Methods:**
+
 ```cpp
 const std::vector<std::shared_ptr<Weapon>>& getWeapons() const;
 std::vector<std::shared_ptr<Weapon>>& getWeapons();
 ```
 
 **New Weapon Methods:**
+
 ```cpp
 void setBaseDamage(float damage);
 void setBaseCooldown(float cooldown);
@@ -61,6 +64,7 @@ float getBaseCooldown() const;
 ```
 
 **Usage in Upgrades:**
+
 - Upgrades iterate through `player->getWeapons()` and call setters
 - Damage and cooldown changes apply multiplicatively:
   - Damage: `weapon->setBaseDamage(weapon->getBaseDamage() * 1.3f)` (30% increase)
@@ -77,6 +81,7 @@ std::vector<Upgrade> UpgradeGenerator::generateUpgrades(int count, int level);
 ```
 
 **Upgrade Types:**
+
 | Type | Effect | Scaling |
 |------|--------|---------|
 | PLAYER_HEALTH | +25% max health | 1.25× multiplier |
@@ -89,6 +94,7 @@ std::vector<Upgrade> UpgradeGenerator::generateUpgrades(int count, int level);
 ### Level Scaling
 
 Upgrade values scale with player level:
+
 ```cpp
 float levelScale = 1.0f + (level * 0.1f);
 // At level 1: 1.1× base value
@@ -111,6 +117,7 @@ float levelScale = 1.0f + (level * 0.1f);
 ### LEVEL_UP State
 
 When player levels up:
+
 1. Game state transitions to `GameState::LEVEL_UP`
 2. `UpgradeGenerator::generateUpgrades(3, m_currentLevel)` creates 3 candidates
 3. Candidates stored in `m_levelUpCandidates`
@@ -129,6 +136,7 @@ When player levels up:
 ### Enemy Health Scaling
 
 Default behavior: `health *= health_multiplier`
+
 - Wave 1 (0-60s): 1.0×
 - Wave 2 (60-120s): 1.0 + (time - 60) / 60 (scales from 1.0 to 2.0)
 - Default (no wave): 1.0 + (gameTime × 0.05)
@@ -136,6 +144,7 @@ Default behavior: `health *= health_multiplier`
 ### Factory Initialization Examples
 
 **HumanoidEnemy:**
+
 ```cpp
 HumanoidEnemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
 enemy.setScale(60.0f);
@@ -143,6 +152,7 @@ enemy.setup();
 ```
 
 **CarEnemy (Generic):**
+
 ```cpp
 CarEnemy car(ModelManager::copy(model));
 car.setScale(0.8f);
@@ -157,7 +167,7 @@ car.setScale(0.8f);
 
 ## Known Limitations & TODOs
 
-- **LevelUpUI**: UI button rendering is basic; text labels for upgrades are not yet implemented (requires BitmapFont context)
+- **LevelUI**: UI rendering for XP bar and level up screen.
 - **Speed upgrade**: PLAYER_SPEED upgrade is a placeholder; actual player speed multiplier needs implementation in locomotion system
 - **Icon paths**: Upgrade icons use placeholder paths (e.g., `"icons/heart.png"`); update with actual asset paths
 - **Mobile/Console controls**: Level-up selection currently assumes keyboard/mouse input via UIManager callbacks
@@ -172,8 +182,8 @@ src/game/
 └── enemy_spawner.cpp  # Tier-based exp and factory usage
 
 src/ui/
-├── level_up_ui.hpp    # LevelUpUI class (basic implementation)
-└── level_up_ui.cpp    # UI rendering (WIP)
+├── ui_level_up.hpp       # LevelUI class (HUD + Level Up)
+└── ui_level_up.cpp       # UI rendering
 
 src/scene/
 ├── player.hpp         # getWeapons() getters added

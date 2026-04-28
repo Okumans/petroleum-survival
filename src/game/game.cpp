@@ -522,7 +522,7 @@ void Game::_setupEnvironment() {
 }
 
 void Game::_populateMap() {
-  MapPopulationSystem populationSystem;
+  MapPopulator populationSystem;
   populationSystem.populateMap(m_objects, m_mapManager);
 }
 

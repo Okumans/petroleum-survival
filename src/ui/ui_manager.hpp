@@ -76,10 +76,12 @@ public:
   const BitmapFont &font;
   glm::vec4 color = {1.0f, 1.0f, 1.0f, 1.0f};
   float scale = 1.0f;
+  float lineGap = 0.5f;
 
 public:
   TextBoxElement(std::string name, UIHitbox box, std::string text,
-                 const BitmapFont &font, glm::vec4 color, float scale = 1.0f);
+                 const BitmapFont &font, glm::vec4 color, float scale = 1.0f,
+                 float line_gap = 3.5f);
   void draw(class Shader &shader) override;
 };
 

@@ -95,8 +95,9 @@ void TextElement::draw(Shader &shader) {
 // TextBoxElement
 TextBoxElement::TextBoxElement(std::string name, UIHitbox box, std::string text,
                                const BitmapFont &font, glm::vec4 color,
-                               float scale)
-    : text(std::move(text)), font(font), color(color), scale(scale) {
+                               float scale, float line_gap)
+    : text(std::move(text)), font(font), color(color), scale(scale),
+      lineGap(line_gap) {
   this->name = std::move(name);
   this->bounds = box;
 }
@@ -110,7 +111,8 @@ void TextBoxElement::draw(Shader &shader) {
   shader.setInt("u_icon", 0);
 
   float current_y = bounds.y;
-  float line_height = font.getLineHeight() * scale;
+
+  float line_height = (font.getLineHeight() + lineGap) * scale;
 
   auto draw_line = [&](const std::string &line, float x, float y) {
     float draw_x = x;

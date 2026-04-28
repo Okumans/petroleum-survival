@@ -1,0 +1,201 @@
+#include "ui/ui_level_up.hpp"
+#include "game/game.hpp"
+#include "ui/font.hpp"
+#include <string>
+
+LevelUI::LevelUI(UIManager &ui_manager, const BitmapFont &font)
+    : m_uiManager(ui_manager), m_font(font) {}
+
+LevelUI::~LevelUI() {}
+
+void LevelUI::setup(Game &game) {
+  _setupHUD();
+  _setupLevelUpOverlay(game);
+}
+
+void LevelUI::update(const Game &game, float virtualWidth) {
+  _updateHUD(game, virtualWidth);
+  _updateLevelUpOverlay(game, virtualWidth);
+}
+
+void LevelUI::_setupHUD() {
+  m_uiManager.addStaticElement("exp_bg", {0.0f, 0.0f, 100.0f, 1.0f},
+                               {0.1f, 0.1f, 0.1f, 1.0f});
+  m_uiManager.addStaticElement("exp_fill", {0.0f, 0.0f, 0.0f, 1.0f},
+                               {0.2f, 0.5f, 1.0f, 0.8f});
+  m_uiManager.addTextElement("level_text", {0.0f, 1.5f, 0.0f, 0.0f}, "LV 1",
+                             m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.1f);
+}
+
+void LevelUI::_setupLevelUpOverlay(Game &game) {
+  // Level Up Overlay
+  m_uiManager.addStaticElement("level_up_bg", {0.0f, 5.0f, 40.0f, 30.0f},
+                               {0.1f, 0.1f, 0.1f, 0.9f});
+  m_uiManager.addTextElement("level_up_title", {0.0f, 7.0f, 0.0f, 0.0f},
+                             "LEVEL UP!", m_font, {1.0f, 0.8f, 0.0f, 1.0f},
+                             0.2f);
+  m_uiManager.addTextElement("level_up_hint", {0.0f, 15.0f, 0.0f, 0.0f},
+                             "Select an upgrade:", m_font,
+                             {0.7f, 0.7f, 0.7f, 1.0f}, 0.1f);
+
+  // Level Up Option Buttons (Title + Wrapping Description)
+  for (int i = 0; i < 3; ++i) {
+    float btnX = 0.0f; // Handled dynamically in update loop
+    float btnY = 18.0f;
+    float btnW = 12.0f;
+    float btnH = 5.0f;
+
+    std::string btnName = "upgrade_option_" + std::to_string(i);
+    std::string titleName = "upgrade_option_title_" + std::to_string(i);
+    std::string descName = "upgrade_option_desc_" + std::to_string(i);
+
+    // Interactive Box
+    m_uiManager.addInteractiveElement(btnName, {btnX, btnY, btnW, btnH},
+                                      {0.2f, 0.2f, 0.8f, 0.8f}, [&game, i]() {
+                                        game.selectLevelUpOption(i);
+                                        game.confirmLevelUpSelection();
+                                      });
+
+    // Option Title (Standard TextElement)
+    m_uiManager.addTextElement(titleName,
+                               {btnX + 0.5f, btnY + 0.5f, 0.0f, 0.0f},
+                               "Option " + std::to_string(i + 1), m_font,
+                               {1.0f, 1.0f, 1.0f, 1.0f}, 0.1f);
+
+    // Option Description (Wrapping TextBoxElement)
+    m_uiManager.addTextBoxElement(
+        descName, {btnX + 0.5f, btnY + 2.0f, btnW - 1.0f, btnH - 2.5f},
+        "Description...", m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.07f);
+  }
+
+  // Level Up Skip Button
+  m_uiManager.addInteractiveElement("level_up_btn", {0.0f, 25.0f, 10.0f, 3.0f},
+                                    {0.2f, 0.6f, 0.2f, 1.0f},
+                                    [&game]() { game.skipLevelUp(); });
+  m_uiManager.addTextElement("level_up_btn_text", {0.0f, 25.5f, 0.0f, 0.0f},
+                             "SKIP", m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.1f);
+}
+
+void LevelUI::_updateHUD(const Game &game, float virtualWidth) {
+  GameState state = game.getState();
+  bool isPlaying = state == GameState::PLAYING || state == GameState::LEVEL_UP;
+
+  m_uiManager.getElement("exp_bg")->visible = isPlaying;
+  m_uiManager.getElement("exp_fill")->visible = isPlaying;
+  m_uiManager.getElement("level_text")->visible = isPlaying;
+
+  if (isPlaying) {
+    m_uiManager.getElement("exp_bg")->bounds.w = virtualWidth;
+    float pct = (float)game.getCurrentExp() / (float)game.getExpToNextLevel();
+    m_uiManager.getElement("exp_fill")->bounds.w = pct * virtualWidth;
+
+    if (auto *levelText =
+            dynamic_cast<TextElement *>(m_uiManager.getElement("level_text"))) {
+      levelText->text = "LV " + std::to_string(game.getCurrentLevel());
+      levelText->bounds.x =
+          virtualWidth -
+          m_font.getTextWidth(levelText->text, levelText->scale) - 1.0f;
+    }
+  }
+}
+
+void LevelUI::_updateLevelUpOverlay(const Game &game, float virtualWidth) {
+  GameState state = game.getState();
+  bool isLevelUp = state == GameState::LEVEL_UP;
+
+  m_uiManager.getElement("level_up_bg")->visible = isLevelUp;
+  m_uiManager.getElement("level_up_title")->visible = isLevelUp;
+  m_uiManager.getElement("level_up_hint")->visible = isLevelUp;
+  m_uiManager.getElement("level_up_btn")->visible = isLevelUp;
+  m_uiManager.getElement("level_up_btn_text")->visible = isLevelUp;
+
+  // Toggle Visibility for Options
+  for (int i = 0; i < 3; ++i) {
+    std::string btnName = "upgrade_option_" + std::to_string(i);
+    std::string titleName = "upgrade_option_title_" + std::to_string(i);
+    std::string descName = "upgrade_option_desc_" + std::to_string(i);
+
+    if (auto *btn = m_uiManager.getElement(btnName))
+      btn->visible = isLevelUp;
+    if (auto *titleTxt = m_uiManager.getElement(titleName))
+      titleTxt->visible = isLevelUp;
+    if (auto *descTxt = m_uiManager.getElement(descName))
+      descTxt->visible = isLevelUp;
+  }
+
+  if (isLevelUp) {
+    float center_x = virtualWidth / 2.0f;
+
+    // Center Background & Main Title
+    m_uiManager.getElement("level_up_bg")->bounds.x = center_x - 20.0f;
+    if (auto *title = dynamic_cast<TextElement *>(
+            m_uiManager.getElement("level_up_title"))) {
+      title->bounds.x =
+          center_x - m_font.getTextWidth(title->text, title->scale) / 2.0f;
+    }
+
+    // Update Upgrade Options (Buttons, Titles, Descriptions)
+    const auto &upgrades = game.getLevelUpCandidates();
+    float btn_w = 12.0f;
+    float spacing = 2.0f;
+    float total_w = (3.0f * btn_w) + (2.0f * spacing);
+    float start_x = center_x - (total_w / 2.0f);
+
+    for (int i = 0; i < 3; ++i) {
+      std::string btnName = "upgrade_option_" + std::to_string(i);
+      std::string titleName = "upgrade_option_title_" + std::to_string(i);
+      std::string descName = "upgrade_option_desc_" + std::to_string(i);
+
+      auto *btn = m_uiManager.getElement(btnName);
+      auto *titleTxt =
+          dynamic_cast<TextElement *>(m_uiManager.getElement(titleName));
+      auto *descTxt =
+          dynamic_cast<TextBoxElement *>(m_uiManager.getElement(descName));
+
+      if (btn) {
+        // Position Box
+        btn->bounds.x = start_x + (i * (btn_w + spacing));
+        btn->bounds.w = btn_w;
+
+        if (i < static_cast<int>(upgrades.size())) {
+          glm::vec4 highlightColor = (game.getLevelUpSelection() == i)
+                                         ? glm::vec4{1.0f, 1.0f, 0.0f, 1.0f}
+                                         : glm::vec4{1.0f, 1.0f, 1.0f, 1.0f};
+
+          // Position & Format Option Title
+          if (titleTxt) {
+            titleTxt->text = upgrades[i].title;
+            titleTxt->color = highlightColor;
+            float tw = m_font.getTextWidth(titleTxt->text, titleTxt->scale);
+            titleTxt->bounds.x = btn->bounds.x + (btn_w - tw) / 2.0f;
+          }
+
+          // Position & Format Option Description (TextBox)
+          if (descTxt) {
+            descTxt->text = upgrades[i].description;
+            descTxt->color = highlightColor;
+            float padding = 0.5f;
+            descTxt->bounds.x = btn->bounds.x + padding;
+            descTxt->bounds.w = btn_w - (padding * 2.0f);
+          }
+        }
+      }
+    }
+
+    // Center Hint Text
+    if (auto *hint = dynamic_cast<TextElement *>(
+            m_uiManager.getElement("level_up_hint"))) {
+      hint->text = "Select an upgrade:";
+      hint->bounds.x =
+          center_x - m_font.getTextWidth(hint->text, hint->scale) / 2.0f;
+    }
+
+    // Center Skip Button
+    m_uiManager.getElement("level_up_btn")->bounds.x = center_x - 5.0f;
+    if (auto *btnText = dynamic_cast<TextElement *>(
+            m_uiManager.getElement("level_up_btn_text"))) {
+      btnText->bounds.x =
+          center_x - m_font.getTextWidth(btnText->text, btnText->scale) / 2.0f;
+    }
+  }
+}

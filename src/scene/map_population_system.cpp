@@ -5,8 +5,8 @@
 
 #include <glm/glm.hpp>
 
-void MapPopulationSystem::populateMap(GameObjectManager &objects,
-                                      MapManager &mapManager) {
+void MapPopulator::populateMap(GameObjectManager &objects,
+                               MapManager &mapManager) {
   auto props = _getMapProps();
 
   for (const auto &prop : props) {
@@ -14,8 +14,7 @@ void MapPopulationSystem::populateMap(GameObjectManager &objects,
   }
 }
 
-std::vector<MapPopulationSystem::PropInstance>
-MapPopulationSystem::_getMapProps() {
+std::vector<MapPopulator::PropInstance> MapPopulator::_getMapProps() {
   std::vector<PropInstance> props;
 
   // Define prop scale factors
@@ -86,9 +85,9 @@ MapPopulationSystem::_getMapProps() {
   return props;
 }
 
-void MapPopulationSystem::_spawnProp(GameObjectManager &objects,
-                                     MapManager &mapManager,
-                                     const PropInstance &propInstance) {
+void MapPopulator::_spawnProp(GameObjectManager &objects,
+                              MapManager &mapManager,
+                              const PropInstance &propInstance) {
   auto model = ModelManager::copy(propInstance.modelName);
   if (!model) {
     return;

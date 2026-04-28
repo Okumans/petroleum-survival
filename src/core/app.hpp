@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game/game.hpp"
+#include "ui/ui_level_up.hpp"
 #include "ui/ui_manager.hpp"
 
 #include <GLFW/glfw3.h>
@@ -43,6 +44,7 @@ private:
 
   UIManager m_uiManager;
   BitmapFont m_font;
+  LevelUI m_levelUI;
 
   std::vector<LoadingTask> m_loadingTasks;
   size_t m_currentLoadingTask = 0;

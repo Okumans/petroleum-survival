@@ -17,7 +17,7 @@
  * - Manually placed prop instances at specific locations
  * - Procedurally spawning props across the map
  */
-class MapPopulationSystem {
+class MapPopulator {
 public:
   /**
    * @struct PropInstance
@@ -30,8 +30,8 @@ public:
     glm::vec3 scale;
   };
 
-  MapPopulationSystem() = default;
-  ~MapPopulationSystem() = default;
+  MapPopulator() = default;
+  ~MapPopulator() = default;
 
   /**
    * @brief Populate the map with static props
