@@ -66,7 +66,8 @@ void App::render(double delta_time) {
 }
 
 App::App(GLFWwindow *window)
-    : m_window(window), m_levelUI(m_uiManager, m_font), m_menuUI(m_uiManager, m_font) {
+    : m_window(window), m_levelUI(m_uiManager, m_font),
+      m_menuUI(m_uiManager, m_font) {
   glfwSetWindowUserPointer(m_window, (void *)this);
 
   glfwSetKeyCallback(m_window, _glfwKeyCallback);
