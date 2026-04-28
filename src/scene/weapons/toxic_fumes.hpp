@@ -17,7 +17,7 @@ private:
       m_findTargets;
 
 public:
-  ToxicFumes() : Weapon(0.5f, 6.0f) {}
+  ToxicFumes() : Weapon(0.8f, 6.0f) {}
 
   bool fire(const glm::vec3 &playerPos,
             const glm::vec3 &playerForward) override {

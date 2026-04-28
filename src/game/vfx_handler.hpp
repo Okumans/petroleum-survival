@@ -42,6 +42,9 @@ public:
     case ParticleEffectType::MAGIC_HIT:
       _emitMagicHit(evt.position);
       break;
+    case ParticleEffectType::FLAME:
+      _emitFlameBurst(evt.position);
+      break;
     }
   }
 
@@ -124,6 +127,20 @@ private:
                              .sizeEnd = 0.0f,
                              .sizeVariation = 0.1f,
                              .lifeTime = 0.2f});
+    }
+  }
+
+  void _emitFlameBurst(const glm::vec3 &position) {
+    for (int i = 0; i < 12; ++i) {
+      m_particleSystem.emit({.position = position,
+                             .velocity = glm::vec3(0.0f, 8.0f, 0.0f),
+                             .velocityVariation = glm::vec3(2.5f, 3.5f, 2.5f),
+                             .colorBegin = glm::vec4(1.0f, 0.65f, 0.15f, 0.95f),
+                             .colorEnd = glm::vec4(0.8f, 0.15f, 0.0f, 0.0f),
+                             .sizeBegin = 1.0f,
+                             .sizeEnd = 0.0f,
+                             .sizeVariation = 0.1f,
+                             .lifeTime = 0.18f});
     }
   }
 };

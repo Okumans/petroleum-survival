@@ -38,7 +38,8 @@ enum class ParticleEffectType {
   ITEM_COLLECT,
   ENEMY_DEATH,
   PLAYER_BLOOD,
-  MAGIC_HIT
+  MAGIC_HIT,
+  FLAME
 };
 
 struct ParticleSpawnRequestedEvent {

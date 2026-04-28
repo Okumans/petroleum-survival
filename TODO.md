@@ -6,6 +6,7 @@
 
 - [x] Basic game engine structure (App, Game, Renderer).
 - [x] Entity-Component-like system for GameObjects.
+- [x] **Centralized GameObjectFactory system for unified instantiation.**
 - [x] PBR Rendering with Skybox and IBL.
 - [x] Shadow mapping (directional light).
 - [x] Collision detection (AABB-based) and resolution.
@@ -17,7 +18,7 @@
 ### Gameplay Mechanics
 
 - [x] Player movement and animation state.
-- [x] Basic Enemy (Humanoid) with AI tracking and damage.
+- [x] Humanoid Enemy AI (Aggressive chase logic).
 - [x] Experience (EXP) collection and leveling system logic.
 - [x] Basic weapon system supporting projectiles and melee.
 - [x] Melee weapon: **Solid Wood Block**.

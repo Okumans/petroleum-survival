@@ -16,6 +16,8 @@ protected:
 
   std::function<void(const GameEvents::ProjectileSpawnRequestedEvent &)>
       m_spawnProjectile;
+    std::function<void(const GameEvents::ParticleSpawnRequestedEvent &)>
+      m_spawnParticle;
   std::function<void(const GameEvents::EnemyDamageRequestedEvent &)>
       m_requestEnemyDamage;
 
@@ -44,6 +46,12 @@ public:
     m_spawnProjectile = spawnProjectile;
   }
 
+  void setParticleContext(
+      std::function<void(const GameEvents::ParticleSpawnRequestedEvent &)>
+          spawnParticle) {
+    m_spawnParticle = spawnParticle;
+  }
+
   void setDamageContext(
       std::function<void(const GameEvents::EnemyDamageRequestedEvent &)>
           requestEnemyDamage) {
@@ -53,6 +61,12 @@ public:
   void emitEnemyDamage(const GameEvents::EnemyDamageRequestedEvent &evt) const {
     if (m_requestEnemyDamage) {
       m_requestEnemyDamage(evt);
+    }
+  }
+
+  void emitParticle(const GameEvents::ParticleSpawnRequestedEvent &evt) const {
+    if (m_spawnParticle) {
+      m_spawnParticle(evt);
     }
   }
 
