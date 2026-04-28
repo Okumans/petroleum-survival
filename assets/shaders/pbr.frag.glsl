@@ -29,6 +29,10 @@ uniform float u_HeightScale;
 uniform float u_AmbientIntensity;
 uniform bool u_UsePackedMR;
 uniform vec3 u_EmissionColor;
+uniform bool u_EnableTerrainTint;
+uniform vec3 u_TerrainTintLow;
+uniform vec3 u_TerrainTintHigh;
+uniform float u_TerrainTintScale;
 
 // Lights
 struct Light {
@@ -49,6 +53,41 @@ const vec2 poissonDisk[4] = vec2[](
     vec2(-0.094184101, -0.92938870),
     vec2(0.34495938, 0.29387760)
   );
+
+float hash12(vec2 p)
+{
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+
+float valueNoise(vec2 p)
+{
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+
+  float n00 = hash12(i + vec2(0.0, 0.0));
+  float n10 = hash12(i + vec2(1.0, 0.0));
+  float n01 = hash12(i + vec2(0.0, 1.0));
+  float n11 = hash12(i + vec2(1.0, 1.0));
+
+  float nx0 = mix(n00, n10, u.x);
+  float nx1 = mix(n01, n11, u.x);
+  return mix(nx0, nx1, u.y);
+}
+
+float fbm2(vec2 p)
+{
+  float value = 0.0;
+  float amplitude = 0.5;
+  for (int i = 0; i < 4; ++i) {
+    value += amplitude * valueNoise(p);
+    p *= 2.0;
+    amplitude *= 0.5;
+  }
+  return value;
+}
 
 // ----------------------------------------------------------------------------
 vec2 ParallaxMapping(vec2 texCoords, vec3 viewDir)
@@ -144,6 +183,12 @@ void main()
   if (finalAlpha < 0.5) discard;
 
   vec3 albedo = pow(diffuseSample.rgb, vec3(2.2)) * u_BaseColor;
+
+  if (u_EnableTerrainTint) {
+    float tintNoise = fbm2(WorldPos.xz * u_TerrainTintScale + vec2(17.0, -9.0));
+    vec3 tint = mix(u_TerrainTintLow, u_TerrainTintHigh, clamp(tintNoise, 0.0, 1.0));
+    albedo *= tint;
+  }
 
   // Sampling separate or packed Metallic and Roughness maps
   float metallic, roughness;

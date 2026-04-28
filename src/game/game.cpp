@@ -383,7 +383,7 @@ void Game::render(double delta_time) {
   // Render particles on top of forward pass models
   m_particleSystem.render(forwardCtx);
 
-  if (m_debugAABB) {
+  if (false && m_debugAABB) {
     RenderContext debug_ctx = {
         .shader = pbr_shader,
         .camera = m_camera,

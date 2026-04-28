@@ -679,6 +679,10 @@ void App::_setupShaders() {
          pbr_shader.define("u_AmbientIntensity");
          pbr_shader.define("u_UsePackedMR");
          pbr_shader.define("u_HasAnimation");
+         pbr_shader.define("u_EnableTerrainTint");
+         pbr_shader.define("u_TerrainTintLow");
+         pbr_shader.define("u_TerrainTintHigh");
+         pbr_shader.define("u_TerrainTintScale");
 
          pbr_shader.define("u_Lights");
          pbr_shader.define("u_NumLights");
@@ -713,6 +717,10 @@ void App::_setupShaders() {
          shadow_shader.define("u_HasAnimation");
          shadow_shader.define("u_BaseInstance");
          shadow_shader.define("u_EmissionColor");
+         shadow_shader.define("u_EnableTerrainTint");
+         shadow_shader.define("u_TerrainTintLow");
+         shadow_shader.define("u_TerrainTintHigh");
+         shadow_shader.define("u_TerrainTintScale");
 
          Shader &skybox_shader = ShaderManager::get(ShaderType::SKYBOX);
          skybox_shader.use();

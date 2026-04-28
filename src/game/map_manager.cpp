@@ -3,7 +3,6 @@
 #include "graphics/mesh.hpp"
 #include "graphics/renderer.hpp"
 #include "resource/texture_manager.hpp"
-#include "scene/game_object_manager.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -340,14 +339,50 @@ void MapManager::_generateHeightmap() {
 }
 
 float MapManager::_terrainHeight(float world_x, float world_z) const {
-  float broad_wave = std::sin(world_x * 0.0075f) * std::cos(world_z * 0.0065f);
-  float ridge_noise = 1.0f - std::abs(_fbm(world_x + 13.0f, world_z - 7.0f));
-  float detail_noise = _fbm(world_x * 1.5f, world_z * 1.5f);
+  // 1. MACRO REGION MASK: Creates massive distinct "biomes" (Flat vs Hilly)
+  // We use a very low frequency (0.003f) so these areas span multiple chunks.
+  float region_raw = _fbm(world_x * 0.001f + 500.0f, world_z * 0.003f - 200.0f);
 
-  float height = broad_wave * 3.0f;
-  height += ridge_noise * 5.5f;
-  height += detail_noise * 2.0f;
-  return height;
+  // Remap from roughly [-1.0, 1.0] to [0.0, 1.0]
+  float region_t = std::clamp(region_raw * 0.5f + 0.5f, 0.0f, 1.0f);
+
+  // Push the values toward the extremes (0 or 1) so we get flatter plains
+  // and sharper mountain transitions, rather than just a linear gradient.
+  float region_mask = _smoothStep(region_t);
+
+  // 2. Base Layer: Gentle rolling plains (Applies everywhere)
+  // Kept relatively low so the flat sections stay walkable and peaceful.
+  float base_fbm = _fbm(world_x * 0.3f, world_z * 0.3f);
+  float plains_height = base_fbm * 4.0f;
+
+  // 3. Mountains (Ridged Noise)
+  float ridge_raw =
+      1.0f - std::abs(_fbm(world_x * 1.2f + 124.0f, world_z * 1.2f - 63.0f));
+  float ridged_noise = ridge_raw * ridge_raw;
+
+  // Local clustering for mountains, MULTIPLIED by the macro region_mask
+  float local_mountain_mask = std::clamp(
+      _fbm(world_x * 0.2f - 45.0f, world_z * 0.2f + 88.0f) + 0.3f, 0.0f, 1.0f);
+
+  // Notice we multiply by 'region_mask'. If region_mask is 0 (plains biome),
+  // mountain_height becomes 0.
+  float mountain_height =
+      ridged_noise * local_mountain_mask * 20.0f * region_mask;
+
+  // 4. Negative Hills / Valleys (Billow Noise)
+  float billow_raw =
+      std::abs(_fbm(world_x * 1.8f + 200.0f, world_z * 1.8f - 100.0f));
+  // We also fade out the deep ravines in the plains using the region_mask
+  float valley_carving = billow_raw * -12.0f * region_mask;
+
+  // 5. Domain Warping & Fine Detail
+  float warp_x = _fbm(world_x * 0.5f, world_z * 0.5f) * 15.0f;
+  float warp_z = _fbm(world_x * 0.5f + 100.0f, world_z * 0.5f + 100.0f) * 15.0f;
+  float warped_detail =
+      _fbm((world_x + warp_x) * 4.0f, (world_z + warp_z) * 4.0f) * 2.0f;
+
+  // Combine everything
+  return plains_height + mountain_height + valley_carving + warped_detail;
 }
 
 glm::vec3 MapManager::_terrainNormal(float world_x, float world_z) const {
@@ -447,6 +482,8 @@ Mesh MapManager::_buildChunkMesh(int chunk_x, int chunk_z) const {
     }
   }
 
+  // C++
+  const glm::vec3 neutral_base{1.0f, 1.0f, 1.0f};
   return Mesh(std::move(vertices), std::move(indices), m_terrainMaterial,
-              glm::vec3(1.0f), 1.0f);
+              neutral_base, 1.0f);
 }
