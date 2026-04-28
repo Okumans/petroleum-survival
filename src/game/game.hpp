@@ -257,6 +257,7 @@ private:
 
   void _registerGameplayEventHandlers();
   void _updateCamera(double delta_time);
+  void _updatePlayerRegen(double delta_time);
   inline void _runCollisionPass();
   inline void _syncObjectsToTerrain();
 };

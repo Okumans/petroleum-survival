@@ -22,4 +22,5 @@ private:
   void _setupLevelUpOverlay(Game &game);
   void _updateHUD(const Game &game, float virtualWidth);
   void _updateLevelUpOverlay(const Game &game, float virtualWidth);
+  void _updateHealthBar(const Game &game, float virtualWidth);
 };

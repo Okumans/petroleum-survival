@@ -10,7 +10,8 @@ enum class StatType {
             // means 20% faster.
   SPEED,    // Projectile/Player speed multiplier
   AMOUNT,   // Extra projectiles
-  MAGNET    // Pickup radius multiplier
+  MAGNET,   // Pickup radius multiplier
+  HEALTH_REGEN
 };
 
 class StatManager {

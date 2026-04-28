@@ -464,33 +464,10 @@ void Game::_setupPlayer() {
   m_mapManager.registerObject(
       player_handle, m_player.ensureInitialized()->getPosition(), false);
 
-  auto magic_wand = std::make_shared<MagicWand>();
-  magic_wand->setContext(this);
-  // m_player.ensureInitialized()->addWeapon(magic_wand);
-
-  auto wood_block = std::make_shared<SolidWoodBlock>();
-  wood_block->setContext(this);
-  // m_player.ensureInitialized()->addWeapon(wood_block);
-
-  // Water Bottle Weapon
+  // Initial weapon
   auto water_bottle = std::make_shared<WaterBottle>();
   water_bottle->setContext(this);
   m_player.ensureInitialized()->addWeapon(water_bottle);
-
-  // Orbiting Cones Weapon
-  auto orbiting_cones = std::make_shared<OrbitingCones>();
-  orbiting_cones->setContext(this);
-  // m_player.ensureInitialized()->addWeapon(orbiting_cones);
-
-  // Toxic Fumes Weapon
-  auto toxic_fumes = std::make_shared<ToxicFumes>();
-  toxic_fumes->setContext(this);
-  // m_player.ensureInitialized()->addWeapon(toxic_fumes);
-
-  // Gas Nozzle Weapon
-  auto gas_nozzle = std::make_shared<GasNozzleE20>();
-  gas_nozzle->setContext(this);
-  // m_player.ensureInitialized()->addWeapon(gas_nozzle);
 }
 
 void Game::_setupEnvironment() {
@@ -587,12 +564,28 @@ void Game::update(double delta_time) {
 
   _runCollisionPass();
   m_eventBus.flush();
+  _updatePlayerRegen(delta_time);
   m_objects.collectGarbage();
 }
 
 void Game::_updateCamera(double delta_time) {
   (void)delta_time;
   m_cameraController.follow(m_player.ensureInitialized()->getPosition());
+}
+
+void Game::_updatePlayerRegen(double delta_time) {
+  Player *player = getPlayer();
+  if (!player || player->isDead()) {
+    return;
+  }
+
+  const float regen_per_second =
+      m_statManager.getMultiplier(StatType::HEALTH_REGEN);
+  if (regen_per_second <= 0.0f) {
+    return;
+  }
+
+  player->heal(regen_per_second * static_cast<float>(delta_time));
 }
 
 void Game::_runCollisionPass() {

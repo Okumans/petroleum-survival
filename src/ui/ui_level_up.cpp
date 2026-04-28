@@ -2,6 +2,7 @@
 #include "game/game.hpp"
 #include "resource/texture_manager.hpp"
 #include "ui/font.hpp"
+#include <cmath>
 #include <string>
 
 LevelUI::LevelUI(UIManager &ui_manager, const BitmapFont &font)
@@ -24,6 +25,12 @@ void LevelUI::_setupHUD() {
                                {0.1f, 0.1f, 0.1f, 1.0f});
   m_uiManager.addStaticElement("exp_fill", {0.0f, 0.0f, 0.0f, 1.0f},
                                {0.2f, 0.5f, 1.0f, 0.8f});
+  m_uiManager.addStaticElement("health_bg", {0.8f, 2.0f, 2.0f, 20.0f},
+                               {0.1f, 0.08f, 0.08f, 0.95f});
+  m_uiManager.addStaticElement("health_fill", {0.8f, 2.0f, 2.0f, 20.0f},
+                               {0.78f, 0.15f, 0.15f, 0.95f});
+  m_uiManager.addTextElement("health_text", {0.75f, 22.6f, 0.0f, 0.0f}, "HP",
+                             m_font, {1.0f, 0.9f, 0.9f, 1.0f}, 0.08f);
   m_uiManager.addTextElement("level_text", {0.0f, 1.5f, 0.0f, 0.0f}, "LV 1",
                              m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.1f);
 }
@@ -91,6 +98,9 @@ void LevelUI::_updateHUD(const Game &game, float virtualWidth) {
 
   m_uiManager.getElement("exp_bg")->visible = isPlaying;
   m_uiManager.getElement("exp_fill")->visible = isPlaying;
+  m_uiManager.getElement("health_bg")->visible = isPlaying;
+  m_uiManager.getElement("health_fill")->visible = isPlaying;
+  m_uiManager.getElement("health_text")->visible = isPlaying;
   m_uiManager.getElement("level_text")->visible = isPlaying;
 
   if (isPlaying) {
@@ -105,7 +115,45 @@ void LevelUI::_updateHUD(const Game &game, float virtualWidth) {
           virtualWidth -
           m_font.getTextWidth(levelText->text, levelText->scale) - 1.0f;
     }
+
+    _updateHealthBar(game, virtualWidth);
   }
+}
+
+void LevelUI::_updateHealthBar(const Game &game, float virtualWidth) {
+  (void)virtualWidth;
+
+  const Player *player = game.getPlayer();
+  if (!player) {
+    return;
+  }
+
+  float maxHealth = std::max(1.0f, player->getMaxHealth());
+  float healthRatio = glm::clamp(player->getHealth() / maxHealth, 0.0f, 1.0f);
+
+  auto *bg = m_uiManager.getElement("health_bg");
+  auto *fill = m_uiManager.getElement("health_fill");
+  auto *label =
+      dynamic_cast<TextElement *>(m_uiManager.getElement("health_text"));
+  if (!bg || !fill || !label) {
+    return;
+  }
+
+  bg->bounds.x = 0.8f;
+  bg->bounds.y = 17;
+  bg->bounds.w = 2.0f;
+  bg->bounds.h = 20.0f;
+
+  fill->bounds.x = bg->bounds.x;
+  fill->bounds.y = bg->bounds.y;
+  fill->bounds.w = bg->bounds.w;
+  fill->bounds.h = bg->bounds.h * healthRatio;
+
+  label->text =
+      std::to_string(static_cast<int>(std::ceil(player->getHealth()))) + " / " +
+      std::to_string(static_cast<int>(std::ceil(player->getMaxHealth())));
+  label->bounds.x = bg->bounds.x - 0.2f;
+  label->bounds.y = bg->bounds.y + bg->bounds.h + 0.4f;
 }
 
 void LevelUI::_updateLevelUpOverlay(const Game &game, float virtualWidth) {
