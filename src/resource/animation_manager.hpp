@@ -13,6 +13,8 @@ enum class AnimationName {
   KASANE_TETO_DANCING,
   HATSUNE_MIKU_IDLE,
   HATSUNE_MIKU_WALKING,
+  HUMAN_IDLE,
+  HUMAN_WALKING,
 };
 
 class AnimationManager {

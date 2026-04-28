@@ -1,6 +1,8 @@
 #include "scene/game_factories.hpp"
+#include "utility/random.hpp"
 
-std::optional<GameObjectFactory<HumanoidEnemy>> GameFactories::s_humanoidEnemy;
+std::optional<GameObjectFactory<MikuEnemy>> GameFactories::s_mikuEnemy;
+std::optional<GameObjectFactory<MilitiaEnemy>> GameFactories::s_militiaEnemy;
 std::optional<GameObjectFactory<Player>> GameFactories::s_player;
 std::optional<GameObjectFactory<Exp>> GameFactories::s_exp;
 EnumMap<ModelName, std::optional<GameObjectFactory<CarEnemy>>>
@@ -12,9 +14,16 @@ std::optional<GameObjectFactory<MeleeProjectile>>
 
 void GameFactories::init() {
   // 1. Humanoid Enemy Factory
-  s_humanoidEnemy = GameObjectFactory<HumanoidEnemy>::create_factory([]() {
-    HumanoidEnemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
+  s_mikuEnemy = GameObjectFactory<MikuEnemy>::create_factory([]() {
+    MikuEnemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
     enemy.setScale(60.0f);
+    enemy.setup();
+    return enemy;
+  });
+
+  s_militiaEnemy = GameObjectFactory<MilitiaEnemy>::create_factory([]() {
+    MilitiaEnemy enemy(ModelManager::copy(ModelName::MILITIA_HUMAN));
+    enemy.setScale(2.5f);
     enemy.setup();
     return enemy;
   });
@@ -72,7 +81,12 @@ void GameFactories::init() {
 }
 
 const GameObjectFactory<HumanoidEnemy> &GameFactories::getHumanoidEnemy() {
-  return *s_humanoidEnemy;
+  if (Random::randFloat() < 0.5f) {
+    return *reinterpret_cast<const GameObjectFactory<HumanoidEnemy> *>(
+        &s_mikuEnemy.value());
+  }
+  return *reinterpret_cast<const GameObjectFactory<HumanoidEnemy> *>(
+      &s_militiaEnemy.value());
 }
 
 const GameObjectFactory<Player> &GameFactories::getPlayer() {

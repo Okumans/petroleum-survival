@@ -14,7 +14,15 @@
 
 enum class EnemyAnimation { IDLE, WALKING };
 
+/**
+ * @brief Base class for all humanoid-type enemies.
+ * Handles the common chase logic and entity state.
+ */
 class HumanoidEnemy : public HumaniodEntity<Enemy, EnemyAnimation> {
+protected:
+  AnimationName m_idleAnimName;
+  AnimationName m_walkingAnimName;
+
 public:
   HumanoidEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
                 glm::vec3 scale = glm::vec3(1.0f),
@@ -32,10 +40,9 @@ public:
     AnimationManager::ensureInit();
 
     m_animations.set(EnemyAnimation::IDLE,
-                     AnimationManager::copy(AnimationName::HATSUNE_MIKU_IDLE));
-    m_animations.set(
-        EnemyAnimation::WALKING,
-        AnimationManager::copy(AnimationName::HATSUNE_MIKU_WALKING));
+                     AnimationManager::copy(m_idleAnimName));
+    m_animations.set(EnemyAnimation::WALKING,
+                     AnimationManager::copy(m_walkingAnimName));
 
     assert(m_animations.isInitialized());
 
@@ -56,7 +63,7 @@ public:
     m_locomotion.setup(0.8f, 0.6f);
   }
 
-private:
+protected:
   void _updateChaseState() {
     glm::vec3 to_player =
         m_context.ensureInitialized()->getPlayerPosition() - m_position;

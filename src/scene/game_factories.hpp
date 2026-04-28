@@ -2,7 +2,7 @@
 
 #include "resource/model_manager.hpp"
 #include "scene/enemy/car_enemy.hpp"
-#include "scene/enemy/humanoid_enemy.hpp"
+#include "scene/enemy/humanoid_enemies.hpp"
 #include "scene/exp.hpp"
 #include "scene/game_object_factory.hpp"
 #include "scene/player.hpp"
@@ -25,7 +25,8 @@ public:
   static const GameObjectFactory<MeleeProjectile> &getMeleeProjectile();
 
 private:
-  static std::optional<GameObjectFactory<HumanoidEnemy>> s_humanoidEnemy;
+  static std::optional<GameObjectFactory<MikuEnemy>> s_mikuEnemy;
+  static std::optional<GameObjectFactory<MilitiaEnemy>> s_militiaEnemy;
   static std::optional<GameObjectFactory<Player>> s_player;
   static std::optional<GameObjectFactory<Exp>> s_exp;
   static EnumMap<ModelName, std::optional<GameObjectFactory<CarEnemy>>> s_cars;

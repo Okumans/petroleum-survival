@@ -220,6 +220,10 @@ void App::_setupResources() {
       {"Model: Rock 1",
        loadModel(ModelName::ROCK_1, ASSETS_PATH "/objects/rock/rock_1.glb")});
 
+  m_loadingTasks.push_back(
+      {"Model: Militia Human", loadModel(ModelName::MILITIA_HUMAN, ASSETS_PATH
+                                         "/objects/human/human.dae")});
+
   // Animations
   m_loadingTasks.push_back({"Animation: Kasane Teto Idle",
                             loadAnimation(AnimationName::KASANE_TETO_IDLE,
@@ -242,7 +246,7 @@ void App::_setupResources() {
                                                       "teto_dancing.dae",
                                           ModelName::KASANE_TETO)});
 
-  m_loadingTasks.push_back({"Animation: Hatsune Miku Walking",
+  m_loadingTasks.push_back({"Animation: Hatsune Miku Idle",
                             loadAnimation(AnimationName::HATSUNE_MIKU_IDLE,
                                           ASSETS_PATH "/objects/hatsune_miku/"
                                                       "miku_idle.dae",
@@ -252,6 +256,17 @@ void App::_setupResources() {
                                           ASSETS_PATH "/objects/hatsune_miku/"
                                                       "miku_walking.dae",
                                           ModelName::HATSUNE_MIKU)});
+
+  m_loadingTasks.push_back({"Animation: Human Walking",
+                            loadAnimation(AnimationName::HUMAN_IDLE,
+                                          ASSETS_PATH "/objects/human/"
+                                                      "human_walking.dae",
+                                          ModelName::MILITIA_HUMAN)});
+  m_loadingTasks.push_back({"Animation: Human Walking",
+                            loadAnimation(AnimationName::HUMAN_WALKING,
+                                          ASSETS_PATH "/objects/human/"
+                                                      "human_walking.dae",
+                                          ModelName::MILITIA_HUMAN)});
 
   // Static texture generation
   m_loadingTasks.push_back(

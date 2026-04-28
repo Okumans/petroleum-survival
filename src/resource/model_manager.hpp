@@ -25,6 +25,7 @@ enum class ModelName {
   CUBE,
   WATER_BOTTLE,
   TRAFFIC_CONE,
+  MILITIA_HUMAN,
   TREE_1,
   TREE_2,
   BUSH_1,
