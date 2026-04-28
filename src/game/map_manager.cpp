@@ -116,6 +116,22 @@ glm::vec3 MapManager::snapToGround(const glm::vec3 &position,
   return snapped;
 }
 
+float MapManager::sampleHeightNoCache(float world_x, float world_z) const {
+  if (!_isInsideWorld(world_x, world_z)) {
+    world_x = std::clamp(world_x, -s_worldHalfSize, s_worldHalfSize);
+    world_z = std::clamp(world_z, -s_worldHalfSize, s_worldHalfSize);
+  }
+
+  return _terrainHeight(world_x, world_z);
+}
+
+glm::vec3 MapManager::snapToGroundNoCache(const glm::vec3 &position,
+                                         float base_offset) const {
+  glm::vec3 snapped = position;
+  snapped.y = sampleHeightNoCache(position.x, position.z) + base_offset;
+  return snapped;
+}
+
 bool MapManager::isPositionInLoadedChunk(const glm::vec3 &position) const {
   int chunk_x = static_cast<int>(std::floor(position.x / s_chunkWorldSize));
   int chunk_z = static_cast<int>(std::floor(position.z / s_chunkWorldSize));

@@ -67,9 +67,12 @@ public:
   void submitToRenderer(Renderer &renderer);
 
   [[nodiscard]] float sampleHeight(float world_x, float world_z) const;
+  [[nodiscard]] float sampleHeightNoCache(float world_x, float world_z) const;
   [[nodiscard]] glm::vec3 sampleNormal(float world_x, float world_z) const;
   [[nodiscard]] glm::vec3 snapToGround(const glm::vec3 &position,
                                        float base_offset = 0.0f) const;
+  [[nodiscard]] glm::vec3 snapToGroundNoCache(const glm::vec3 &position,
+                                               float base_offset = 0.0f) const;
   [[nodiscard]] bool isPositionInLoadedChunk(const glm::vec3 &position) const;
 
   void registerObject(const ObjectHandle &handle, const glm::vec3 &position,

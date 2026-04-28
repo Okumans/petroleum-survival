@@ -2,7 +2,6 @@
 #include "resource/model_manager.hpp"
 #include "scene/static_prop.hpp"
 #include "utility/random.hpp"
-#include "utility/utility.hpp"
 
 #include <glm/glm.hpp>
 
@@ -98,7 +97,7 @@ void MapPopulationSystem::_spawnProp(GameObjectManager &objects,
   auto [prop, handle] = objects.emplaceWithHandle<StaticProp>(
       model, propInstance.position, propInstance.scale, propInstance.rotation);
 
-  const glm::vec3 snapped_position = mapManager.snapToGround(
+  const glm::vec3 snapped_position = mapManager.snapToGroundNoCache(
       prop.getPosition(), prop.getPosition().y - prop.getWorldAABB().min.y);
   prop.setPosition(snapped_position);
 
