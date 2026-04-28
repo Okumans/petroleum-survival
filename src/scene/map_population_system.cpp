@@ -29,14 +29,61 @@ std::vector<MapPopulator::PropInstance> MapPopulator::_getMapProps() {
     return glm::vec3(base_scale * Random::randFloat(min_mul, max_mul));
   };
 
-  const int NUM_GROVES = 12; // How many clusters of props
-  const int PROPS_PER_GROVE_MIN = 4;
-  const int PROPS_PER_GROVE_MAX = 15;
-  const float GROVE_RADIUS = 18.0f; // Max spread of a single cluster
+  const int PROPS_PER_GROVE_MIN = 8;
+  const int PROPS_PER_GROVE_MAX = 26;
+  const float GROVE_RADIUS = 22.0f; // Max spread of a single cluster
   const float SPAWN_AREA_EXTENT =
-      60.0f; // Your world boundaries to spawn within
+      460.0f; // Keep inside MapManager world half-size
 
-  for (int g = 0; g < NUM_GROVES; ++g) {
+  // Baseline scatter so the world never feels empty.
+  // We place a few props per grid cell with jitter, then add groves for variety.
+  const float GRID_STEP = 55.0f;
+  const int GRID_PROPS_MIN = 1;
+  const int GRID_PROPS_MAX = 4;
+
+  for (float gx = -SPAWN_AREA_EXTENT; gx <= SPAWN_AREA_EXTENT; gx += GRID_STEP) {
+    for (float gz = -SPAWN_AREA_EXTENT; gz <= SPAWN_AREA_EXTENT;
+         gz += GRID_STEP) {
+      int props_in_cell = Random::randInt(GRID_PROPS_MIN, GRID_PROPS_MAX);
+      for (int i = 0; i < props_in_cell; ++i) {
+        float x = gx + Random::randFloat(-GRID_STEP * 0.45f, GRID_STEP * 0.45f);
+        float z = gz + Random::randFloat(-GRID_STEP * 0.45f, GRID_STEP * 0.45f);
+
+        switch (Random::randInt(0, 4)) {
+        case 0:
+          props.push_back({ModelName::TREE_1, glm::vec3(x, 0.0f, z),
+                           glm::vec3(0.0f, Random::randFloat() * 360.0f, 0.0f),
+                           randomizeScale(TREE_1_SCALE)});
+          break;
+        case 1:
+          props.push_back({ModelName::TREE_2, glm::vec3(x, 0.0f, z),
+                           glm::vec3(0.0f, Random::randFloat() * 360.0f, 0.0f),
+                           randomizeScale(TREE_2_SCALE)});
+          break;
+        case 2:
+          props.push_back({ModelName::BUSH_1, glm::vec3(x, 0.0f, z),
+                           glm::vec3(0.0f, Random::randFloat() * 360.0f, 0.0f),
+                           randomizeScale(BUSH_1_SCALE)});
+          break;
+        case 3:
+          props.push_back({ModelName::BUSH_2, glm::vec3(x, 0.0f, z),
+                           glm::vec3(0.0f, Random::randFloat() * 360.0f, 0.0f),
+                           randomizeScale(BUSH_2_SCALE)});
+          break;
+        case 4:
+          props.push_back({ModelName::ROCK_1, glm::vec3(x, 0.0f, z),
+                           glm::vec3(0.0f, Random::randFloat() * 360.0f, 0.0f),
+                           randomizeScale(ROCK_1_SCALE, 0.85f, 1.25f)});
+          break;
+        }
+      }
+    }
+  }
+
+  // Add groves (clusters) for density variation.
+  const int GROVE_COUNT = 140;
+
+  for (int g = 0; g < GROVE_COUNT; ++g) {
     float center_x = Random::randFloat(-SPAWN_AREA_EXTENT, SPAWN_AREA_EXTENT);
     float center_z = Random::randFloat(-SPAWN_AREA_EXTENT, SPAWN_AREA_EXTENT);
 

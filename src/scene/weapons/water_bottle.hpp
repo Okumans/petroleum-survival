@@ -132,8 +132,8 @@ public:
               p.setScale(glm::vec3(5.0f));
 
               // Lighter capture payload to avoid heap allocations
-              p.setUpdateLogic([spin = spin_deg_per_sec,
-                                gravity = m_gravity](Projectile &p, double dt) {
+              p.setUpdateLogic([spin = spin_deg_per_sec, gravity = m_gravity,
+                                this](Projectile &p, double dt) {
                 float fdt = static_cast<float>(dt);
                 glm::vec3 vel = p.getVelocity();
 
@@ -142,6 +142,17 @@ public:
 
                 p.translate(vel * fdt);
                 p.rotate(spin * fdt);
+
+                if (p.getHitboxAABB().max.y <=
+                    m_context.ensureInitialized()->getGroundLevel(
+                        p.getPosition())) {
+                  p.requestRemoval();
+                  emitParticle(GameEvents::ParticleSpawnRequestedEvent{
+                      .position = p.getPosition(),
+                      .direction = p.getVelocity(),
+                      .effectId = GameEvents::ParticleEffectType::PHYSICAL_HIT,
+                  });
+                }
               });
             }));
 

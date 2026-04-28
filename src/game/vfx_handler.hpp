@@ -42,6 +42,9 @@ public:
     case ParticleEffectType::MAGIC_HIT:
       _emitMagicHit(evt.position);
       break;
+    case ParticleEffectType::PHYSICAL_HIT:
+      _emitPhysicalHit(evt.position);
+      break;
     case ParticleEffectType::FLAME:
       _emitFlameBurst(evt);
       break;
@@ -50,6 +53,9 @@ public:
       break;
     case ParticleEffectType::GAS_E95:
       _emitGasSpray(evt, true);
+      break;
+    case ParticleEffectType::WOOD_SWEEP:
+      _emitWoodSweep(evt);
       break;
     case ParticleEffectType::FUME_IDLE:
       _emitFumeCloud(evt, false);
@@ -142,6 +148,35 @@ private:
     }
   }
 
+  void _emitPhysicalHit(const glm::vec3 &position) {
+    for (int i = 0; i < 26; ++i) {
+      bool spark = (i % 5) == 0;
+
+      glm::vec3 vel =
+          glm::vec3(0.0f, 1.6f, 0.0f) +
+          Random::randVec3(-1.0f, 1.0f) * (spark ? 4.5f : 2.2f);
+
+      glm::vec4 begin = spark ? glm::vec4(1.0f, 0.95f, 0.75f, 1.0f)
+                              : glm::vec4(0.55f, 0.50f, 0.45f, 0.9f);
+      glm::vec4 end = spark ? glm::vec4(0.8f, 0.55f, 0.25f, 0.0f)
+                            : glm::vec4(0.25f, 0.22f, 0.20f, 0.0f);
+
+      float sizeBegin = spark ? 0.10f : 0.22f;
+      float sizeEnd = spark ? 0.0f : 0.05f;
+      float life = spark ? 0.15f : 0.35f;
+
+      m_particleSystem.emit({.position = position + glm::vec3(0.0f, 0.9f, 0.0f),
+                             .velocity = vel,
+                             .velocityVariation = glm::vec3(1.2f, 1.0f, 1.2f),
+                             .colorBegin = begin,
+                             .colorEnd = end,
+                             .sizeBegin = sizeBegin,
+                             .sizeEnd = sizeEnd,
+                             .sizeVariation = sizeBegin * 0.35f,
+                             .lifeTime = life});
+    }
+  }
+
   void _emitFlameBurst(const GameEvents::ParticleSpawnRequestedEvent &evt) {
     glm::vec3 direction = evt.direction;
 
@@ -224,9 +259,8 @@ private:
     float coreSize = glm::max(0.06f, thickness * 0.55f);
     float mistSize = glm::max(0.025f, thickness * 0.22f);
 
-    // Brown-ish gas palette, with E95 being darker.
-    glm::vec3 base = darker ? glm::vec3(0.28f, 0.16f, 0.06f)
-                            : glm::vec3(0.42f, 0.26f, 0.10f);
+    glm::vec3 base = darker ? glm::vec3(0.18f, 0.10f, 0.04f)
+                            : glm::vec3(0.28f, 0.16f, 0.06f);
 
     for (int i = 0; i < 70; ++i) {
       bool isCoreParticle = (i % 5) != 0;
@@ -251,20 +285,19 @@ private:
       float tint = isCoreParticle ? Random::randFloat(0.85f, 1.15f)
                                   : Random::randFloat(0.7f, 1.05f);
 
-      glm::vec3 beginRgb =
-          glm::clamp(base * tint +
-                         glm::vec3(Random::randFloat(-0.03f, 0.03f),
-                                   Random::randFloat(-0.02f, 0.02f),
-                                   Random::randFloat(-0.015f, 0.015f)),
-                     0.0f, 1.0f);
+      glm::vec3 beginRgb = glm::clamp(
+          base * tint + glm::vec3(Random::randFloat(-0.03f, 0.03f),
+                                  Random::randFloat(-0.02f, 0.02f),
+                                  Random::randFloat(-0.015f, 0.015f)),
+          0.0f, 1.0f);
 
-      glm::vec4 colorBegin = glm::vec4(beginRgb, isCoreParticle ? 0.85f : 0.65f);
-      glm::vec4 colorEnd =
-          glm::vec4(beginRgb * (darker ? 0.35f : 0.45f), 0.0f);
+      glm::vec4 colorBegin =
+          glm::vec4(beginRgb, isCoreParticle ? 0.85f : 0.65f);
+      glm::vec4 colorEnd = glm::vec4(beginRgb * (darker ? 0.35f : 0.45f), 0.0f);
 
       float pSizeBegin = isCoreParticle ? coreSize : mistSize;
-      float pSizeEnd = isCoreParticle ? (coreSize * Random::randFloat(2.0f, 3.2f))
-                                      : 0.0f;
+      float pSizeEnd =
+          isCoreParticle ? (coreSize * Random::randFloat(2.0f, 3.2f)) : 0.0f;
 
       m_particleSystem.emit(
           {.position = spawnPos,
@@ -276,10 +309,83 @@ private:
            .sizeBegin = pSizeBegin,
            .sizeEnd = pSizeEnd,
            .sizeVariation = pSizeBegin * 0.35f,
-           .stretch = 1.35f,
+           .stretch = 1.0f,
            .stretchVariation = 0.25f,
            .lifeTime = isCoreParticle ? Random::randFloat(0.18f, 0.35f)
                                       : Random::randFloat(0.28f, 0.55f)});
+    }
+  }
+
+  void _emitWoodSweep(const GameEvents::ParticleSpawnRequestedEvent &evt) {
+    glm::vec3 direction = evt.direction;
+    if (glm::length(direction) < 0.001f) {
+      direction = glm::vec3(0.0f, 0.0f, 1.0f);
+    } else {
+      direction = glm::normalize(direction);
+    }
+
+    float length = glm::max(0.8f, evt.length);
+    float width = glm::max(0.35f, evt.thickness);
+
+    // Build a simple "sweeping fan" in front of the player by spraying
+    // particles in a forward wedge with some lateral variation.
+    glm::vec3 up(0.0f, 1.0f, 0.0f);
+    glm::vec3 right = glm::cross(direction, up);
+    float right_len = glm::length(right);
+    if (right_len < 0.001f) {
+      right = glm::vec3(1.0f, 0.0f, 0.0f);
+    } else {
+      right /= right_len;
+    }
+
+    glm::vec3 basePos = evt.position + direction * 0.4f;
+
+    // White sweep with subtle cool tint.
+    glm::vec3 baseA(0.95f, 0.95f, 1.0f);
+    glm::vec3 baseB(0.85f, 0.88f, 0.98f);
+
+    for (int i = 0; i < 85; ++i) {
+      float t = Random::randFloat(0.05f, 1.0f);
+      float forwardDist = t * length;
+
+      float lateralSpan = width * (0.55f + t * 1.15f);
+      float lateral = Random::randFloat(-lateralSpan, lateralSpan);
+      float lift = Random::randFloat(0.0f, 0.12f) + t * 0.18f;
+
+      glm::vec3 spawnPos = basePos + direction * forwardDist +
+                           right * lateral + glm::vec3(0.0f, lift, 0.0f);
+
+      glm::vec3 velocity =
+          direction * Random::randFloat(1.2f, 3.4f) +
+          right * (lateral * Random::randFloat(0.6f, 1.1f)) +
+          glm::vec3(0.0f, Random::randFloat(0.3f, 1.2f), 0.0f);
+
+      bool bright = (i % 4) == 0;
+      glm::vec3 beginRgb = bright ? baseA : baseB;
+      beginRgb += glm::vec3(Random::randFloat(-0.04f, 0.04f),
+                            Random::randFloat(-0.04f, 0.04f),
+                            Random::randFloat(-0.02f, 0.02f));
+      beginRgb = glm::clamp(beginRgb, 0.0f, 1.0f);
+
+      glm::vec4 colorBegin = glm::vec4(beginRgb, bright ? 0.95f : 0.82f);
+      glm::vec4 colorEnd = glm::vec4(beginRgb * 0.35f, 0.0f);
+
+      float sizeBegin = bright ? Random::randFloat(0.06f, 0.10f)
+                               : Random::randFloat(0.04f, 0.08f);
+      float sizeEnd = sizeBegin * Random::randFloat(1.2f, 2.4f);
+
+      m_particleSystem.emit({.position = spawnPos,
+                             .velocity = velocity,
+                             .velocityVariation = glm::vec3(0.25f, 0.25f, 0.25f),
+                             .direction = direction,
+                             .colorBegin = colorBegin,
+                             .colorEnd = colorEnd,
+                             .sizeBegin = sizeBegin,
+                             .sizeEnd = sizeEnd,
+                             .sizeVariation = sizeBegin * 0.35f,
+                             .stretch = 1.6f,
+                             .stretchVariation = 0.25f,
+                             .lifeTime = Random::randFloat(0.18f, 0.32f)});
     }
   }
 

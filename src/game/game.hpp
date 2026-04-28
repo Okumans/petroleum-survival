@@ -3,6 +3,7 @@
 #include "game/game_events.hpp"
 #include "game/stat_manager.hpp"
 #include "game/vfx_handler.hpp"
+#include "glm/fwd.hpp"
 #include "graphics/camera.hpp"
 #include "graphics/camera_controller.hpp"
 #include "graphics/particle_system.hpp"
@@ -117,9 +118,9 @@ public:
       return;
     if (m_levelUpSelection < 0)
       m_levelUpSelection = 0;
-    m_levelUpSelection =
-        (m_levelUpSelection - 1 + static_cast<int>(m_levelUpCandidates.size())) %
-        static_cast<int>(m_levelUpCandidates.size());
+    m_levelUpSelection = (m_levelUpSelection - 1 +
+                          static_cast<int>(m_levelUpCandidates.size())) %
+                         static_cast<int>(m_levelUpCandidates.size());
   }
 
   void selectNextLevelUpOption() {
@@ -228,6 +229,8 @@ public:
   void emit(const GameEvents::PlayerDamageRequestedEvent &event) override {
     m_eventBus.emit(event);
   }
+
+  float getGroundLevel(glm::vec3 pos) const override;
 
   void findTargets(float range, uint32_t k,
                    EnemyCallback callback) const override;

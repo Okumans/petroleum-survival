@@ -536,6 +536,7 @@ void App::_setupShaders() {
          pbr_shader.define("u_TerrainTintLow");
          pbr_shader.define("u_TerrainTintHigh");
          pbr_shader.define("u_TerrainTintScale");
+         pbr_shader.define("u_TerrainTintStrength");
 
          pbr_shader.define("u_Lights");
          pbr_shader.define("u_NumLights");
@@ -574,6 +575,7 @@ void App::_setupShaders() {
          shadow_shader.define("u_TerrainTintLow");
          shadow_shader.define("u_TerrainTintHigh");
          shadow_shader.define("u_TerrainTintScale");
+         shadow_shader.define("u_TerrainTintStrength");
 
          Shader &skybox_shader = ShaderManager::get(ShaderType::SKYBOX);
          skybox_shader.use();

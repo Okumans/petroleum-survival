@@ -27,6 +27,9 @@ protected:
   }
 
   [[nodiscard]] bool hasLighterSynergy() const {
+    if (getLevel() < getMaxLevel()) {
+      return false;
+    }
     const Player *player = m_context.ensureInitialized()->getPlayer();
     if (!player) {
       return false;

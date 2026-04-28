@@ -23,6 +23,8 @@ public:
   virtual void emit(const GameEvents::ProjectileSpawnRequestedEvent &event) = 0;
   virtual void emit(const GameEvents::ParticleSpawnRequestedEvent &event) = 0;
 
+  [[nodiscard]] virtual float getGroundLevel(glm::vec3 pos) const = 0;
+
   [[nodiscard]] virtual const GameObject *
   resolveHandle(const ObjectHandle &handle) const = 0;
 

@@ -438,6 +438,10 @@ glm::vec3 Game::getPlayerPosition() const {
          glm::vec3(0.0f, (box.max.y - box.min.y) * 0.5f, 0.0f);
 }
 
+float Game::getGroundLevel(glm::vec3 pos) const {
+  return m_mapManager.sampleHeight(pos.x, pos.z);
+}
+
 glm::vec3 Game::getPlayerForward() const {
   Player *player = m_player.ensureInitialized();
   float rad = glm::radians(player->getRotation().y);

@@ -140,9 +140,10 @@ void Renderer::flush(const RenderContext &ctx) {
       return;
 
     ctx.shader.setBool("u_EnableTerrainTint", true);
-    ctx.shader.setVec3("u_TerrainTintLow", glm::vec3(0.55f, 0.72f, 0.50f));
-    ctx.shader.setVec3("u_TerrainTintHigh", glm::vec3(1.35f, 1.18f, 0.92f));
-    ctx.shader.setFloat("u_TerrainTintScale", 0.010f);
+    ctx.shader.setVec3("u_TerrainTintLow", glm::vec3(0.50f, 0.70f, 0.55f));
+    ctx.shader.setVec3("u_TerrainTintHigh", glm::vec3(1.45f, 1.20f, 0.85f));
+    ctx.shader.setFloat("u_TerrainTintScale", 0.006f);
+    ctx.shader.setFloat("u_TerrainTintStrength", 0.9f);
     ctx.shader.setBool("u_HasAnimation", false);
     ctx.shader.setInt("u_BaseInstance", batchStartOffset);
     const_cast<Mesh *>(currentMesh)->drawInstanced(ctx, batchCount);

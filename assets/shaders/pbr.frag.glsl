@@ -33,6 +33,7 @@ uniform bool u_EnableTerrainTint;
 uniform vec3 u_TerrainTintLow;
 uniform vec3 u_TerrainTintHigh;
 uniform float u_TerrainTintScale;
+uniform float u_TerrainTintStrength;
 
 // Lights
 struct Light {
@@ -187,7 +188,7 @@ void main()
   if (u_EnableTerrainTint) {
     float tintNoise = fbm2(WorldPos.xz * u_TerrainTintScale + vec2(17.0, -9.0));
     vec3 tint = mix(u_TerrainTintLow, u_TerrainTintHigh, clamp(tintNoise, 0.0, 1.0));
-    albedo *= tint;
+    albedo = mix(albedo, albedo * tint, clamp(u_TerrainTintStrength, 0.0, 1.0));
   }
 
   // Sampling separate or packed Metallic and Roughness maps

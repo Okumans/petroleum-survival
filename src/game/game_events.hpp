@@ -39,9 +39,11 @@ enum class ParticleEffectType {
   ENEMY_DEATH,
   PLAYER_BLOOD,
   MAGIC_HIT,
+  PHYSICAL_HIT,
   FLAME,
   GAS_E20,
   GAS_E95,
+  WOOD_SWEEP,
   FUME_IDLE,
   FUME_ATTACk,
 };
