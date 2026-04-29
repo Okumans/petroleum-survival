@@ -20,8 +20,8 @@ std::vector<MapPopulator::PropInstance> MapPopulator::_getMapProps() {
   std::vector<PropInstance> props;
 
   // Define prop scale factors
-  constexpr float TREE_1_SCALE = 0.006f * 3;
-  constexpr float TREE_2_SCALE = 0.4f * 3;
+  constexpr float TREE_1_SCALE = 0.006f * 4;
+  constexpr float TREE_2_SCALE = 0.4f * 4;
   constexpr float BUSH_1_SCALE = 0.002f * 3;
   constexpr float BUSH_2_SCALE = 0.0025f * 3;
   constexpr float ROCK_1_SCALE = 0.005f * 3;
