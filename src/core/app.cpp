@@ -152,11 +152,12 @@ void App::_setupResources() {
                                       "/objects/car/monsterTruck.glb")});
 
   m_loadingTasks.push_back(
-      {"Model: Kasane Teto", loadModel(ModelName::KASANE_TETO, ASSETS_PATH
-                                       "/objects/kasane_teto/teto.dae")});
+      {"Model: The Witch", loadModel(ModelName::THE_WITCH, ASSETS_PATH
+                                     "/objects/the_witch/the_witch.dae")});
   m_loadingTasks.push_back(
-      {"Model: Hatsune Miku", loadModel(ModelName::HATSUNE_MIKU, ASSETS_PATH
-                                        "/objects/hatsune_miku/miku.dae")});
+      {"Model: Budhist Character",
+       loadModel(ModelName::BUDHIST_CHARACTER, ASSETS_PATH
+                 "/objects/budhist_character/budhist_character.dae")});
   m_loadingTasks.push_back(
       {"Model: Money 20", loadModel(ModelName::MONEY_20, ASSETS_PATH
                                     "/objects/items/money/20_baht.glb")});
@@ -225,37 +226,44 @@ void App::_setupResources() {
                                          "/objects/human/human.dae")});
 
   // Animations
-  m_loadingTasks.push_back({"Animation: Kasane Teto Idle",
-                            loadAnimation(AnimationName::KASANE_TETO_IDLE,
-                                          ASSETS_PATH "/objects/kasane_teto/"
-                                                      "teto_idle.dae",
-                                          ModelName::KASANE_TETO)});
-  m_loadingTasks.push_back({"Animation: Kasane Teto Walking",
-                            loadAnimation(AnimationName::KASANE_TETO_WALKING,
-                                          ASSETS_PATH "/objects/kasane_teto/"
-                                                      "teto_walking_normal.dae",
-                                          ModelName::KASANE_TETO)});
-  m_loadingTasks.push_back({"Animation: Kasane Teto Running",
-                            loadAnimation(AnimationName::KASANE_TETO_RUNNING,
-                                          ASSETS_PATH "/objects/kasane_teto/"
-                                                      "teto_running.dae",
-                                          ModelName::KASANE_TETO)});
-  m_loadingTasks.push_back({"Animation: Kasane Teto Dancing",
-                            loadAnimation(AnimationName::KASANE_TETO_DANCING,
-                                          ASSETS_PATH "/objects/kasane_teto/"
-                                                      "teto_dancing.dae",
-                                          ModelName::KASANE_TETO)});
+  m_loadingTasks.push_back({"Animation: The Witch Idle",
+                            loadAnimation(AnimationName::THE_WITCH_IDLE,
+                                          ASSETS_PATH "/objects/the_witch/"
+                                                      "Idle.dae",
+                                          ModelName::THE_WITCH)});
+  m_loadingTasks.push_back({"Animation: The Witch Walking",
+                            loadAnimation(AnimationName::THE_WITCH_WALKING,
+                                          ASSETS_PATH "/objects/the_witch/"
+                                                      "Walking.dae",
+                                          ModelName::THE_WITCH)});
+  m_loadingTasks.push_back({"Animation: The Witch Running",
+                            loadAnimation(AnimationName::THE_WITCH_RUNNING,
+                                          ASSETS_PATH "/objects/the_witch/"
+                                                      "Running.dae",
+                                          ModelName::THE_WITCH)});
+  // Dancing slot intentionally loads Idle.dae — there is no separate
+  // dancing animation for this character, so dancing falls back to idle.
+  m_loadingTasks.push_back({"Animation: The Witch Dancing",
+                            loadAnimation(AnimationName::THE_WITCH_DANCING,
+                                          ASSETS_PATH "/objects/the_witch/"
+                                                      "Idle.dae",
+                                          ModelName::THE_WITCH)});
 
-  m_loadingTasks.push_back({"Animation: Hatsune Miku Idle",
-                            loadAnimation(AnimationName::HATSUNE_MIKU_IDLE,
-                                          ASSETS_PATH "/objects/hatsune_miku/"
-                                                      "miku_idle.dae",
-                                          ModelName::HATSUNE_MIKU)});
-  m_loadingTasks.push_back({"Animation: Hatsune Miku Walking",
-                            loadAnimation(AnimationName::HATSUNE_MIKU_WALKING,
-                                          ASSETS_PATH "/objects/hatsune_miku/"
-                                                      "miku_walking.dae",
-                                          ModelName::HATSUNE_MIKU)});
+  // Budhist character only ships with a walking animation, so we reuse it for
+  // both the idle and walking slots. Replace the IDLE source with a real
+  // idle .dae once one is available.
+  m_loadingTasks.push_back(
+      {"Animation: Budhist Character Idle",
+       loadAnimation(AnimationName::BUDHIST_CHARACTER_IDLE,
+                     ASSETS_PATH
+                     "/objects/budhist_character/budhist_character.dae",
+                     ModelName::BUDHIST_CHARACTER)});
+  m_loadingTasks.push_back(
+      {"Animation: Budhist Character Walking",
+       loadAnimation(AnimationName::BUDHIST_CHARACTER_WALKING,
+                     ASSETS_PATH
+                     "/objects/budhist_character/budhist_character_walking.dae",
+                     ModelName::BUDHIST_CHARACTER)});
 
   m_loadingTasks.push_back({"Animation: Human Walking",
                             loadAnimation(AnimationName::HUMAN_IDLE,
