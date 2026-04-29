@@ -75,7 +75,7 @@ private:
 
   Utility::NotInitialized<Player *, "Player"> m_player;
 
-  bool m_debugAABB = true;
+  bool m_debugAABB = false;
   GameState m_state = GameState::START_MENU;
 
   struct LoadedChunkObject {

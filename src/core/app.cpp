@@ -377,7 +377,7 @@ void App::_setupResources() {
   // Game Setup
   m_loadingTasks.push_back({"Game Engine Initializing", [this]() {
                               m_game.setup();
-                              m_game.setDebugAABB(true);
+                              m_game.setDebugAABB(false);
                             }});
 }
 
