@@ -79,7 +79,8 @@ constexpr T withBase(T base, F modifier) {
   return base;
 }
 
-inline constexpr float lerpAngle(float start, float end, float t) {
+// NOTE: not constexpr — std::fmod is not constexpr in MSVC's STL for this C++ mode.
+inline float lerpAngle(float start, float end, float t) {
   float diff = std::fmod(end - start + 180.0f, 360.0f) - 180.0f;
   if (diff < -180.0f)
     diff += 360.0f;

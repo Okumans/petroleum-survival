@@ -51,10 +51,13 @@ endif()
 
 
 # --- Assimp ---
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(MINIZIP REQUIRED minizip)
-
-include_directories(${MINIZIP_INCLUDE_DIRS})
+# NOTE: System pkg-config + minizip lookup removed — assimp is built with
+# ASSIMP_BUILD_MINIZIP ON below, which provides minizip internally, and the
+# project source does not include minizip headers directly. Re-enable these
+# lines if you switch ASSIMP_BUILD_MINIZIP to OFF.
+# find_package(PkgConfig REQUIRED)
+# pkg_check_modules(MINIZIP REQUIRED minizip)
+# include_directories(${MINIZIP_INCLUDE_DIRS})
 
 CPMAddPackage(
   NAME assimp
