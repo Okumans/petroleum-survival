@@ -581,10 +581,9 @@ void Game::update(double delta_time) {
   _calculateClosestEnemies(m_player.ensureInitialized()->getPosition());
 
   // Update Objects
-  for (auto &[_, object] : m_currentChunkObjects.dynamics)
-    object->update(delta_time);
-  for (auto &[_, object] : m_currentChunkObjects.statics)
-    object->update(delta_time);
+  Utility::concat(
+      [delta_time](LoadedChunkObject &val) { val.object->update(delta_time); },
+      m_currentChunkObjects.dynamics, m_currentChunkObjects.statics);
 
   _syncObjectsToTerrain();
   _runCollisionPass();
