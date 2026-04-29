@@ -2,8 +2,7 @@
 
 #include "graphics/material.hpp"
 #include "graphics/mesh.hpp"
-#include "graphics/render_context.hpp"
-#include "scene/game_object_manager.hpp"
+#include "scene/game_object.hpp"
 
 #include <concepts>
 #include <glm/glm.hpp>

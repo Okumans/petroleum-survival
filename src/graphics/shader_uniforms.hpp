@@ -2,7 +2,6 @@
 
 #include "utility/name_hash.hpp"
 #include <array>
-#include <string_view>
 
 namespace ShaderUniforms {
 
@@ -11,17 +10,16 @@ struct LightUniforms {
   std::array<char, 32> color;
   std::array<char, 32> type;
 
-  NameHash positionHash;
-  NameHash colorHash;
-  NameHash typeHash;
+  Utility::NameHash positionHash;
+  Utility::NameHash colorHash;
+  Utility::NameHash typeHash;
 };
 
 constexpr std::array<LightUniforms, 4> generateLightUniforms() {
   std::array<LightUniforms, 4> results = {};
 
   for (size_t i = 0; i < 4; ++i) {
-    auto build_str = [&](const char *property,
-                         std::array<char, 32> &out_arr) -> NameHash {
+    auto build_str = [&](const char *property, std::array<char, 32> &out_arr) {
       char full_buf[32] = "u_Lights[";
       size_t p = 9;
 
@@ -52,7 +50,7 @@ constexpr std::array<LightUniforms, 4> generateLightUniforms() {
         out_arr[j] = full_buf[j];
       }
 
-      return NameHash(std::string_view(full_buf, p));
+      return Utility::NameHash(std::string_view(full_buf, p));
     };
 
     results[i].positionHash = build_str("position", results[i].position);

@@ -31,7 +31,7 @@ protected:
   AnimationState<void> m_iFrameState;
   AnimationState<float> m_damageFlashState;
 
-  NotInitialized<IEnemyContext *> m_context;
+  Utility::NotInitialized<IEnemyContext *> m_context;
 
 public:
   Entity(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),

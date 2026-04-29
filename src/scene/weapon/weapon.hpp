@@ -26,7 +26,7 @@ protected:
   std::string m_description = "A mysterious weapon.";
   std::string m_iconName = "icon_cone"; // Default icon
 
-  NotInitialized<IWeaponContext *> m_context;
+  Utility::NotInitialized<IWeaponContext *> m_context;
 
 public:
   Weapon(float cooldown, float damage)
@@ -58,7 +58,7 @@ public:
     float critChance = stats->getMultiplier(StatType::CRIT_CHANCE);
     float critMult = stats->getMultiplier(StatType::CRIT_MULTIPLIER);
 
-    bool isCrit = Random::randChance(critChance);
+    bool isCrit = Utility::Random::randChance(critChance);
     float finalDmg = isCrit ? baseDmg * critMult : baseDmg;
 
     return {finalDmg, isCrit};

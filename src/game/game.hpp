@@ -12,6 +12,7 @@
 #include "graphics/skybox.hpp"
 #include "map_manager.hpp"
 #include "scene/enemy/enemy.hpp"
+#include "scene/game_object.hpp"
 #include "scene/game_object_manager.hpp"
 #include "scene/player.hpp"
 #include "ui/damage_text_manager.hpp"
@@ -53,7 +54,7 @@ private:
   std::unique_ptr<ShadowMap> m_shadowMap;
   GameObjectManager m_objects;
   EventBus m_eventBus;
-
+  Renderer m_renderer;
   ParticleSystem m_particleSystem;
   VFXHandler m_vfxHandler;
   EnemySpawner m_spawner;
@@ -72,14 +73,23 @@ private:
   std::vector<Upgrade> m_levelUpCandidates;
   int m_levelUpSelection = -1;
 
-  NotInitialized<Player *, "Player"> m_player;
+  Utility::NotInitialized<Player *, "Player"> m_player;
 
   bool m_debugAABB = true;
   GameState m_state = GameState::START_MENU;
 
-  Renderer m_renderer;
+  struct LoadedChunkObject {
+    ObjectHandle handle;
+    GameObject *object;
+
+    bool isValid() { return object && handle.isValid(); }
+  };
 
   std::vector<EnemyDist> m_closestEnemies;
+  struct LoadedChunkObjectReferences {
+    std::vector<LoadedChunkObject> dynamics;
+    std::vector<LoadedChunkObject> statics;
+  } m_currentChunkObjects; // Gurantree valid handle and object
 
 public:
   Game();
@@ -245,6 +255,7 @@ public:
 
 private:
   void _calculateClosestEnemies(glm::vec3 position);
+  void _updateCurrentChunkObjects();
 
   void _initializeManagers();
   void _resetGameplayState();

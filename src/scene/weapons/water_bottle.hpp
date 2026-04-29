@@ -10,6 +10,8 @@
 
 class WaterBottle : public ProjectileWeapon {
 private:
+  using Random = Utility::Random;
+
   float m_range = 15.0f;
   float m_projectileSpeed = 12.0f;
   float m_projectileLifetime = 2.5f;

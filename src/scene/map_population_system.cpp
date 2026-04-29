@@ -5,6 +5,8 @@
 
 #include <glm/glm.hpp>
 
+using Random = Utility::Random;
+
 void MapPopulator::populateMap(GameObjectManager &objects,
                                MapManager &mapManager) {
   auto props = _getMapProps();

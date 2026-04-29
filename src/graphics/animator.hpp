@@ -8,7 +8,6 @@ class Animation;
 struct AssimpNodeData;
 
 class Animator {
-private:
   std::vector<glm::mat4> m_finalBoneMatrices;
   std::vector<glm::mat4> m_fromBoneMatrices;
   std::vector<glm::mat4> m_toBoneMatrices;

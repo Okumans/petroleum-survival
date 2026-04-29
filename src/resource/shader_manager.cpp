@@ -4,7 +4,7 @@
 
 #include <memory>
 
-SettableNotInitialized<
+Utility::SettableNotInitialized<
     EnumMap<ShaderType, std::unique_ptr<Shader>>, "s_shaders",
     EnumMapValidator<EnumMap<ShaderType, std::unique_ptr<Shader>>>>
     ShaderManager::s_shaders;

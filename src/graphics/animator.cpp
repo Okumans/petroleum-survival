@@ -121,7 +121,7 @@ void Animator::_calculateBoneTransform(const AssimpNodeData *node,
                                        Animation *animation,
                                        float animation_time,
                                        std::vector<glm::mat4> &out_matrices) {
-  NameHash node_name(node->name);
+  Utility::NameHash node_name(node->name);
   glm::mat4 node_transform = node->transformation;
 
   Bone *bone = animation->findBone(node_name);
@@ -133,7 +133,8 @@ void Animator::_calculateBoneTransform(const AssimpNodeData *node,
 
   glm::mat4 global_transformation = parent_transform * node_transform;
 
-  const std::map<NameHash, BoneInfo> &bone_info_map = animation->getBoneIDMap();
+  const std::map<Utility::NameHash, BoneInfo> &bone_info_map =
+      animation->getBoneIDMap();
 
   auto bone_iterator = bone_info_map.find(node_name);
 

@@ -7,7 +7,6 @@
 #include "scene/game_object_factory.hpp"
 #include "scene/player.hpp"
 #include "scene/projectile.hpp"
-#include "scene/static_prop.hpp"
 #include "scene/weapons/melee_projectile.hpp"
 #include "utility/enum_map.hpp"
 #include <optional>

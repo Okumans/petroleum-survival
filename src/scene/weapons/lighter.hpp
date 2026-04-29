@@ -87,13 +87,15 @@ public:
     forward = forward / forward_len;
 
     float random_yaw_deg =
-        Random::randFloat(-m_spreadAngleDegrees, m_spreadAngleDegrees);
+        Utility::Random::randFloat(-m_spreadAngleDegrees, m_spreadAngleDegrees);
     float random_yaw_rad = glm::radians(random_yaw_deg);
 
     glm::vec3 dir;
-    dir.x = forward.x * std::cos(random_yaw_rad) - forward.z * std::sin(random_yaw_rad);
+    dir.x = forward.x * std::cos(random_yaw_rad) -
+            forward.z * std::sin(random_yaw_rad);
     dir.y = 0.0f;
-    dir.z = forward.x * std::sin(random_yaw_rad) + forward.z * std::cos(random_yaw_rad);
+    dir.z = forward.x * std::sin(random_yaw_rad) +
+            forward.z * std::cos(random_yaw_rad);
     float dir_len = glm::length(dir);
     if (dir_len < 0.001f) {
       return false;
@@ -115,7 +117,8 @@ public:
           p.copyModel()->setEmissionColor(glm::vec3(8.0f, 4.0f, 1.0f) * 0.5f);
         }));
 
-    emitProjectile(GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});
+    emitProjectile(
+        GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});
 
     emitParticle(GameEvents::ParticleSpawnRequestedEvent{
         .position = spawn_pos,
@@ -128,4 +131,3 @@ public:
     return true;
   }
 };
-

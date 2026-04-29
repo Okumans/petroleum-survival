@@ -1,6 +1,5 @@
 #pragma once
 
-#include "graphics/bone.hpp"
 #include "graphics/render_context.hpp"
 #include "mesh.hpp"
 
@@ -9,18 +8,20 @@
 #include <assimp/scene.h>
 
 #include "graphics/animation_data.hpp"
+#include "utility/name_hash.hpp"
 #include <cstdint>
 #include <map>
 #include <string>
 
 class Model {
 private:
-  // model data
+  using NameHash = Utility::NameHash;
+
   std::vector<Mesh> m_meshes;
   std::string m_directory;
   std::string m_path;
 
-  std::map<NameHash, BoneInfo> m_boneInfoMap;
+  std::map<Utility::NameHash, BoneInfo> m_boneInfoMap;
   uint32_t m_boneCount = 0;
 
 public:

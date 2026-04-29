@@ -19,7 +19,7 @@ enum class AnimationName {
 
 class AnimationManager {
 public:
-  static SettableNotInitialized<
+  static Utility::SettableNotInitialized<
       EnumMap<AnimationName, std::shared_ptr<Animation>>, "s_animations",
       EnumMapValidator<EnumMap<AnimationName, std::shared_ptr<Animation>>>>
       s_animations;

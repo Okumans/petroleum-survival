@@ -7,6 +7,8 @@
 #include <optional>
 #include <stdexcept>
 
+namespace Utility {
+
 /**
  * @brief A wrapper class that mandates explicit initialization before access.
  * * Provides safe access to an underlying object of type T. It prevents
@@ -205,3 +207,5 @@ public:
    */
   constexpr void clear() { storage.reset(); }
 };
+
+} // namespace Utility

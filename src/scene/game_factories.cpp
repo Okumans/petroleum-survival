@@ -81,7 +81,7 @@ void GameFactories::init() {
 }
 
 const GameObjectFactory<HumanoidEnemy> &GameFactories::getHumanoidEnemy() {
-  if (Random::randFloat() < 0.5f) {
+  if (Utility::Random::randFloat() < 0.5f) {
     return *reinterpret_cast<const GameObjectFactory<HumanoidEnemy> *>(
         &s_budhistEnemy.value());
   }
