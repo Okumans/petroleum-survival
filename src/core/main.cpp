@@ -59,7 +59,7 @@ GLFWwindow *initialize_window(int width, int height, const char *title) {
 }
 
 int main() {
-  GLFWwindow *window = initialize_window(800, 600, "vampire survivor");
+  GLFWwindow *window = initialize_window(800, 600, "Petroleum Survival");
 
   try {
     App application(window);

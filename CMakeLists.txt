@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 
 # specify name of the project and specify which language to compile for
-project(vampire-survivor LANGUAGES CXX C)
+project(petroleum-survivor LANGUAGES CXX C)
 
 # If you do not set the CMAKE_INSTALL_PREFIX variable, the default path on Windows will point to "Program Files",
 # where you cannot copy files without administrator rights.

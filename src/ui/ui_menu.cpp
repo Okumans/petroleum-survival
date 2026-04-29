@@ -22,7 +22,7 @@ void MenuUI::update(const Game &game, float virtualWidth) {
 
 void MenuUI::_setupStartMenu(Game &game) {
   m_uiManager.addTextElement("start_title", {0.0f, 10.0f, 0.0f, 0.0f},
-                             "VAMPIRE SURVIVOR", m_font,
+                             "PETROLEUM SURVIVOR", m_font,
                              {1.0f, 0.2f, 0.2f, 1.0f}, 0.35f);
 
   // Start Button
@@ -59,7 +59,7 @@ void MenuUI::_setupCreditsMenu() {
                              0.25f);
 
   std::string creditsText =
-      "Vampire Survivor Clone\n\n"
+      "Petroleum Survival\n\n"
       "Lead Developer: Jeerabhat Supapinit\n"
       "Second in command developer: Jane\n"
       "Special Thanks to Antigravity, Gemini CLI and Codex\n"
