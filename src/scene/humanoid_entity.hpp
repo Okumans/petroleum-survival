@@ -21,11 +21,11 @@ template <typename BaseClass, typename AnimationTypes>
            }
 class HumaniodEntity : public BaseClass {
 protected:
-  SettableNotInitialized<
+  Utility::SettableNotInitialized<
       EnumMap<AnimationTypes, std::shared_ptr<Animation>>, "m_animations",
       EnumMapValidator<EnumMap<AnimationTypes, std::shared_ptr<Animation>>>>
       m_animations;
-  NotInitialized<Animator, "m_animator"> m_animator;
+  Utility::NotInitialized<Animator, "m_animator"> m_animator;
   AnimationTypes m_playingAnimation = AnimationTypes::IDLE;
   HumanoidLocomotionState m_locomotion;
   glm::vec3 m_knockbackVelocity = glm::vec3(0.0f);
@@ -130,8 +130,8 @@ protected:
     m_locomotion.rotateState.updateTimer((float)delta_time);
     float t = m_locomotion.rotateState.getProgress();
 
-    float current_yaw = lerpAngle(m_locomotion.rotateState.start,
-                                  m_locomotion.rotateState.target, t);
+    float current_yaw = Utility::lerpAngle(m_locomotion.rotateState.start,
+                                           m_locomotion.rotateState.target, t);
 
     this->setRotation({0.0f, current_yaw, 0.0f});
 

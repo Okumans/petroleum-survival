@@ -1,11 +1,14 @@
 #include "game/enemy_spawner.hpp"
 #include "game/game.hpp"
+#include "glm/gtc/constants.hpp"
 #include "utility/random.hpp"
 
 #include "resource/model_manager.hpp"
 #include "scene/enemy/car_enemy.hpp"
 #include "scene/enemy/humanoid_enemy.hpp"
 #include "scene/game_factories.hpp"
+
+using Random = Utility::Random;
 
 void EnemySpawner::init(Game *game) { m_game = game; }
 
@@ -74,8 +77,8 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
     break;
   }
   case GameObjectType::WEAK_CAR_ENEMY: {
-    ModelName model = (Random::randFloat() < 0.5f) ? ModelName::CAR_SEDAN
-                                                   : ModelName::CAR_TAXI;
+    ModelName model =
+        Random::randChance(0.5f) ? ModelName::CAR_SEDAN : ModelName::CAR_TAXI;
     auto model_ptr = ModelManager::copy(model);
     auto [enemy, enemy_handle] =
         m_game->getObjects().emplaceWithHandle<WeakCarEnemy>(model_ptr, pos);
@@ -91,8 +94,8 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
     break;
   }
   case GameObjectType::STANDARD_CAR_ENEMY: {
-    ModelName model = (Random::randFloat() < 0.5f) ? ModelName::CAR_MUSCLE
-                                                   : ModelName::CAR_PICKUP;
+    ModelName model = Random::randChance(0.5f) ? ModelName::CAR_MUSCLE
+                                               : ModelName::CAR_PICKUP;
     auto model_ptr = ModelManager::copy(model);
     auto [enemy, enemy_handle] =
         m_game->getObjects().emplaceWithHandle<StandardCarEnemy>(model_ptr,
@@ -109,8 +112,8 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
     break;
   }
   case GameObjectType::ARMORED_CAR_ENEMY: {
-    ModelName model = (Random::randFloat() < 0.5f) ? ModelName::CAR_POLICE
-                                                   : ModelName::CAR_BUS;
+    ModelName model =
+        Random::randChance(0.5f) ? ModelName::CAR_POLICE : ModelName::CAR_BUS;
     auto model_ptr = ModelManager::copy(model);
     auto [enemy, enemy_handle] =
         m_game->getObjects().emplaceWithHandle<ArmoredCarEnemy>(model_ptr, pos);
@@ -153,7 +156,7 @@ void EnemySpawner::spawnInCircle(int count, float radius,
   glm::vec3 center = m_game->getPlayer()->getPosition();
 
   for (int i = 0; i < count; ++i) {
-    float angle = Random::randFloat(0.0f, 3.14159f * 2.0f);
+    float angle = Random::randFloat(0.0f, glm::two_pi<float>());
     glm::vec3 offset(std::cos(angle) * radius, 0.0f, std::sin(angle) * radius);
     spawnEnemy(center + offset, healthMultiplier);
   }
@@ -171,7 +174,7 @@ void EnemySpawner::spawnMixed(int count, float healthMultiplier) {
 
   // Spawn on-screen enemies (within m_onScreenRadius)
   for (int i = 0; i < onScreenCount; ++i) {
-    float angle = Random::randFloat(0.0f, 3.14159f * 2.0f);
+    float angle = Random::randFloat(0.0f, glm::two_pi<float>());
     float radiusVariation = Random::randFloat(0.0f, m_onScreenRadius);
     glm::vec3 offset(std::cos(angle) * radiusVariation, 0.0f,
                      std::sin(angle) * radiusVariation);
@@ -180,7 +183,7 @@ void EnemySpawner::spawnMixed(int count, float healthMultiplier) {
 
   // Spawn off-screen enemies (between m_onScreenRadius and m_offScreenRadius)
   for (int i = 0; i < offScreenCount; ++i) {
-    float angle = Random::randFloat(0.0f, 3.14159f * 2.0f);
+    float angle = Random::randFloat(0.0f, glm::two_pi<float>());
     float radiusVariation =
         Random::randFloat(m_onScreenRadius, m_offScreenRadius);
     glm::vec3 offset(std::cos(angle) * radiusVariation, 0.0f,

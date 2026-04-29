@@ -9,7 +9,7 @@ enum class ShaderType { UI, PBR, SKYBOX, SHADOW, IRRADIANCE, DEBUG };
 
 class ShaderManager {
 public:
-  static SettableNotInitialized<
+  static Utility::SettableNotInitialized<
       EnumMap<ShaderType, std::unique_ptr<Shader>>, "s_shaders",
       EnumMapValidator<EnumMap<ShaderType, std::unique_ptr<Shader>>>>
       s_shaders;

@@ -5,6 +5,8 @@
 #include <source_location>
 #include <string_view>
 
+namespace Utility {
+
 template <typename T> consteval auto func_name() {
   const auto &loc = std::source_location::current();
   return loc.function_name();
@@ -26,3 +28,5 @@ template <typename T> constexpr auto type_of(T &&arg) {
 }
 
 template <typename T> constexpr auto type_of() { return type_of_impl_<T>(); }
+
+} // namespace Utility

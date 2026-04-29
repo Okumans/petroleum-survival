@@ -13,6 +13,7 @@ class Item;
 class Exp;
 class GameObject;
 class Enemy;
+
 #include "scene/projectile.hpp"
 
 namespace GameEvents {

@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 #include <random>
 
+namespace Utility {
+
 class Random {
 public:
   Random() = delete;
@@ -39,7 +41,8 @@ public:
    * The weights vector size must equal (max - min + 1).
    */
   template <std::integral T = int, std::ranges::input_range R>
-  static T randWeighted(T min, T max, const R &weights) {
+  static T randWeighted(T min, [[maybe_unused]] T max, const R &weights) {
+
     // weights[0] corresponds to min, weights[1] to min + 1, etc.
     std::discrete_distribution<T> dist(std::begin(weights), std::end(weights));
     return min + dist(s_engine);
@@ -72,3 +75,5 @@ private:
   // Using mt19937_64 for better compatibility with 64-bit types like size_t
   inline static std::mt19937_64 s_engine{std::random_device{}()};
 };
+
+}; // namespace Utility

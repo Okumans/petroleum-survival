@@ -4,6 +4,7 @@
 // #include "graphics/animdata.hpp"
 #include "graphics/bone.hpp"
 #include "graphics/model.hpp"
+#include "utility/name_hash.hpp"
 
 #include <assimp/scene.h>
 #include <cstdint>
@@ -19,7 +20,7 @@ struct BoneInfo;
 
 struct AssimpNodeData {
   glm::mat4 transformation;
-  NameHash name;
+  Utility::NameHash name;
   uint32_t childrenCount;
   std::vector<AssimpNodeData> children;
 
@@ -28,6 +29,8 @@ struct AssimpNodeData {
 
 class Animation {
 private:
+  using NameHash = Utility::NameHash;
+
   glm::mat4 m_globalTransformation{1.0f};
   float m_duration;
   int m_ticksPerSecond;
@@ -40,8 +43,6 @@ public:
   Animation(const std::string &animation_path, Model *model);
   ~Animation();
 
-  [[deprecated("Use findBone with hashed_name alternaive instead")]]
-  Bone *findBone(const std::string &name);
   Bone *findBone(NameHash name);
 
   [[nodiscard]] float getTicksPerSecond() const { return m_ticksPerSecond; }

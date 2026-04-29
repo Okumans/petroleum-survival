@@ -51,36 +51,39 @@ const std::vector<ItemOffer> &itemPool() {
        .title = "Heart",
        .description = "Increase max health by 20.",
        .iconName = "icon_heart",
-       .apply = [](Game &g) {
-         Player *p = g.getPlayer();
-         if (!p) {
-           return;
-         }
-         p->setMaxHealth(p->getMaxHealth() + 20.0f);
-         p->heal(20.0f);
-       }},
+       .apply =
+           [](Game &g) {
+             Player *p = g.getPlayer();
+             if (!p) {
+               return;
+             }
+             p->setMaxHealth(p->getMaxHealth() + 20.0f);
+             p->heal(20.0f);
+           }},
       {.id = "golden_heart",
        .title = "Golden Heart",
        .description = "Increase max health by 10 and health regen by 0.2/sec.",
        .iconName = "icon_golden_heart",
-       .apply = [](Game &g) {
-         Player *p = g.getPlayer();
-         if (!p) {
-           return;
-         }
-         p->setMaxHealth(p->getMaxHealth() + 10.0f);
-         p->heal(10.0f);
-         g.getStats().addMultiplier(StatType::HEALTH_REGEN, 0.2f);
-       }},
+       .apply =
+           [](Game &g) {
+             Player *p = g.getPlayer();
+             if (!p) {
+               return;
+             }
+             p->setMaxHealth(p->getMaxHealth() + 10.0f);
+             p->heal(10.0f);
+             g.getStats().addMultiplier(StatType::HEALTH_REGEN, 0.2f);
+           }},
       {.id = "running_shoe",
        .title = "Running Shoe",
        .description = "Increase movement speed by 10%.",
        .iconName = "icon_running_shoe",
-       .apply = [](Game &g) {
-         StatManager &stats = g.getStats();
-         stats.setMultiplier(StatType::SPEED,
-                             stats.getMultiplier(StatType::SPEED) * 1.10f);
-       }},
+       .apply =
+           [](Game &g) {
+             StatManager &stats = g.getStats();
+             stats.setMultiplier(StatType::SPEED,
+                                 stats.getMultiplier(StatType::SPEED) * 1.10f);
+           }},
   };
   return pool;
 }
@@ -205,7 +208,7 @@ std::vector<Upgrade> UpgradeGenerator::generateUpgrades(Game &game, int count) {
     indices[i] = i;
   }
   for (int i = 0; i < static_cast<int>(indices.size()); ++i) {
-    int j = Random::randInt(0, static_cast<int>(indices.size()) - 1);
+    int j = Utility::Random::randInt(0, static_cast<int>(indices.size()) - 1);
     std::swap(indices[i], indices[j]);
   }
 

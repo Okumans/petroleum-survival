@@ -14,6 +14,8 @@ inline static constexpr uint32_t _fnv1a(std::string_view str) {
 }
 } // namespace
 
+namespace Utility {
+
 struct NameHash {
   uint32_t hash;
 
@@ -28,8 +30,12 @@ struct NameHash {
   constexpr auto operator<=>(const NameHash &) const = default;
 };
 
+} // namespace Utility
+
 namespace std {
-template <> struct hash<NameHash> {
-  constexpr std::size_t operator()(const NameHash &h) const { return h.hash; }
+template <> struct hash<Utility::NameHash> {
+  constexpr std::size_t operator()(const Utility::NameHash &h) const {
+    return h.hash;
+  }
 };
 } // namespace std

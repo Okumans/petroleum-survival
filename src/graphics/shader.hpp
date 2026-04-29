@@ -88,6 +88,8 @@ public:
 
 class Shader {
 private:
+  using NameHash = Utility::NameHash;
+
   unsigned int m_id;
 
   std::unordered_map<NameHash, std::pair<std::string, GLint>>

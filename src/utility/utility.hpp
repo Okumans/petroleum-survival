@@ -12,6 +12,8 @@
 #include <memory>
 #include <string>
 
+namespace Utility {
+
 inline void loadMaterialFolder(const std::string &materialName,
                                const std::string &folderPath) {
   namespace fs = std::filesystem;
@@ -74,12 +76,13 @@ inline void loadMaterialFolder(const std::string &materialName,
 }
 
 template <typename T, std::invocable<T &> F>
-constexpr T withBase(T base, F modifier) {
+inline constexpr T withBase(T base, F modifier) {
   modifier(base);
   return base;
 }
 
-// NOTE: not constexpr — std::fmod is not constexpr in MSVC's STL for this C++ mode.
+// NOTE: not constexpr — std::fmod is not constexpr in MSVC's STL for this C++
+// mode.
 inline float lerpAngle(float start, float end, float t) {
   float diff = std::fmod(end - start + 180.0f, 360.0f) - 180.0f;
   if (diff < -180.0f)
@@ -95,6 +98,19 @@ inline constexpr uint32_t fnv1a(std::string_view str) {
   }
   return hash;
 }
+
+template <typename Callback, std::ranges::range... Containers>
+inline constexpr void concat(Callback &&callback, Containers &&...containers) {
+  auto process_container = [&](auto &&container) {
+    for (auto &&arg : container) {
+      std::forward<Callback>(callback)(std::forward<decltype(arg)>(arg));
+    }
+  };
+
+  (process_container(std::forward<Containers>(containers)), ...);
+}
+
+}; // namespace Utility
 
 #include "enum_map.hpp" // IWYU pragma: keep
 #include "random.hpp"   // IWYU pragma: keep

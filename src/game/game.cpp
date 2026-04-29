@@ -22,6 +22,7 @@
 #include "scene/weapons/water_bottle.hpp"
 #include "utility/random.hpp"
 
+#include <cassert>
 #include <cstdlib>
 #include <glad/gl.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -32,6 +33,7 @@
 #include <ranges>
 
 using namespace GameEvents;
+using Random = Utility::Random;
 
 namespace {
 void snapObjectToGround(MapManager &map_manager, GameObject &object) {
@@ -144,7 +146,7 @@ void setupWaves(EnemySpawner &spawner) {
               h_timer = 0.0f;
               glm::vec3 pos = game.getPlayer()->getPosition() +
                               Random::randVec3Circle(25.0f);
-              // Linear scaling: e.g., 1.0 at 60s, 2.0 at 120s
+
               float health_scale = 1.0f + (current_time - 60.0f) / 60.0f;
               game.getSpawner().spawnSpecificEnemy(GameObjectType::ENEMY, pos,
                                                    health_scale);
@@ -154,6 +156,7 @@ void setupWaves(EnemySpawner &spawner) {
               c_timer = 0.0f;
               glm::vec3 pos = game.getPlayer()->getPosition() +
                               Random::randVec3Circle(25.0f);
+
               game.getSpawner().spawnSpecificEnemy(
                   GameObjectType::WEAK_CAR_ENEMY, pos);
             }
@@ -175,6 +178,7 @@ void setupWaves(EnemySpawner &spawner) {
               h_timer = 0.0f;
               glm::vec3 pos = game.getPlayer()->getPosition() +
                               Random::randVec3Circle(25.0f);
+
               game.getSpawner().spawnSpecificEnemy(GameObjectType::ENEMY, pos);
             }
 
@@ -182,6 +186,7 @@ void setupWaves(EnemySpawner &spawner) {
               c_timer = 0.0f;
               glm::vec3 pos = game.getPlayer()->getPosition() +
                               Random::randVec3Circle(25.0f);
+
               game.getSpawner().spawnSpecificEnemy(
                   GameObjectType::STANDARD_CAR_ENEMY, pos);
             }
@@ -205,6 +210,7 @@ void setupWaves(EnemySpawner &spawner) {
               for (int i = 0; i < 15; ++i) {
                 glm::vec3 pos = game.getPlayer()->getPosition() +
                                 Random::randVec3Circle(25.0f);
+
                 game.getSpawner().spawnSpecificEnemy(GameObjectType::ENEMY,
                                                      pos);
               }
@@ -214,6 +220,7 @@ void setupWaves(EnemySpawner &spawner) {
               c_timer = 0.0f;
               glm::vec3 pos = game.getPlayer()->getPosition() +
                               Random::randVec3Circle(25.0f);
+
               game.getSpawner().spawnSpecificEnemy(
                   GameObjectType::ARMORED_CAR_ENEMY, pos);
             }
@@ -233,6 +240,7 @@ void setupWaves(EnemySpawner &spawner) {
               boss_spawned = true;
               glm::vec3 pos = game.getPlayer()->getPosition() +
                               Random::randVec3Circle(30.0f);
+
               game.getSpawner().spawnSpecificEnemy(
                   GameObjectType::BOSS_CAR_ENEMY, pos);
             }
@@ -242,6 +250,7 @@ void setupWaves(EnemySpawner &spawner) {
               h_timer = 0.0f;
               glm::vec3 pos = game.getPlayer()->getPosition() +
                               Random::randVec3Circle(25.0f);
+
               game.getSpawner().spawnSpecificEnemy(GameObjectType::ENEMY, pos);
             }
           },
@@ -261,6 +270,7 @@ void Game::setup() {
   _setupPlayer();
   _setupEnvironment();
   _populateMap();
+
   reset();
 }
 
@@ -284,13 +294,19 @@ void Game::render(double delta_time) {
 
   m_particleSystem.update(delta_time);
 
-  static std::vector<ObjectHandle> handles;
-  m_mapManager.collectLoadedChunkHandles(handles);
-
-  for (const auto &handle : handles) {
-    GameObject *object = m_objects.get(handle);
-    if (!object || object->isRemovalRequested())
+  for (const auto &[_, object] : m_currentChunkObjects.dynamics) {
+    if (object->isRemovalRequested())
       continue;
+
+    object->ensureTransformUpdated();
+    m_renderer.submit(&object->getModel(), object->getModelMatrix(),
+                      object->getAnimator(), object->getEmissionColor());
+  }
+
+  for (const auto &[_, object] : m_currentChunkObjects.statics) {
+    if (object->isRemovalRequested())
+      continue;
+
     object->ensureTransformUpdated();
     m_renderer.submit(&object->getModel(), object->getModelMatrix(),
                       object->getAnimator(), object->getEmissionColor());
@@ -321,15 +337,13 @@ void Game::render(double delta_time) {
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  glCullFace(GL_BACK); // Restore back-face culling
+  glCullFace(GL_BACK);
 
-  // 2. Main Pass
-  glViewport(0, 0, (int)m_camera.getSceneWidth(),
-             (int)m_camera.getSceneHeight());
+  glViewport(0, 0, static_cast<int>(m_camera.getSceneWidth()),
+             static_cast<int>(m_camera.getSceneHeight()));
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // Bind and draw Skybox first (as background)
-  auto &skyboxTex = TextureManager::get(TextureName("skybox"));
+  Texture &skybox_tex = TextureManager::get(TextureName("skybox"));
   Shader &skybox_shader = ShaderManager::get(ShaderType::SKYBOX);
   glDepthMask(GL_FALSE);
 
@@ -354,20 +368,16 @@ void Game::render(double delta_time) {
   pbr_shader.setVec3("u_CameraPos", m_camera.position);
   pbr_shader.setMat4("u_LightSpaceMatrix", m_shadowMap->getLightSpaceMatrix());
 
-  // Bind Skybox for reflections
-  glBindTextureUnit(10, skyboxTex.getTexID());
+  glBindTextureUnit(10, skybox_tex.getTexID());
   pbr_shader.setInt("u_SpecularEnvMap", 10);
 
-  // Bind Irradiance Map for diffuse IBL
-  auto &irradiance_map = TextureManager::get(TextureName("irradiance_map"));
+  Texture &irradiance_map = TextureManager::get(TextureName("irradiance_map"));
   glBindTextureUnit(12, irradiance_map.getTexID());
   pbr_shader.setInt("u_IrradianceMap", 12);
 
-  // Bind Shadow Map
   m_shadowMap->bindForReading(11);
   pbr_shader.setInt("u_ShadowMap", 11);
 
-  // Lighting setup
   LightingManager::apply(pbr_shader);
 
   pbr_shader.setFloat("u_HeightScale", 0.03f);
@@ -384,10 +394,9 @@ void Game::render(double delta_time) {
 
   m_renderer.flush(forwardCtx);
 
-  // Render particles on top of forward pass models
   m_particleSystem.render(forwardCtx);
 
-  if (false && m_debugAABB) {
+  if (m_debugAABB) {
     RenderContext debug_ctx = {
         .shader = pbr_shader,
         .camera = m_camera,
@@ -535,16 +544,14 @@ void Game::startGame() {
 }
 
 void Game::update(double delta_time) {
+  // Pause gameplay simulation while the player is picking upgrades.
   if (m_state == GameState::LEVEL_UP) {
-    // Pause gameplay simulation while the player is picking upgrades.
     return;
   }
 
   if (m_state == GameState::PLAYING) {
     m_gameTime += static_cast<float>(delta_time);
     m_spawner.update(m_gameTime, static_cast<float>(delta_time));
-  } else if (m_state == GameState::GAME_OVER) {
-    // Optionally slow down time or show game over screen
   }
 
   m_damageTextManager.update(static_cast<float>(delta_time));
@@ -570,15 +577,16 @@ void Game::update(double delta_time) {
 
   m_mapManager.update(m_player.ensureInitialized()->getPosition());
 
+  _updateCurrentChunkObjects();
   _calculateClosestEnemies(m_player.ensureInitialized()->getPosition());
 
-  // Update can be expensive
-  m_objects.updateWhere(delta_time, [this](const GameObject &object) {
-    return m_mapManager.isPositionInLoadedChunk(object.getPosition());
-  });
+  // Update Objects
+  for (auto &[_, object] : m_currentChunkObjects.dynamics)
+    object->update(delta_time);
+  for (auto &[_, object] : m_currentChunkObjects.statics)
+    object->update(delta_time);
 
   _syncObjectsToTerrain();
-
   _runCollisionPass();
   m_eventBus.flush();
 
@@ -595,18 +603,18 @@ void Game::_updateCamera(double delta_time) {
 }
 
 void Game::_updatePlayerRegen(double delta_time) {
-  Player *player = getPlayer();
-  if (!player || player->isDead()) {
+  Player &player = *m_player.ensureInitialized();
+
+  if (player.isDead())
     return;
-  }
 
   const float regen_per_second =
       m_statManager.getMultiplier(StatType::HEALTH_REGEN);
-  if (regen_per_second <= 0.0f) {
-    return;
-  }
 
-  player->heal(regen_per_second * static_cast<float>(delta_time));
+  if (regen_per_second <= 0.0f)
+    return;
+
+  player.heal(regen_per_second * static_cast<float>(delta_time));
 }
 
 void Game::_runCollisionPass() {
@@ -640,8 +648,8 @@ void Game::_runCollisionPass() {
     }
   }
 
-  for (GameObject *object : m_objects.getObjects()) {
-    if (!object || object->isRemovalRequested() || !object->isEnemy())
+  for (auto &[_, object] : m_currentChunkObjects.dynamics) {
+    if (object->isRemovalRequested() || !object->isEnemy())
       continue;
 
     Enemy *enemy = static_cast<Enemy *>(object);
@@ -666,8 +674,8 @@ void Game::_runCollisionPass() {
 
     Projectile *proj = static_cast<Projectile *>(proj_obj);
 
-    for (GameObject *object : m_objects.getObjects()) {
-      if (!object || object->isRemovalRequested() || !object->isEnemy())
+    for (auto &[_, object] : m_currentChunkObjects.dynamics) {
+      if (object->isRemovalRequested() || !object->isEnemy())
         continue;
 
       Enemy *enemy = static_cast<Enemy *>(object);
@@ -693,25 +701,7 @@ void Game::_runCollisionPass() {
       }
     }
   }
-
-  std::vector<std::pair<ObjectHandle, GameObject *>> dynamic_object_entries;
-  dynamic_object_entries.reserve(100);
-
-  // Collect dynamic_objects, more effcient than collectLoadedChunkHandles
-  m_mapManager.foreachLoadedChunkHandles(
-      [this, &dynamic_object_entries](const ObjectHandle &handle) {
-        if (!handle.isValid())
-          return;
-
-        GameObject *object = m_objects.get(handle);
-
-        if (!object || object->isRemovalRequested() ||
-            !isDynamicBlockingObject(*object))
-          return;
-
-        dynamic_object_entries.emplace_back(handle, object);
-      },
-      MapManager::ObjectFilter::Dynamic);
+  auto &dynamic_object_entries = m_currentChunkObjects.dynamics;
 
   constexpr uint8_t k_resolve_iterations = 4;
 
@@ -724,8 +714,14 @@ void Game::_runCollisionPass() {
     for (size_t i = 0; i < dynamic_object_entries.size(); ++i) {
       auto &[lhs_handle, lhs] = dynamic_object_entries[i];
 
+      if (!isDynamicBlockingObject(*lhs))
+        continue;
+
       for (size_t j = i + 1; j < dynamic_object_entries.size(); ++j) {
         auto &[rhs_handle, rhs] = dynamic_object_entries[j];
+
+        if (!isDynamicBlockingObject(*rhs))
+          continue;
 
         if (!lhs->collidesWith(*rhs))
           continue;
@@ -748,14 +744,10 @@ void Game::_runCollisionPass() {
 void Game::_calculateClosestEnemies(glm::vec3 position) {
   m_closestEnemies.clear();
 
-  static std::vector<ObjectHandle> handles;
-  m_mapManager.collectLoadedChunkHandles(handles,
-                                         MapManager::ObjectFilter::Dynamic);
+  for (const auto &[handle, object] : m_currentChunkObjects.dynamics) {
+    assert(object);
 
-  for (const auto &handle : handles) {
-    GameObject *object = m_objects.get(handle);
-
-    if (!object || object->isRemovalRequested() || !object->isEnemy())
+    if (object->isRemovalRequested() || !object->isEnemy())
       continue;
 
     Enemy *enemy = static_cast<Enemy *>(object);
@@ -768,30 +760,48 @@ void Game::_calculateClosestEnemies(glm::vec3 position) {
   std::ranges::sort(m_closestEnemies, {}, &EnemyDist::dist_sq);
 }
 
+void Game::_updateCurrentChunkObjects() {
+  m_currentChunkObjects.dynamics.clear();
+  m_currentChunkObjects.statics.clear();
+
+  // Collect Dynamic Objects
+  m_mapManager.foreachLoadedChunkHandles(
+      [this](const ObjectHandle &handle) {
+        if (!handle.isValid())
+          return;
+
+        GameObject *object = m_objects.get(handle);
+        if (!object || object->isRemovalRequested())
+          return;
+
+        m_currentChunkObjects.dynamics.emplace_back(handle, object);
+      },
+      MapManager::ObjectFilter::Dynamic);
+
+  // Collect Static Objects
+  m_mapManager.foreachLoadedChunkHandles(
+      [this](const ObjectHandle &handle) {
+        if (!handle.isValid())
+          return;
+
+        GameObject *object = m_objects.get(handle);
+        if (!object || object->isRemovalRequested())
+          return;
+
+        m_currentChunkObjects.dynamics.emplace_back(handle, object);
+      },
+      MapManager::ObjectFilter::Static);
+}
+
 void Game::_syncObjectsToTerrain() {
   snapObjectToGround(m_mapManager, *m_player.ensureInitialized());
 
-  static std::vector<ObjectHandle> handles;
-
-  m_mapManager.collectLoadedChunkHandles(handles,
-                                         MapManager::ObjectFilter::Dynamic);
-
-  // Because EXP isn't static
-  for (GameObject *object : m_objects.getObjectsWithType(GameObjectType::EXP)) {
-    auto handle = m_objects.getHandle(*object);
-    if (handle)
-      handles.push_back(handle.value());
-  }
-
-  for (const auto &handle : handles) {
-    GameObject *object = m_objects.get(handle);
-
-    if (!object)
-      continue;
+  auto sync_object_to_terrain = [this](LoadedChunkObject val) {
+    auto [handle, object] = val;
 
     if (object->isRemovalRequested()) {
       m_mapManager.unregisterObject(handle);
-      continue;
+      return;
     }
 
     if (object->getObjectType() == GameObjectType::EXP) {
@@ -811,6 +821,14 @@ void Game::_syncObjectsToTerrain() {
     }
 
     m_mapManager.updateObjectChunk(handle, object->getPosition());
+  };
+
+  for (const LoadedChunkObject &val : m_currentChunkObjects.dynamics) {
+    sync_object_to_terrain(val);
+  }
+
+  for (const LoadedChunkObject &val : m_currentChunkObjects.statics) {
+    sync_object_to_terrain(val);
   }
 }
 

@@ -29,6 +29,8 @@ struct KeyScale {
 
 class Bone {
 private:
+  using NameHash = Utility::NameHash;
+
   std::vector<KeyPosition> m_positions;
   std::vector<KeyRotation> m_rotations;
   std::vector<KeyScale> m_scales;

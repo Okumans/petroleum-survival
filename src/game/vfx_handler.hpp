@@ -14,6 +14,8 @@
 
 class VFXHandler {
 private:
+  using Random = Utility::Random;
+
   ParticleSystem &m_particleSystem;
   GameObjectManager &m_objects;
   MapManager &m_mapManager;
@@ -152,9 +154,8 @@ private:
     for (int i = 0; i < 26; ++i) {
       bool spark = (i % 5) == 0;
 
-      glm::vec3 vel =
-          glm::vec3(0.0f, 1.6f, 0.0f) +
-          Random::randVec3(-1.0f, 1.0f) * (spark ? 4.5f : 2.2f);
+      glm::vec3 vel = glm::vec3(0.0f, 1.6f, 0.0f) +
+                      Random::randVec3(-1.0f, 1.0f) * (spark ? 4.5f : 2.2f);
 
       glm::vec4 begin = spark ? glm::vec4(1.0f, 0.95f, 0.75f, 1.0f)
                               : glm::vec4(0.55f, 0.50f, 0.45f, 0.9f);
@@ -243,7 +244,7 @@ private:
   }
 
   void _emitGasSpray(const GameEvents::ParticleSpawnRequestedEvent &evt,
-                    bool darker) {
+                     bool darker) {
     glm::vec3 direction = evt.direction;
 
     if (glm::length(direction) < 0.001f) {
@@ -352,13 +353,12 @@ private:
       float lateral = Random::randFloat(-lateralSpan, lateralSpan);
       float lift = Random::randFloat(0.0f, 0.12f) + t * 0.18f;
 
-      glm::vec3 spawnPos = basePos + direction * forwardDist +
-                           right * lateral + glm::vec3(0.0f, lift, 0.0f);
+      glm::vec3 spawnPos = basePos + direction * forwardDist + right * lateral +
+                           glm::vec3(0.0f, lift, 0.0f);
 
-      glm::vec3 velocity =
-          direction * Random::randFloat(1.2f, 3.4f) +
-          right * (lateral * Random::randFloat(0.6f, 1.1f)) +
-          glm::vec3(0.0f, Random::randFloat(0.3f, 1.2f), 0.0f);
+      glm::vec3 velocity = direction * Random::randFloat(1.2f, 3.4f) +
+                           right * (lateral * Random::randFloat(0.6f, 1.1f)) +
+                           glm::vec3(0.0f, Random::randFloat(0.3f, 1.2f), 0.0f);
 
       bool bright = (i % 4) == 0;
       glm::vec3 beginRgb = bright ? baseA : baseB;
@@ -374,18 +374,19 @@ private:
                                : Random::randFloat(0.04f, 0.08f);
       float sizeEnd = sizeBegin * Random::randFloat(1.2f, 2.4f);
 
-      m_particleSystem.emit({.position = spawnPos,
-                             .velocity = velocity,
-                             .velocityVariation = glm::vec3(0.25f, 0.25f, 0.25f),
-                             .direction = direction,
-                             .colorBegin = colorBegin,
-                             .colorEnd = colorEnd,
-                             .sizeBegin = sizeBegin,
-                             .sizeEnd = sizeEnd,
-                             .sizeVariation = sizeBegin * 0.35f,
-                             .stretch = 1.6f,
-                             .stretchVariation = 0.25f,
-                             .lifeTime = Random::randFloat(0.18f, 0.32f)});
+      m_particleSystem.emit(
+          {.position = spawnPos,
+           .velocity = velocity,
+           .velocityVariation = glm::vec3(0.25f, 0.25f, 0.25f),
+           .direction = direction,
+           .colorBegin = colorBegin,
+           .colorEnd = colorEnd,
+           .sizeBegin = sizeBegin,
+           .sizeEnd = sizeEnd,
+           .sizeVariation = sizeBegin * 0.35f,
+           .stretch = 1.6f,
+           .stretchVariation = 0.25f,
+           .lifeTime = Random::randFloat(0.18f, 0.32f)});
     }
   }
 

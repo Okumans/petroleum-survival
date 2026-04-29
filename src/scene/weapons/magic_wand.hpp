@@ -86,8 +86,8 @@ public:
       return false;
     }
 
-    Enemy *target =
-        targets[Random::randInt(0, static_cast<int>(targets.size()) - 1)];
+    Enemy *target = targets[Utility::Random::randInt(
+        0, static_cast<int>(targets.size()) - 1)];
 
     glm::vec3 spawn_pos = m_context.ensureInitialized()->getPlayerPosition();
 

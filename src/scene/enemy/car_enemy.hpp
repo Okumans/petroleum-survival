@@ -103,8 +103,8 @@ private:
     m_locomotion.rotateState.updateTimer((float)delta_time);
     float t = m_locomotion.rotateState.getProgress();
 
-    float current_yaw = lerpAngle(m_locomotion.rotateState.start,
-                                  m_locomotion.rotateState.target, t);
+    float current_yaw = Utility::lerpAngle(m_locomotion.rotateState.start,
+                                           m_locomotion.rotateState.target, t);
 
     this->setRotation({0.0f, current_yaw, 0.0f});
 

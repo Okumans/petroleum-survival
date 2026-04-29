@@ -2,7 +2,6 @@
 #include "assimp/anim.h"
 #include "graphics/animation_data.hpp"
 #include "graphics/bone.hpp"
-#include "utility/utility.hpp"
 
 #include <algorithm>
 #include <assimp/Importer.hpp>
@@ -34,21 +33,6 @@ Animation::Animation(const std::string &animation_path, Model *model) {
 }
 
 Animation::~Animation() {}
-
-Bone *Animation::findBone(const std::string &name) {
-  const uint32_t hashed_name = fnv1a(name);
-
-  auto iter =
-      std::ranges::lower_bound(m_bones, hashed_name, {}, [](const Bone &bone) {
-        return bone.getBoneName().hash;
-      });
-
-  if (iter == m_bones.end() || iter->getBoneName().hash != hashed_name) {
-    return nullptr;
-  }
-
-  return &(*iter);
-}
 
 Bone *Animation::findBone(NameHash hashed_name) {
   auto iter = std::ranges::lower_bound(

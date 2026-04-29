@@ -216,15 +216,6 @@ void Shader::define(const std::string name) {
   m_uniformLocationCache[name_hash] = {name, location};
 }
 
-void defineInt(NameHash hash, const std::string name);
-void defineFloat(NameHash hash, const std::string name);
-void defineVec2(NameHash hash, const std::string name);
-void defineVec3(NameHash hash, const std::string name);
-void defineVec4(NameHash hash, const std::string name);
-void defineMat2(NameHash hash, const std::string name);
-void defineMat3(NameHash hash, const std::string name);
-void defineMat4(NameHash hash, const std::string name);
-
 void Shader::checkCompileErrors(GLuint shader, std::string type) {
   GLint success;
   GLchar infoLog[1024];

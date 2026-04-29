@@ -13,9 +13,10 @@ void CameraController::update(float deltaTime) {
   if (m_shakeTime > 0.0f) {
     m_shakeTime -= deltaTime;
     float currentIntensity = (m_shakeTime / m_shakeDuration) * m_shakeIntensity;
-    shakeOffset = glm::vec3(Random::randFloat(-1.0f, 1.0f) * currentIntensity,
-                            Random::randFloat(-1.0f, 1.0f) * currentIntensity,
-                            Random::randFloat(-1.0f, 1.0f) * currentIntensity);
+    shakeOffset =
+        glm::vec3(Utility::Random::randFloat(-1.0f, 1.0f) * currentIntensity,
+                  Utility::Random::randFloat(-1.0f, 1.0f) * currentIntensity,
+                  Utility::Random::randFloat(-1.0f, 1.0f) * currentIntensity);
   } else {
     m_shakeTime = 0.0f;
   }
