@@ -21,6 +21,7 @@
 #include "scene/projectile.hpp"
 #include "scene/weapons/water_bottle.hpp"
 #include "utility/random.hpp"
+#include "utility/utility.hpp"
 
 #include <cassert>
 #include <cstdlib>
@@ -294,27 +295,23 @@ void Game::render(double delta_time) {
 
   m_particleSystem.update(delta_time);
 
-  for (const auto &[_, object] : m_currentChunkObjects.dynamics) {
-    if (object->isRemovalRequested())
-      continue;
+  // Push loaded object to be rendered
+  Utility::concat(
+      [this](const LoadedChunkObject &val) {
+        GameObject *object = val.object;
+        assert(object);
 
-    object->ensureTransformUpdated();
-    m_renderer.submit(&object->getModel(), object->getModelMatrix(),
-                      object->getAnimator(), object->getEmissionColor());
-  }
+        if (object->isRemovalRequested())
+          return;
 
-  for (const auto &[_, object] : m_currentChunkObjects.statics) {
-    if (object->isRemovalRequested())
-      continue;
-
-    object->ensureTransformUpdated();
-    m_renderer.submit(&object->getModel(), object->getModelMatrix(),
-                      object->getAnimator(), object->getEmissionColor());
-  }
+        object->ensureTransformUpdated();
+        m_renderer.submit(&object->getModel(), object->getModelMatrix(),
+                          object->getAnimator(), object->getEmissionColor());
+      },
+      m_currentChunkObjects.dynamics, m_currentChunkObjects.statics);
 
   m_mapManager.submitToRenderer(m_renderer);
 
-  // 1. Shadow Pass
   m_shadowMap->updateLightSpaceMatrix(
       m_player.ensureInitialized()->getPosition());
 
@@ -403,14 +400,18 @@ void Game::render(double delta_time) {
         .deltaTime = delta_time,
     };
 
-    m_mapManager.foreachLoadedChunkHandles(
-        [this, &debug_ctx](const ObjectHandle &handle) {
-          GameObject *object = m_objects.get(handle);
-          if (!object || object->isRemovalRequested())
+    Utility::concat(
+        [debug_ctx](const LoadedChunkObject &val) {
+          GameObject *object = val.object;
+          assert(object);
+
+          if (object->isRemovalRequested())
             return;
+
           DebugDrawer::drawAABB(debug_ctx, object->getHitboxAABB(),
                                 {1.0f, 0.0f, 0.0f});
-        });
+        },
+        m_currentChunkObjects.dynamics, m_currentChunkObjects.statics);
   }
 
   glDisable(GL_BLEND);
@@ -495,21 +496,20 @@ void Game::_setupEnvironment() {
   TextureManager::manage(TextureName("irradiance_map"),
                          std::move(*irradiance_map));
 
-  // Setup Lights
   LightingManager::clear();
 
-  // 1. "Sun" Light (Directional, casts shadows)
+  // Sun Light (Directional, casts shadows)
   LightingManager::add({.type = LightType::DIRECTIONAL,
                         .position = glm::vec3(0.3f, -1.0f, 0.1f),
                         .color = glm::vec3(11.0f, 9.0f, 8.0f) * .8f,
                         .castsShadows = true});
 
-  // 2. Sky Blue Fill Light (Directional)
+  // Sky Blue Fill Light (Directional)
   LightingManager::add({.type = LightType::DIRECTIONAL,
                         .position = glm::vec3(0.5f, -1.0f, 0.2f),
                         .color = glm::vec3(0.1f, 0.15f, 0.25f)});
 
-  // 3. Ground Bounce Fill (Point light)
+  // Ground Bounce Fill (Point light)
   LightingManager::add({.type = LightType::POINT,
                         .position = glm::vec3(0.0f, -5.0f, 0.0f),
                         .color = glm::vec3(0.3f, 0.2f, 0.1f) * 5.0f});
@@ -823,13 +823,8 @@ void Game::_syncObjectsToTerrain() {
     m_mapManager.updateObjectChunk(handle, object->getPosition());
   };
 
-  for (const LoadedChunkObject &val : m_currentChunkObjects.dynamics) {
-    sync_object_to_terrain(val);
-  }
-
-  for (const LoadedChunkObject &val : m_currentChunkObjects.statics) {
-    sync_object_to_terrain(val);
-  }
+  Utility::concat(sync_object_to_terrain, m_currentChunkObjects.dynamics,
+                  m_currentChunkObjects.statics);
 }
 
 void Game::_registerGameplayEventHandlers() {
