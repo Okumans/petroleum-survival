@@ -25,7 +25,7 @@ public:
   static const GameObjectFactory<MeleeProjectile> &getMeleeProjectile();
 
 private:
-  static std::optional<GameObjectFactory<MikuEnemy>> s_mikuEnemy;
+  static std::optional<GameObjectFactory<BudhistEnemy>> s_budhistEnemy;
   static std::optional<GameObjectFactory<MilitiaEnemy>> s_militiaEnemy;
   static std::optional<GameObjectFactory<Player>> s_player;
   static std::optional<GameObjectFactory<Exp>> s_exp;

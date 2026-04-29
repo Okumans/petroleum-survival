@@ -1,7 +1,7 @@
 #include "scene/game_factories.hpp"
 #include "utility/random.hpp"
 
-std::optional<GameObjectFactory<MikuEnemy>> GameFactories::s_mikuEnemy;
+std::optional<GameObjectFactory<BudhistEnemy>> GameFactories::s_budhistEnemy;
 std::optional<GameObjectFactory<MilitiaEnemy>> GameFactories::s_militiaEnemy;
 std::optional<GameObjectFactory<Player>> GameFactories::s_player;
 std::optional<GameObjectFactory<Exp>> GameFactories::s_exp;
@@ -14,9 +14,9 @@ std::optional<GameObjectFactory<MeleeProjectile>>
 
 void GameFactories::init() {
   // 1. Humanoid Enemy Factory
-  s_mikuEnemy = GameObjectFactory<MikuEnemy>::create_factory([]() {
-    MikuEnemy enemy(ModelManager::copy(ModelName::HATSUNE_MIKU));
-    enemy.setScale(60.0f);
+  s_budhistEnemy = GameObjectFactory<BudhistEnemy>::create_factory([]() {
+    BudhistEnemy enemy(ModelManager::copy(ModelName::BUDHIST_CHARACTER));
+    enemy.setScale(25000.0f);
     enemy.setup();
     return enemy;
   });
@@ -30,8 +30,8 @@ void GameFactories::init() {
 
   // 2. Player Factory
   s_player = GameObjectFactory<Player>::create_factory([]() {
-    Player player(ModelManager::copy(ModelName::KASANE_TETO));
-    player.setScale(20.0f);
+    Player player(ModelManager::copy(ModelName::THE_WITCH));
+    player.setScale(300.0f);
     player.setup();
     return player;
   });
@@ -83,7 +83,7 @@ void GameFactories::init() {
 const GameObjectFactory<HumanoidEnemy> &GameFactories::getHumanoidEnemy() {
   if (Random::randFloat() < 0.5f) {
     return *reinterpret_cast<const GameObjectFactory<HumanoidEnemy> *>(
-        &s_mikuEnemy.value());
+        &s_budhistEnemy.value());
   }
   return *reinterpret_cast<const GameObjectFactory<HumanoidEnemy> *>(
       &s_militiaEnemy.value());

@@ -8,8 +8,8 @@
 
 // Define model names here
 enum class ModelName {
-  KASANE_TETO,
-  HATSUNE_MIKU,
+  THE_WITCH,
+  BUDHIST_CHARACTER,
   MONEY_20,
   MONEY_100,
   MONEY_500,

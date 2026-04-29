@@ -46,13 +46,13 @@ public:
     AnimationManager::ensureInit();
 
     m_animations.set(PlayerAnimation::IDLE,
-                     AnimationManager::copy(AnimationName::KASANE_TETO_IDLE));
+                     AnimationManager::copy(AnimationName::THE_WITCH_IDLE));
     m_animations.set(
         PlayerAnimation::WALKING,
-        AnimationManager::copy(AnimationName::KASANE_TETO_WALKING));
+        AnimationManager::copy(AnimationName::THE_WITCH_WALKING));
     m_animations.set(
         PlayerAnimation::RUNNING,
-        AnimationManager::copy(AnimationName::KASANE_TETO_RUNNING));
+        AnimationManager::copy(AnimationName::THE_WITCH_RUNNING));
 
     assert(m_animations.isInitialized());
 

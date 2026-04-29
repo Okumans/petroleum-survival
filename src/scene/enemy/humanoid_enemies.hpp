@@ -3,16 +3,16 @@
 #include "scene/enemy/humanoid_enemy.hpp"
 
 /**
- * @brief Enemy variant using the Hatsune Miku model.
+ * @brief Enemy variant using the Budhist Character model.
  */
-class MikuEnemy : public HumanoidEnemy {
+class BudhistEnemy : public HumanoidEnemy {
 public:
-  MikuEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
-            glm::vec3 scale = glm::vec3(1.0f),
-            glm::vec3 rotation = glm::vec3(0.0f))
+  BudhistEnemy(std::shared_ptr<Model> model, glm::vec3 pos = glm::vec3(0.0f),
+              glm::vec3 scale = glm::vec3(1.0f),
+              glm::vec3 rotation = glm::vec3(0.0f))
       : HumanoidEnemy(model, pos, scale, rotation) {
-    m_idleAnimName = AnimationName::HATSUNE_MIKU_IDLE;
-    m_walkingAnimName = AnimationName::HATSUNE_MIKU_WALKING;
+    m_idleAnimName = AnimationName::BUDHIST_CHARACTER_IDLE;
+    m_walkingAnimName = AnimationName::BUDHIST_CHARACTER_WALKING;
   }
 };
 
@@ -27,6 +27,6 @@ public:
       : HumanoidEnemy(model, pos, scale, rotation) {
     m_idleAnimName = AnimationName::HUMAN_IDLE;
     m_walkingAnimName = AnimationName::HUMAN_WALKING;
-    m_baseSpeed = 1.0f; // Slightly faster than Miku
+    m_baseSpeed = 1.0f; // Slightly faster than Budhist
   }
 };
