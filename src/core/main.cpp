@@ -7,6 +7,17 @@
 
 #include "app.hpp"
 
+// Hint to hybrid-graphics laptops (NVIDIA Optimus / AMD switchable graphics)
+// to run this OpenGL app on the discrete GPU instead of the integrated one.
+// Must be exported with C linkage from the executable; the driver inspects the
+// process for these exact symbols at startup.
+#ifdef _WIN32
+extern "C" {
+__declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+__declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+#endif
+
 #ifndef ASSETS_PATH
 #define ASSETS_PATH "./assets"
 #endif

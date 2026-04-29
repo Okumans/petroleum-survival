@@ -13,6 +13,18 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+# Multi-config generators (Visual Studio, Xcode) re-append $(Configuration)/
+# to runtime output paths unless explicitly overridden per config. Without
+# these overrides the exe lands at build/bin/Release/ on Windows but
+# build/bin/ on Linux, which breaks any code using "../assets" relative
+# paths. Flatten everything to build/bin/ on both platforms.
+foreach(cfg Debug Release RelWithDebInfo MinSizeRel)
+  string(TOUPPER ${cfg} CFG)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG} ${CMAKE_BINARY_DIR}/bin)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG} ${CMAKE_BINARY_DIR}/bin)
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG} ${CMAKE_BINARY_DIR}/lib)
+endforeach()
+
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   ${CMAKE_SOURCE_DIR}/cmake)

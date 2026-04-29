@@ -79,7 +79,7 @@ target_link_libraries(
   PRIVATE
   glfw
   ${GLAD_LIBRARY}
-  m
+  $<$<NOT:$<PLATFORM_ID:Windows>>:m>  # libm is Unix-only; on Windows math is in the CRT
   glm
   assimp
 )
