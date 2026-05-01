@@ -103,7 +103,7 @@ Game::Game()
     : m_camera(glm::vec3(0.0f, 10.0f, 10.0f)),
       m_cameraController(m_camera, glm::vec3(0.0f, 12.0f, 10.0f)),
       m_skybox(std::make_unique<Skybox>()),
-      m_shadowMap(std::make_unique<ShadowMap>()),
+      m_shadowMap(std::make_unique<ShadowMap>(2048, 2048)),
       m_vfxHandler(m_particleSystem, m_objects, m_mapManager, m_eventBus),
       m_state(GameState::LOADING) {
   m_camera.setPitch(-45.0f);
@@ -321,7 +321,8 @@ void Game::render(double delta_time) {
                         m_shadowMap->getLightSpaceMatrix());
 
   m_shadowMap->bindForWriting();
-  glDisable(GL_CULL_FACE);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
 
   {
     RenderContext shadow_draw_ctx = {
@@ -377,7 +378,7 @@ void Game::render(double delta_time) {
 
   LightingManager::apply(pbr_shader);
 
-  pbr_shader.setFloat("u_HeightScale", 0.03f);
+  pbr_shader.setFloat("u_HeightScale", 0.0f);
   pbr_shader.setFloat("u_AOFactor", 1.0f);
   pbr_shader.setFloat("u_AmbientIntensity", 1.0f);
   pbr_shader.setVec3("u_BaseColor", glm::vec3(1.0f));
@@ -763,7 +764,6 @@ void Game::_updateCurrentChunkObjects() {
   m_currentChunkObjects.dynamics.clear();
   m_currentChunkObjects.statics.clear();
 
-  // Collect Dynamic Objects
   m_mapManager.foreachLoadedChunkHandles(
       [this](const ObjectHandle &handle) {
         if (!handle.isValid())
@@ -777,7 +777,6 @@ void Game::_updateCurrentChunkObjects() {
       },
       MapManager::ObjectFilter::Dynamic);
 
-  // Collect Static Objects
   m_mapManager.foreachLoadedChunkHandles(
       [this](const ObjectHandle &handle) {
         if (!handle.isValid())
@@ -795,8 +794,12 @@ void Game::_updateCurrentChunkObjects() {
 void Game::_syncObjectsToTerrain() {
   snapObjectToGround(m_mapManager, *m_player.ensureInitialized());
 
-  auto sync_object_to_terrain = [this](LoadedChunkObject val) {
-    auto [handle, object] = val;
+  auto snap_objects_to_terrain = [this](LoadedChunkObject &val) {
+    GameObject *object = val.object;
+    ObjectHandle handle = val.handle;
+
+    if (object->getObjectType() == GameObjectType::STATIC_PROP)
+      return;
 
     if (object->isRemovalRequested()) {
       m_mapManager.unregisterObject(handle);
@@ -805,13 +808,10 @@ void Game::_syncObjectsToTerrain() {
 
     if (object->getObjectType() == GameObjectType::EXP) {
       Exp *exp = static_cast<Exp *>(object);
-
       const float base_offset =
           exp->getPosition().y - exp->getWorldAABB().min.y;
-
       glm::vec3 snapped =
           m_mapManager.snapToGround(exp->getPosition(), base_offset);
-
       exp->setGroundY(snapped.y);
     }
 
@@ -822,7 +822,7 @@ void Game::_syncObjectsToTerrain() {
     m_mapManager.updateObjectChunk(handle, object->getPosition());
   };
 
-  Utility::concat(sync_object_to_terrain, m_currentChunkObjects.dynamics,
+  Utility::concat(snap_objects_to_terrain, m_currentChunkObjects.dynamics,
                   m_currentChunkObjects.statics);
 }
 

@@ -5,7 +5,6 @@
 #include "graphics/animation_data.hpp"
 #include "graphics/bone.hpp"
 #include "graphics/renderer.hpp"
-#include "utility/name_hash.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -121,26 +120,18 @@ void Animator::_calculateBoneTransform(const AssimpNodeData *node,
                                        Animation *animation,
                                        float animation_time,
                                        std::vector<glm::mat4> &out_matrices) {
-  Utility::NameHash node_name(node->name);
   glm::mat4 node_transform = node->transformation;
 
-  Bone *bone = animation->findBone(node_name);
-
-  if (bone) {
-    bone->update(animation_time);
-    node_transform = bone->getLocalTransform();
+  if (node->m_cachedBone) {
+    node->m_cachedBone->update(animation_time);
+    node_transform = node->m_cachedBone->getLocalTransform();
   }
 
   glm::mat4 global_transformation = parent_transform * node_transform;
 
-  const std::map<Utility::NameHash, BoneInfo> &bone_info_map =
-      animation->getBoneIDMap();
-
-  auto bone_iterator = bone_info_map.find(node_name);
-
-  if (bone_iterator != bone_info_map.end()) {
-    uint32_t index = bone_iterator->second.id;
-    glm::mat4 offset = bone_iterator->second.offset;
+  if (node->m_cachedBoneInfo) {
+    uint32_t index = node->m_cachedBoneInfo->id;
+    glm::mat4 offset = node->m_cachedBoneInfo->offset;
 
     if (index < out_matrices.size()) {
       out_matrices[index] = global_transformation * offset;

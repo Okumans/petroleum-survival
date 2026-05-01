@@ -162,14 +162,14 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
   float shadow = 0.0;
   vec2 texelSize = 1.0 / textureSize(u_ShadowMap, 0);
 
-  // 16-sample PCF for smoother shadows
-  for (int x = -2; x <= 1; ++x) {
-    for (int y = -2; y <= 1; ++y) {
+  // 4-sample PCF for better performance
+  for (int x = -1; x <= 0; ++x) {
+    for (int y = -1; y <= 0; ++y) {
       float pcfDepth = texture(u_ShadowMap, projCoords.xy + vec2(x, y) * texelSize).r;
       shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;
     }
   }
-  return shadow / 16.0;
+  return shadow / 4.0;
 }
 
 // ----------------------------------------------------------------------------
@@ -177,8 +177,13 @@ void main()
 {
   vec3 V = normalize(u_CameraPos - WorldPos);
   vec3 tangentViewDir = normalize(transpose(TBN) * V);
-  vec2 texCoords = ParallaxMapping(TexCoords, tangentViewDir);
+  
+  vec2 texCoords = TexCoords;
+  if (u_HeightScale > 0.0) {
+    texCoords = ParallaxMapping(TexCoords, tangentViewDir);
+  }
 
+  // Early alpha discard to save expensive PBR and shadow calculations
   vec4 diffuseSample = texture(u_DiffuseTex, texCoords);
   float finalAlpha = diffuseSample.a * u_Opacity;
   if (finalAlpha < 0.5) discard;

@@ -14,7 +14,6 @@
 #include <string>
 #include <vector>
 
-// Forward declarations
 class Bone;
 struct BoneInfo;
 
@@ -25,6 +24,9 @@ struct AssimpNodeData {
   std::vector<AssimpNodeData> children;
 
   AssimpNodeData() = default;
+
+  mutable Bone *m_cachedBone = nullptr;
+  mutable const BoneInfo *m_cachedBoneInfo = nullptr;
 };
 
 class Animation {
@@ -58,4 +60,5 @@ public:
 private:
   void _readMissingBones(const aiAnimation *animation, Model &model);
   void _readHierarchyData(AssimpNodeData &dest, const aiNode *src);
+  void _resolveBones(const AssimpNodeData &node);
 };

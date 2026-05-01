@@ -30,6 +30,7 @@ Animation::Animation(const std::string &animation_path, Model *model) {
 
   _readHierarchyData(m_rootNode, scene->mRootNode);
   _readMissingBones(animation, *model);
+  _resolveBones(m_rootNode);
 }
 
 Animation::~Animation() {}
@@ -44,6 +45,19 @@ Bone *Animation::findBone(NameHash hashed_name) {
   }
 
   return &(*iter);
+}
+
+void Animation::_resolveBones(const AssimpNodeData &node) {
+  node.m_cachedBone = findBone(node.name);
+
+  auto it = m_boneInfoMap.find(node.name);
+  if (it != m_boneInfoMap.end()) {
+    node.m_cachedBoneInfo = &it->second;
+  }
+
+  for (auto &child : node.children) {
+    _resolveBones(child);
+  }
 }
 
 void Animation::_readMissingBones(const aiAnimation *animation, Model &model) {
