@@ -1,3 +1,8 @@
+
+
+https://github.com/user-attachments/assets/25c51314-7769-4213-8a64-4087c72bcea4
+
+
 # Petroleum Survival
 
 A 3D top-down wave-survival game built from scratch in C++23 and OpenGL 4.6. You play **The Witch**, an evil gas station manager defending your fuel reserves from a rising tide of pedestrians and vehicles. Survive the waves, level up, and turn the gas station into a kill zone.
