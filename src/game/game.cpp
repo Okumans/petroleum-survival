@@ -787,7 +787,7 @@ void Game::_updateCurrentChunkObjects() {
         if (!object || object->isRemovalRequested())
           return;
 
-        m_currentChunkObjects.dynamics.emplace_back(handle, object);
+        m_currentChunkObjects.statics.emplace_back(handle, object);
       },
       MapManager::ObjectFilter::Static);
 }

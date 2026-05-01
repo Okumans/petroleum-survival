@@ -16,7 +16,7 @@ void GameFactories::init() {
   // 1. Humanoid Enemy Factory
   s_budhistEnemy = GameObjectFactory<BudhistEnemy>::create_factory([]() {
     BudhistEnemy enemy(ModelManager::copy(ModelName::BUDHIST_CHARACTER));
-    enemy.setScale(13000.0f);
+    enemy.setScale(12000.0f);
     enemy.setup();
     return enemy;
   });

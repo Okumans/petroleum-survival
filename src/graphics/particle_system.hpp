@@ -49,9 +49,9 @@ private:
 
   GLuint m_quadVAO = 0;
   GLuint m_quadVBO = 0;
-  
+
   GLuint m_ssbo = 0;
-  ParticleGPUData* m_ssboMapped = nullptr;
+  ParticleGPUData *m_ssboMapped = nullptr;
   GLsync m_fence = nullptr;
 
   std::shared_ptr<Shader> m_shader;

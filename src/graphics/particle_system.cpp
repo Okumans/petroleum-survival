@@ -1,6 +1,5 @@
 #include "graphics/particle_system.hpp"
 
-#include <algorithm>
 #include <random>
 
 ParticleSystem::ParticleSystem(uint32_t maxParticles)
@@ -37,18 +36,8 @@ void ParticleSystem::setup() {
 
   // Setup basic quad VAO
   float vertices[] = {
-      -0.5f,
-      -0.5f,
-      0.5f,
-      -0.5f,
-      0.5f,
-      0.5f,
-      0.5f,
-      0.5f,
-      -0.5f,
-      0.5f,
-      -0.5f,
-      -0.5f,
+      -0.5f, -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,
+      0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f,
   };
 
   glCreateVertexArrays(1, &m_quadVAO);
@@ -64,16 +53,10 @@ void ParticleSystem::setup() {
   GLbitfield flags =
       GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
   glCreateBuffers(1, &m_ssbo);
-  glNamedBufferStorage(m_ssbo,
-                       m_particlePool.size() * sizeof(ParticleGPUData),
-                       nullptr,
-                       flags);
-  m_ssboMapped =
-      (ParticleGPUData *)glMapNamedBufferRange(m_ssbo,
-                                               0,
-                                               m_particlePool.size() *
-                                                   sizeof(ParticleGPUData),
-                                               flags);
+  glNamedBufferStorage(m_ssbo, m_particlePool.size() * sizeof(ParticleGPUData),
+                       nullptr, flags);
+  m_ssboMapped = (ParticleGPUData *)glMapNamedBufferRange(
+      m_ssbo, 0, m_particlePool.size() * sizeof(ParticleGPUData), flags);
 }
 
 void ParticleSystem::update(double delta_time) {
@@ -112,9 +95,9 @@ void ParticleSystem::render(const RenderContext &ctx) {
     glm::vec4 color = glm::mix(particle.colorBegin, particle.colorEnd, t);
 
     m_ssboMapped[activeParticleCount].positionSize =
-      glm::vec4(particle.position, size);
+        glm::vec4(particle.position, size);
     m_ssboMapped[activeParticleCount].directionStretch =
-      glm::vec4(particle.direction, particle.stretch);
+        glm::vec4(particle.direction, particle.stretch);
     m_ssboMapped[activeParticleCount].color = color;
 
     activeParticleCount++;
@@ -177,8 +160,8 @@ void ParticleSystem::emit(const ParticleProps &particleProps) {
                        particleProps.sizeVariation * (_randomFloat() - 0.5f);
   particle.sizeEnd = particleProps.sizeEnd;
   particle.stretch =
-      glm::max(1.0f, particleProps.stretch +
-                         particleProps.stretchVariation * (_randomFloat() - 0.5f));
+      glm::max(1.0f, particleProps.stretch + particleProps.stretchVariation *
+                                                 (_randomFloat() - 0.5f));
 
   m_poolIndex =
       (m_poolIndex == 0) ? m_particlePool.size() - 1 : m_poolIndex - 1;
