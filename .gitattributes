@@ -1,0 +1,56 @@
+# Default: auto-detect text files and normalize to LF in working tree.
+* text=auto eol=lf
+
+# Windows-only scripts must keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Image / texture binaries
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.bmp binary
+*.tga binary
+*.hdr binary
+*.exr binary
+*.psd binary
+
+# 3D / model binaries
+*.fbx binary
+*.glb binary
+*.gltf binary
+*.obj binary
+*.dae binary
+*.blend binary
+
+# Font binaries
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+
+# Audio / video
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.flac binary
+*.mp4 binary
+*.mov binary
+
+# Archives
+*.zip binary
+*.7z binary
+*.rar binary
+*.tar binary
+*.gz binary
+
+# Native build artifacts
+*.dll binary
+*.lib binary
+*.exe binary
+*.so binary
+*.dylib binary
+*.pdb binary
+*.o binary

@@ -23,7 +23,7 @@ void GameFactories::init() {
 
   s_militiaEnemy = GameObjectFactory<MilitiaEnemy>::create_factory([]() {
     MilitiaEnemy enemy(ModelManager::copy(ModelName::MILITIA_HUMAN));
-    enemy.setScale(300.0f);
+    enemy.setScale(3.5f);
     enemy.setup();
     return enemy;
   });

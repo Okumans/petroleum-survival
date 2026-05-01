@@ -252,11 +252,16 @@ void App::_setupResources() {
   // Budhist character only ships with a walking animation, so we reuse it for
   // both the idle and walking slots. Replace the IDLE source with a real
   // idle .dae once one is available.
+  // NOTE: Do NOT load the IDLE from budhist_character.dae. That file's
+  // skeleton bind matrices don't match budhist_character_walking.dae's, so
+  // switching IDLE → WALKING at runtime causes the mesh to deform/inflate
+  // (the visible "grows when getting close" bug). Until a proper idle .dae
+  // exists, both slots must share the same animation file.
   m_loadingTasks.push_back(
       {"Animation: Budhist Character Idle",
        loadAnimation(AnimationName::BUDHIST_CHARACTER_IDLE,
                      ASSETS_PATH
-                     "/objects/budhist_character/budhist_character.dae",
+                     "/objects/budhist_character/budhist_character_walking.dae",
                      ModelName::BUDHIST_CHARACTER)});
   m_loadingTasks.push_back(
       {"Animation: Budhist Character Walking",
@@ -377,7 +382,7 @@ void App::_setupResources() {
   // Game Setup
   m_loadingTasks.push_back({"Game Engine Initializing", [this]() {
                               m_game.setup();
-                              m_game.setDebugAABB(false);
+                              m_game.setDebugAABB(true);
                             }});
 }
 

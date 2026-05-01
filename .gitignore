@@ -43,6 +43,7 @@ install
 
 # CMake
 *.user
+cfg.log
 
 # CLion
 .idea
