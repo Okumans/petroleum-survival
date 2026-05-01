@@ -53,7 +53,7 @@ LightingManager::calculateLightSpaceMatrix(const glm::vec3 &targetPos) {
 
   // 1. Tune the size to your camera view.
   // If it's too big, shadows are blurry. If too small, they cut off.
-  float size = 25.0f;
+  float size = 40.0f;
   float nearPlane = -100.0f;
   float farPlane = 100.0f;
 
@@ -107,5 +107,3 @@ Light LightingManager::getShadowCaster() {
 
   return Light();
 }
-
-
