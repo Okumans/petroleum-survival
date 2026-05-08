@@ -19,11 +19,11 @@ public:
   ~MenuUI();
 
   void setup(Game &game);
-  void update(const Game &game, float virtualWidth);
+  void update(const Game &game, float virtual_width);
 
 private:
   void _setupStartMenu(Game &game);
   void _setupCreditsMenu();
-  void _updateStartMenu(const Game &game, float virtualWidth);
-  void _updateCreditsMenu(float virtualWidth);
+  void _updateStartMenu(const Game &game, float virtual_width);
+  void _updateCreditsMenu(float virtual_width);
 };

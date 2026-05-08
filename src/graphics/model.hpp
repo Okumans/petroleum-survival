@@ -60,7 +60,7 @@ private:
   std::shared_ptr<Texture> _loadMaterialTexture(aiMaterial *mat,
                                                 const aiScene *scene,
                                                 aiTextureType type,
-                                                TextureType typeName,
+                                                TextureType type_name,
                                                 bool flip_vertical);
 
   void _setVertexBoneDataToDefault(Vertex &vertex);

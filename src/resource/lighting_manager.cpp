@@ -1,8 +1,6 @@
 #include "lighting_manager.hpp"
 #include "graphics/shader_uniforms.hpp"
-#include <format>
 #include <glm/gtc/matrix_transform.hpp>
-#include <string>
 
 std::vector<Light> LightingManager::m_lights = {};
 
@@ -47,43 +45,43 @@ void LightingManager::apply(Shader &shader) {
 }
 
 glm::mat4
-LightingManager::calculateLightSpaceMatrix(const glm::vec3 &targetPos) {
-  Light shadowCaster = getShadowCaster();
-  glm::vec3 lightDir = glm::normalize(shadowCaster.position);
+LightingManager::calculateLightSpaceMatrix(const glm::vec3 &target_pos) {
+  Light shadow_caster = getShadowCaster();
+  glm::vec3 light_dir = glm::normalize(shadow_caster.position);
 
   // 1. Tune the size to your camera view.
   // If it's too big, shadows are blurry. If too small, they cut off.
   float size = 40.0f;
-  float nearPlane = -100.0f;
-  float farPlane = 100.0f;
+  float near_plane = -100.0f;
+  float far_plane = 100.0f;
 
-  glm::mat4 lightProjection =
-      glm::ortho(-size, size, -size, size, nearPlane, farPlane);
+  glm::mat4 light_projection =
+      glm::ortho(-size, size, -size, size, near_plane, far_plane);
 
   // 2. View matrix: We move the "eye" back along the light direction.
   // Use targetPos as the center so the shadow map follows the chicken.
-  glm::vec3 lightPos = targetPos - (lightDir * 50.0f);
-  glm::mat4 lightView =
-      glm::lookAt(lightPos, targetPos, glm::vec3(0.0f, 1.0f, 0.0f));
+  glm::vec3 light_pos = target_pos - (light_dir * 50.0f);
+  glm::mat4 light_view =
+      glm::lookAt(light_pos, target_pos, glm::vec3(0.0f, 1.0f, 0.0f));
 
-  glm::mat4 lightSpaceMatrix = lightProjection * lightView;
+  glm::mat4 light_space_matrix = light_projection * light_view;
 
   // 3. The Snap: Round the world-space origin in shadow-map texel units
   // This prevents the "shimmering" edges when the camera/player moves.
-  glm::vec4 shadowOrigin = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-  shadowOrigin = lightSpaceMatrix * shadowOrigin;
-  shadowOrigin *= (4096.0f / 2.0f);
+  glm::vec4 shadow_origin = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+  shadow_origin = light_space_matrix * shadow_origin;
+  shadow_origin *= (4096.0f / 2.0f);
 
-  glm::vec4 roundedOrigin = glm::round(shadowOrigin);
-  glm::vec4 roundOffset = roundedOrigin - shadowOrigin;
-  roundOffset = roundOffset * (2.0f / 4096.0f);
-  roundOffset.z = 0.0f;
-  roundOffset.w = 0.0f;
+  glm::vec4 rounded_origin = glm::round(shadow_origin);
+  glm::vec4 round_offset = rounded_origin - shadow_origin;
+  round_offset = round_offset * (2.0f / 4096.0f);
+  round_offset.z = 0.0f;
+  round_offset.w = 0.0f;
 
   // Apply offset to the projection's translation column
-  lightProjection[3] += roundOffset;
+  light_projection[3] += round_offset;
 
-  return lightProjection * lightView;
+  return light_projection * light_view;
 }
 
 bool LightingManager::hasShadowCaster() {

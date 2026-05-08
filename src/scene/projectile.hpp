@@ -47,7 +47,7 @@ public:
 
   void setVelocity(const glm::vec3 &velocity) { m_velocity = velocity; }
   void setDamage(float damage) { m_damage = damage; }
-  void setCritical(bool isCritical) { m_isCritical = isCritical; }
+  void setCritical(bool is_critical) { m_isCritical = is_critical; }
   void setLifetime(float lifetime) { m_lifetime = lifetime; }
   void setUpdateLogic(std::function<void(Projectile &, double)> logic) {
     m_behaviorCallback = logic;

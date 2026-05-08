@@ -49,8 +49,8 @@ public:
     }
   }
 
-  void onLevelUp(uint32_t newLevel) override {
-    switch (newLevel) {
+  void onLevelUp(uint32_t new_level) override {
+    switch (new_level) {
     case 2:
       setBaseCooldown(getBaseCooldown() * 0.9f);
       break;
@@ -108,7 +108,7 @@ public:
       float calculated_knockback = m_knockbackStrength * falloff_multiplier;
 
       auto dmg = calculateDamage();
-      emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
+      _emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
           .enemy = enemy,
           .amount = dmg.amount,
           .isCritical = dmg.isCritical,
@@ -133,7 +133,7 @@ public:
     }
 
     if (m_visualPulseTimer.isFinished()) {
-      emitParticle(GameEvents::ParticleSpawnRequestedEvent{
+      _emitParticle(GameEvents::ParticleSpawnRequestedEvent{
           .position = ctx.getPlayerPosition(),
           .length = getRadius(),
           .thickness = 0.6f,
@@ -147,11 +147,11 @@ public:
         m_coolDownState.reset();
         m_coolDownState.duration = getCooldown();
 
-        emitParticle(GameEvents::ParticleSpawnRequestedEvent{
+        _emitParticle(GameEvents::ParticleSpawnRequestedEvent{
             .position = ctx.getPlayerPosition(),
             .length = getRadius(),
             .thickness = 0.6f,
-            .effectId = GameEvents::ParticleEffectType::FUME_ATTACk,
+            .effectId = GameEvents::ParticleEffectType::FUME_ATTACK,
         });
       }
     }

@@ -50,8 +50,8 @@ private:
   bool m_isInitialized = false;
   Material m_terrainMaterial;
   std::unordered_map<int64_t, TerrainChunk> m_chunks;
-  std::unordered_map<int64_t, ChunkObjectSet> m_chunk_objects;
-  std::unordered_map<uint64_t, TrackedObjectState> m_tracked_objects;
+  std::unordered_map<int64_t, ChunkObjectSet> m_chunkObjects;
+  std::unordered_map<uint64_t, TrackedObjectState> m_trackedObjects;
 
   // Heightmap cache for O(1) lookup
   std::vector<float> m_heightmap;
@@ -83,19 +83,19 @@ public:
                          const glm::vec3 &new_position);
 
   enum class ObjectFilter : uint8_t {
-    None = 0,
-    Static = 1 << 0,
-    Dynamic = 1 << 1,
-    All = Static | Dynamic
+    NONE = 0,
+    STATIC = 1 << 0,
+    DYNAMIC = 1 << 1,
+    ALL = STATIC | DYNAMIC
   };
 
   /** @brief Collects every object attached to loaded chunks */
   void collectLoadedChunkHandles(std::vector<ObjectHandle> &out_handles,
-                                 ObjectFilter filter = ObjectFilter::All) const;
+                                 ObjectFilter filter = ObjectFilter::ALL) const;
 
   /** @brief Iterates every object attached to loaded chunks */
   void foreachLoadedChunkHandles(std::invocable<ObjectHandle> auto &&pred,
-                                 ObjectFilter filter = ObjectFilter::All) const;
+                                 ObjectFilter filter = ObjectFilter::ALL) const;
   void clearObjectTracking();
 
 private:
@@ -124,18 +124,18 @@ private:
 void MapManager::foreachLoadedChunkHandles(
     std::invocable<ObjectHandle> auto &&pred, ObjectFilter filter) const {
   for (const auto &[chunk_key, _] : m_chunks) {
-    auto chunk_object_it = m_chunk_objects.find(chunk_key);
+    auto chunk_object_it = m_chunkObjects.find(chunk_key);
 
-    if (chunk_object_it == m_chunk_objects.end())
+    if (chunk_object_it == m_chunkObjects.end())
       continue;
 
     const ChunkObjectSet &chunk_set = chunk_object_it->second;
 
     bool include_static = static_cast<uint8_t>(filter) &
-                          static_cast<uint8_t>(ObjectFilter::Static);
+                          static_cast<uint8_t>(ObjectFilter::STATIC);
 
     bool include_dynamic = static_cast<uint8_t>(filter) &
-                           static_cast<uint8_t>(ObjectFilter::Dynamic);
+                           static_cast<uint8_t>(ObjectFilter::DYNAMIC);
 
     if (include_static) {
       for (const auto &h : chunk_set.static_objects)

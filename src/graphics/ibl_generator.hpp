@@ -8,6 +8,6 @@
 class IBLGenerator {
 public:
   static std::shared_ptr<Texture>
-  generateIrradianceMap(const Texture &skybox, const Skybox &cubeMesh,
-                        Shader &irradianceShader);
+  generateIrradianceMap(const Texture &skybox, const Skybox &cube_mesh,
+                        Shader &irradiance_shader);
 };

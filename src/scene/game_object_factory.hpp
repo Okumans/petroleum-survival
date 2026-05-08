@@ -22,16 +22,15 @@ public:
       : m_prototype(std::move(object_template)) {}
 
   template <typename... Args>
-    requires(sizeof...(Args) != 1 ||
-             !(std::invocable<Args> && ...)) [[nodiscard]] static auto
-  create_factory(Args &&...args) {
+    requires(sizeof...(Args) != 1 || !(std::invocable<Args> && ...))
+  [[nodiscard]] static auto createFactory(Args &&...args) {
     return GameObjectFactory(T(std::forward<Args>(args)...));
   }
 
   template <typename F>
     requires std::invocable<F> &&
              std::convertible_to<std::invoke_result_t<F>, T>
-  [[nodiscard]] static auto create_factory(F &&inv) {
+  [[nodiscard]] static auto createFactory(F &&inv) {
     return GameObjectFactory(std::invoke(std::forward<F>(inv)));
   }
 

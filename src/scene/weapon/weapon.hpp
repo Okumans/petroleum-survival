@@ -49,19 +49,19 @@ public:
     return calculateDamage(getDamage());
   }
 
-  virtual CalculatedDamage calculateDamage(float baseDmg) const {
+  virtual CalculatedDamage calculateDamage(float base_damage) const {
     if (!canCrit()) {
-      return {baseDmg, false};
+      return {base_damage, false};
     }
 
     auto stats = m_context.ensureInitialized()->getStats();
-    float critChance = stats->getMultiplier(StatType::CRIT_CHANCE);
-    float critMult = stats->getMultiplier(StatType::CRIT_MULTIPLIER);
+    float crit_chance = stats->getMultiplier(StatType::CRIT_CHANCE);
+    float crit_mult = stats->getMultiplier(StatType::CRIT_MULTIPLIER);
 
-    bool isCrit = Utility::Random::randChance(critChance);
-    float finalDmg = isCrit ? baseDmg * critMult : baseDmg;
+    bool is_crit = Utility::Random::randChance(crit_chance);
+    float final_damage = is_crit ? base_damage * crit_mult : base_damage;
 
-    return {finalDmg, isCrit};
+    return {final_damage, is_crit};
   }
 
   virtual float getCooldown() const {
@@ -92,8 +92,8 @@ public:
     return std::format("Upgrade {} to level {}", m_name, level);
   }
 
-  virtual void onLevelUp(uint32_t newLevel) {
-    (void)newLevel;
+  virtual void onLevelUp(uint32_t new_level) {
+    (void)new_level;
     m_baseDamage *= 1.1f; // small generic boost as fallback
   }
 
@@ -117,15 +117,15 @@ public:
   virtual bool fire() = 0;
 
 protected:
-  void emitProjectile(const GameEvents::ProjectileSpawnRequestedEvent &event) {
+  void _emitProjectile(const GameEvents::ProjectileSpawnRequestedEvent &event) {
     m_context.ensureInitialized()->emit(event);
   }
 
-  void emitParticle(const GameEvents::ParticleSpawnRequestedEvent &event) {
+  void _emitParticle(const GameEvents::ParticleSpawnRequestedEvent &event) {
     m_context.ensureInitialized()->emit(event);
   }
 
-  void emitEnemyDamage(const GameEvents::EnemyDamageRequestedEvent &event) {
+  void _emitEnemyDamage(const GameEvents::EnemyDamageRequestedEvent &event) {
     m_context.ensureInitialized()->emit(event);
   }
 };

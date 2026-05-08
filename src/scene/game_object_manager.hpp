@@ -19,24 +19,24 @@ class GameObjectManager {
 private:
   EnumMap<GameObjectType, std::vector<std::unique_ptr<GameObject>>> m_objects;
 
-  uint32_t m_next_id = 1;
-  std::vector<uint32_t> m_free_ids;
-  std::unordered_map<uint32_t, uint32_t> m_id_generations;
-  std::unordered_map<uint32_t, GameObject *> m_id_to_object;
-  std::unordered_map<const GameObject *, ObjectHandle> m_object_to_handle;
+  uint32_t m_nextId = 1;
+  std::vector<uint32_t> m_freeIds;
+  std::unordered_map<uint32_t, uint32_t> m_idGenerations;
+  std::unordered_map<uint32_t, GameObject *> m_idToObject;
+  std::unordered_map<const GameObject *, ObjectHandle> m_objectToHandle;
 
   ObjectHandle _acquireHandle() {
-    if (!m_free_ids.empty()) {
-      uint32_t id = m_free_ids.back();
-      m_free_ids.pop_back();
+    if (!m_freeIds.empty()) {
+      uint32_t id = m_freeIds.back();
+      m_freeIds.pop_back();
 
-      uint32_t next_generation = m_id_generations[id] + 1;
-      m_id_generations[id] = next_generation;
+      uint32_t next_generation = m_idGenerations[id] + 1;
+      m_idGenerations[id] = next_generation;
       return ObjectHandle{.id = id, .generation = next_generation};
     }
 
-    uint32_t id = m_next_id++;
-    m_id_generations[id] = 1;
+    uint32_t id = m_nextId++;
+    m_idGenerations[id] = 1;
     return ObjectHandle{.id = id, .generation = 1};
   }
 
@@ -45,23 +45,23 @@ private:
       return;
     }
 
-    m_id_to_object.erase(handle.id);
-    m_free_ids.push_back(handle.id);
+    m_idToObject.erase(handle.id);
+    m_freeIds.push_back(handle.id);
   }
 
   void _registerObjectHandle(GameObject &object, const ObjectHandle &handle) {
-    m_id_to_object[handle.id] = &object;
-    m_object_to_handle[&object] = handle;
+    m_idToObject[handle.id] = &object;
+    m_objectToHandle[&object] = handle;
   }
 
   void _unregisterObjectHandle(GameObject &object) {
-    auto handle_it = m_object_to_handle.find(&object);
-    if (handle_it == m_object_to_handle.end()) {
+    auto handle_it = m_objectToHandle.find(&object);
+    if (handle_it == m_objectToHandle.end()) {
       return;
     }
 
     ObjectHandle handle = handle_it->second;
-    m_object_to_handle.erase(handle_it);
+    m_objectToHandle.erase(handle_it);
     _releaseHandle(handle);
   }
 
@@ -129,13 +129,13 @@ public:
       return nullptr;
     }
 
-    auto id_it = m_id_to_object.find(handle.id);
-    if (id_it == m_id_to_object.end()) {
+    auto id_it = m_idToObject.find(handle.id);
+    if (id_it == m_idToObject.end()) {
       return nullptr;
     }
 
-    auto generation_it = m_id_generations.find(handle.id);
-    if (generation_it == m_id_generations.end()) {
+    auto generation_it = m_idGenerations.find(handle.id);
+    if (generation_it == m_idGenerations.end()) {
       return nullptr;
     }
 
@@ -156,8 +156,8 @@ public:
 
   [[nodiscard]] std::optional<ObjectHandle>
   getHandle(const GameObject &object) const {
-    auto handle_it = m_object_to_handle.find(&object);
-    if (handle_it == m_object_to_handle.end()) {
+    auto handle_it = m_objectToHandle.find(&object);
+    if (handle_it == m_objectToHandle.end()) {
       return std::nullopt;
     }
 

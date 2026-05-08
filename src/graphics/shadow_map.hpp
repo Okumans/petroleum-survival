@@ -11,7 +11,7 @@ public:
   void bindForWriting();
   void bindForReading(unsigned int unit);
 
-  void updateLightSpaceMatrix(const glm::vec3 &targetPos);
+  void updateLightSpaceMatrix(const glm::vec3 &target_pos);
 
   [[nodiscard]] glm::mat4 getLightSpaceMatrix() const {
     return m_lightSpaceMatrix;

@@ -16,34 +16,34 @@ void EnemySpawner::addWave(const WaveConfig &wave) { m_waves.push_back(wave); }
 
 void EnemySpawner::clearWaves() { m_waves.clear(); }
 
-void EnemySpawner::update(float currentTime, float delta_time) {
+void EnemySpawner::update(float current_time, float delta_time) {
   if (!m_game)
     return;
 
-  bool waveActive = false;
+  bool wave_active = false;
   for (const auto &wave : m_waves) {
-    if (currentTime >= wave.timeStart && currentTime <= wave.timeEnd) {
+    if (current_time >= wave.timeStart && current_time <= wave.timeEnd) {
       if (wave.spawnLogic) {
-        wave.spawnLogic(*m_game, currentTime, delta_time);
+        wave.spawnLogic(*m_game, current_time, delta_time);
       }
-      waveActive = true;
+      wave_active = true;
     }
   }
 
-  if (!waveActive) {
+  if (!wave_active) {
     m_defaultTimer += delta_time;
     if (m_defaultTimer >= 1.0f) { // spawn roughly every 1 second
       m_defaultTimer = 0.0f;
       // Health scales over time linearly: 1.0 + 0.1 per second
-      float healthScaling = 1.0f + (currentTime * 0.05f);
+      float health_scaling = 1.0f + (current_time * 0.05f);
       // Spawn 3 enemies: mix of on-screen and off-screen
-      spawnMixed(3, healthScaling);
+      spawnMixed(3, health_scaling);
     }
   }
 }
 
-void EnemySpawner::spawnEnemy(glm::vec3 position, float healthMultiplier) {
-  (void)healthMultiplier;
+void EnemySpawner::spawnEnemy(glm::vec3 position, float health_multiplier) {
+  (void)health_multiplier;
   spawnSpecificEnemy(GameObjectType::ENEMY, position);
 }
 
@@ -55,8 +55,8 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
   // Determine exp drop amount based on tier
   // Tier 0 (common): 20, Tier 1 (elite): 100, Tier 2 (boss): 500, Tier 3
   // (legendary): 1000
-  static constexpr int TIER_EXP_MAP[] = {20, 100, 500, 1000};
-  int expAmount = TIER_EXP_MAP[std::clamp(tier, 0, 3)];
+  static constexpr int tier_exp_map[] = {20, 100, 500, 1000};
+  int exp_amount = tier_exp_map[std::clamp(tier, 0, 3)];
 
   switch (type) {
   case GameObjectType::ENEMY: {
@@ -69,8 +69,8 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
               enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
               enemy.setHealth(enemy.getMaxHealth());
               // Apply tier-based exp scaling
-              float expScale = 1.0f + (tier * 0.5f);
-              enemy.setExpDropAmount(expAmount * expScale);
+              float exp_scale = 1.0f + (tier * 0.5f);
+              enemy.setExpDropAmount(exp_amount * exp_scale);
             });
     m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
                                            false);
@@ -87,8 +87,8 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
     enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
     enemy.setHealth(enemy.getMaxHealth());
     // Apply tier-based exp scaling
-    float expScale = 1.0f + (tier * 0.5f);
-    enemy.setExpDropAmount(expAmount * expScale);
+    float exp_scale = 1.0f + (tier * 0.5f);
+    enemy.setExpDropAmount(exp_amount * exp_scale);
     m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
                                            false);
     break;
@@ -105,8 +105,8 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
     enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
     enemy.setHealth(enemy.getMaxHealth());
     // Apply tier-based exp scaling
-    float expScale = 1.0f + (tier * 0.5f);
-    enemy.setExpDropAmount(expAmount * expScale);
+    float exp_scale = 1.0f + (tier * 0.5f);
+    enemy.setExpDropAmount(exp_amount * exp_scale);
     m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
                                            false);
     break;
@@ -122,8 +122,8 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
     enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
     enemy.setHealth(enemy.getMaxHealth());
     // Apply tier-based exp scaling
-    float expScale = 1.0f + (tier * 0.5f);
-    enemy.setExpDropAmount(expAmount * expScale);
+    float exp_scale = 1.0f + (tier * 0.5f);
+    enemy.setExpDropAmount(exp_amount * exp_scale);
     m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
                                            false);
     break;
@@ -137,8 +137,8 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
     enemy.setMaxHealth(enemy.getMaxHealth() * health_multiplier);
     enemy.setHealth(enemy.getMaxHealth());
     // Boss tier is always tier 3
-    float expScale = 1.0f + (3 * 0.5f);
-    enemy.setExpDropAmount(TIER_EXP_MAP[3] * expScale);
+    float exp_scale = 1.0f + (3 * 0.5f);
+    enemy.setExpDropAmount(tier_exp_map[3] * exp_scale);
     m_game->getMapManager().registerObject(enemy_handle, enemy.getPosition(),
                                            false);
     break;
@@ -149,7 +149,7 @@ void EnemySpawner::spawnSpecificEnemy(GameObjectType type, glm::vec3 pos,
 }
 
 void EnemySpawner::spawnInCircle(int count, float radius,
-                                 float healthMultiplier) {
+                                 float health_multiplier) {
   if (!m_game || !m_game->getPlayer())
     return;
 
@@ -158,36 +158,36 @@ void EnemySpawner::spawnInCircle(int count, float radius,
   for (int i = 0; i < count; ++i) {
     float angle = Random::randFloat(0.0f, glm::two_pi<float>());
     glm::vec3 offset(std::cos(angle) * radius, 0.0f, std::sin(angle) * radius);
-    spawnEnemy(center + offset, healthMultiplier);
+    spawnEnemy(center + offset, health_multiplier);
   }
 }
 
-void EnemySpawner::spawnMixed(int count, float healthMultiplier) {
+void EnemySpawner::spawnMixed(int count, float health_multiplier) {
   if (!m_game || !m_game->getPlayer())
     return;
 
   glm::vec3 center = m_game->getPlayer()->getPosition();
 
   // Calculate how many spawn on-screen vs off-screen
-  int onScreenCount = static_cast<int>(count * m_onScreenSpawnFraction);
-  int offScreenCount = count - onScreenCount;
+  int on_screen_count = static_cast<int>(count * m_onScreenSpawnFraction);
+  int off_screen_count = count - on_screen_count;
 
   // Spawn on-screen enemies (within m_onScreenRadius)
-  for (int i = 0; i < onScreenCount; ++i) {
+  for (int i = 0; i < on_screen_count; ++i) {
     float angle = Random::randFloat(0.0f, glm::two_pi<float>());
-    float radiusVariation = Random::randFloat(0.0f, m_onScreenRadius);
-    glm::vec3 offset(std::cos(angle) * radiusVariation, 0.0f,
-                     std::sin(angle) * radiusVariation);
-    spawnEnemy(center + offset, healthMultiplier);
+    float radius_variation = Random::randFloat(0.0f, m_onScreenRadius);
+    glm::vec3 offset(std::cos(angle) * radius_variation, 0.0f,
+                     std::sin(angle) * radius_variation);
+    spawnEnemy(center + offset, health_multiplier);
   }
 
   // Spawn off-screen enemies (between m_onScreenRadius and m_offScreenRadius)
-  for (int i = 0; i < offScreenCount; ++i) {
+  for (int i = 0; i < off_screen_count; ++i) {
     float angle = Random::randFloat(0.0f, glm::two_pi<float>());
-    float radiusVariation =
+    float radius_variation =
         Random::randFloat(m_onScreenRadius, m_offScreenRadius);
-    glm::vec3 offset(std::cos(angle) * radiusVariation, 0.0f,
-                     std::sin(angle) * radiusVariation);
-    spawnEnemy(center + offset, healthMultiplier);
+    glm::vec3 offset(std::cos(angle) * radius_variation, 0.0f,
+                     std::sin(angle) * radius_variation);
+    spawnEnemy(center + offset, health_multiplier);
   }
 }

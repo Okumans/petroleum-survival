@@ -275,8 +275,8 @@ void Game::setup() {
   reset();
 }
 
-void Game::movePlayer(glm::vec3 vec, bool isRunning) {
-  m_player.ensureInitialized()->setRunning(isRunning);
+void Game::movePlayer(glm::vec3 vec, bool is_running) {
+  m_player.ensureInitialized()->setRunning(is_running);
   m_player.ensureInitialized()->moveWithAnimation(
       vec, m_statManager.getMultiplier(StatType::SPEED));
 
@@ -384,15 +384,15 @@ void Game::render(double delta_time) {
   pbr_shader.setVec3("u_BaseColor", glm::vec3(1.0f));
   pbr_shader.setVec2("u_UVOffset", glm::vec2(0.0f));
 
-  RenderContext forwardCtx = {
+  RenderContext forward_ctx = {
       .shader = pbr_shader,
       .camera = m_camera,
       .deltaTime = delta_time,
   };
 
-  m_renderer.flush(forwardCtx);
+  m_renderer.flush(forward_ctx);
 
-  m_particleSystem.render(forwardCtx);
+  m_particleSystem.render(forward_ctx);
 
   if (m_debugAABB) {
     RenderContext debug_ctx = {
@@ -517,8 +517,8 @@ void Game::_setupEnvironment() {
 }
 
 void Game::_populateMap() {
-  MapPopulator populationSystem;
-  populationSystem.populateMap(m_objects, m_mapManager);
+  MapPopulator population_system;
+  population_system.populateMap(m_objects, m_mapManager);
 }
 
 void Game::reset() {
@@ -775,7 +775,7 @@ void Game::_updateCurrentChunkObjects() {
 
         m_currentChunkObjects.dynamics.emplace_back(handle, object);
       },
-      MapManager::ObjectFilter::Dynamic);
+      MapManager::ObjectFilter::DYNAMIC);
 
   m_mapManager.foreachLoadedChunkHandles(
       [this](const ObjectHandle &handle) {
@@ -788,7 +788,7 @@ void Game::_updateCurrentChunkObjects() {
 
         m_currentChunkObjects.statics.emplace_back(handle, object);
       },
-      MapManager::ObjectFilter::Static);
+      MapManager::ObjectFilter::STATIC);
 }
 
 void Game::_syncObjectsToTerrain() {
@@ -880,17 +880,17 @@ void Game::_registerGameplayEventHandlers() {
         if (!evt.enemy || evt.enemy->isRemovalRequested())
           return;
 
-        bool wasDead = evt.enemy->isDead();
+        bool was_dead = evt.enemy->isDead();
 
-        bool isCritical = evt.isCritical;
+        bool is_critical = evt.isCritical;
         float amount = evt.amount;
         Player *player = m_player.ensureInitialized();
         if (Random::randFloat(0.0f, 1.0f) <= player->getCritProbability()) {
-          isCritical = true;
+          is_critical = true;
           amount *= player->getCritMultiplier();
         }
 
-        evt.enemy->takeDamage(amount, isCritical, evt.knockbackDirection,
+        evt.enemy->takeDamage(amount, is_critical, evt.knockbackDirection,
                               evt.knockbackStrength);
 
         glm::vec3 offset = {Random::randFloat(-0.5f, 0.5f),
@@ -898,12 +898,12 @@ void Game::_registerGameplayEventHandlers() {
                             Random::randFloat(-0.5f, 0.5f)};
 
         m_damageTextManager.addText(evt.enemy->getPosition() + offset, amount,
-                                    isCritical);
+                                    is_critical);
 
         m_eventBus.emit(ParticleSpawnRequestedEvent{.position = evt.hitPosition,
                                                     .effectId = evt.hitEffect});
 
-        if (!wasDead && evt.enemy->isDead()) {
+        if (!was_dead && evt.enemy->isDead()) {
           m_eventBus.emit(EnemyKilledEvent{
               .enemy = evt.enemy,
               .killerPosition = m_player.ensureInitialized()->getPosition()});
@@ -914,7 +914,7 @@ void Game::_registerGameplayEventHandlers() {
       [this](const PlayerDamageRequestedEvent &evt) {
         Player &player = *m_player.ensureInitialized();
 
-        bool wasDead = player.isDead();
+        bool was_dead = player.isDead();
 
         player.takeDamage(evt.amount, evt.isCritical);
 
@@ -931,7 +931,7 @@ void Game::_registerGameplayEventHandlers() {
                         glm::vec3(0.0f, 1.0f, 0.0f),
             .effectId = ParticleEffectType::PLAYER_BLOOD});
 
-        if (!wasDead && player.isDead()) {
+        if (!was_dead && player.isDead()) {
           m_eventBus.emit(PlayerKilledEvent{
               .enemy = evt.enemy, .killerPosition = evt.enemy->getPosition()});
         }

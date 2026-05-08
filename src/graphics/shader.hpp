@@ -99,7 +99,7 @@ private:
 public:
   Shader(const char *vertex_shader_path, const char *fragment_shader_path,
          const char *geometry_shader_path = nullptr);
-  Shader(GLuint ID);
+  Shader(GLuint id);
   ~Shader();
 
   Shader(const Shader &) = delete;
@@ -135,5 +135,5 @@ public:
 
 private:
   GLint _getUniformLocation(NameHash name);
-  static void checkCompileErrors(GLuint shader, std::string type);
+  static void _checkCompileErrors(GLuint shader, std::string type);
 };

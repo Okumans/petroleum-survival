@@ -47,8 +47,8 @@ public:
     }
   }
 
-  void onLevelUp(uint32_t newLevel) override {
-    switch (newLevel) {
+  void onLevelUp(uint32_t new_level) override {
+    switch (new_level) {
     case 2:
       setBaseCooldown(getBaseCooldown() * 0.9f);
       break;
@@ -117,10 +117,10 @@ public:
           p.copyModel()->setEmissionColor(glm::vec3(8.0f, 4.0f, 1.0f) * 0.5f);
         }));
 
-    emitProjectile(
+    _emitProjectile(
         GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});
 
-    emitParticle(GameEvents::ParticleSpawnRequestedEvent{
+    _emitParticle(GameEvents::ParticleSpawnRequestedEvent{
         .position = spawn_pos,
         .direction = dir,
         .length = 0.6f,

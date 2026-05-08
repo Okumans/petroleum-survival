@@ -15,9 +15,9 @@ void MenuUI::setup(Game &game) {
   _setupCreditsMenu();
 }
 
-void MenuUI::update(const Game &game, float virtualWidth) {
-  _updateStartMenu(game, virtualWidth);
-  _updateCreditsMenu(virtualWidth);
+void MenuUI::update(const Game &game, float virtual_width) {
+  _updateStartMenu(game, virtual_width);
+  _updateCreditsMenu(virtual_width);
 }
 
 void MenuUI::_setupStartMenu(Game &game) {
@@ -58,7 +58,7 @@ void MenuUI::_setupCreditsMenu() {
                              "CREDITS", m_font, {1.0f, 0.8f, 0.0f, 1.0f},
                              0.25f);
 
-  std::string creditsText =
+  std::string credits_text =
       "Petroleum Survival\n\n"
       "Lead Developer: Jeerabhat Supapinit\n"
       "Second in command developer: Jane\n"
@@ -68,7 +68,7 @@ void MenuUI::_setupCreditsMenu() {
       "Enjoy the chaos!";
 
   m_uiManager.addTextBoxElement("credits_box", {0.0f, 10.0f, 30.0f, 20.0f},
-                                creditsText, m_font, {1.0f, 1.0f, 1.0f, 1.0f},
+                                credits_text, m_font, {1.0f, 1.0f, 1.0f, 1.0f},
                                 0.08f);
 
   m_uiManager.addInteractiveElement(
@@ -78,21 +78,21 @@ void MenuUI::_setupCreditsMenu() {
                              "BACK", m_font, {1.0f, 1.0f, 1.0f, 1.0f}, 0.1f);
 }
 
-void MenuUI::_updateStartMenu(const Game &game, float virtualWidth) {
-  GameState gameState = game.getState();
-  bool showMain =
-      (gameState == GameState::START_MENU && m_state == MenuState::MAIN);
+void MenuUI::_updateStartMenu(const Game &game, float virtual_width) {
+  GameState game_state = game.getState();
+  bool show_main =
+      (game_state == GameState::START_MENU && m_state == MenuState::MAIN);
 
-  m_uiManager.getElement("start_title")->visible = showMain;
-  m_uiManager.getElement("menu_start_btn")->visible = showMain;
-  m_uiManager.getElement("menu_start_text")->visible = showMain;
-  m_uiManager.getElement("menu_credits_btn")->visible = showMain;
-  m_uiManager.getElement("menu_credits_text")->visible = showMain;
-  m_uiManager.getElement("menu_quit_btn")->visible = showMain;
-  m_uiManager.getElement("menu_quit_text")->visible = showMain;
+  m_uiManager.getElement("start_title")->visible = show_main;
+  m_uiManager.getElement("menu_start_btn")->visible = show_main;
+  m_uiManager.getElement("menu_start_text")->visible = show_main;
+  m_uiManager.getElement("menu_credits_btn")->visible = show_main;
+  m_uiManager.getElement("menu_credits_text")->visible = show_main;
+  m_uiManager.getElement("menu_quit_btn")->visible = show_main;
+  m_uiManager.getElement("menu_quit_text")->visible = show_main;
 
-  if (showMain) {
-    float center_x = virtualWidth / 2.0f;
+  if (show_main) {
+    float center_x = virtual_width / 2.0f;
     float time = static_cast<float>(glfwGetTime());
 
     if (auto *title = dynamic_cast<TextElement *>(
@@ -104,10 +104,10 @@ void MenuUI::_updateStartMenu(const Game &game, float virtualWidth) {
       title->bounds.y = 8.0f + 1.0f * std::sin(time * 1.5f);
     }
 
-    auto centerButton = [&](const std::string &btnId,
-                            const std::string &textId) {
-      auto *btn = m_uiManager.getElement(btnId);
-      auto *txt = dynamic_cast<TextElement *>(m_uiManager.getElement(textId));
+    auto center_button = [&](const std::string &btn_id,
+                             const std::string &text_id) {
+      auto *btn = m_uiManager.getElement(btn_id);
+      auto *txt = dynamic_cast<TextElement *>(m_uiManager.getElement(text_id));
       if (btn && txt) {
         btn->bounds.x = center_x - btn->bounds.w / 2.0f;
         txt->bounds.x =
@@ -115,22 +115,22 @@ void MenuUI::_updateStartMenu(const Game &game, float virtualWidth) {
       }
     };
 
-    centerButton("menu_start_btn", "menu_start_text");
-    centerButton("menu_credits_btn", "menu_credits_text");
-    centerButton("menu_quit_btn", "menu_quit_text");
+    center_button("menu_start_btn", "menu_start_text");
+    center_button("menu_credits_btn", "menu_credits_text");
+    center_button("menu_quit_btn", "menu_quit_text");
   }
 }
 
-void MenuUI::_updateCreditsMenu(float virtualWidth) {
-  bool showCredits = (m_state == MenuState::CREDITS);
+void MenuUI::_updateCreditsMenu(float virtual_width) {
+  bool show_credits = (m_state == MenuState::CREDITS);
 
-  m_uiManager.getElement("credits_title")->visible = showCredits;
-  m_uiManager.getElement("credits_box")->visible = showCredits;
-  m_uiManager.getElement("credits_back_btn")->visible = showCredits;
-  m_uiManager.getElement("credits_back_text")->visible = showCredits;
+  m_uiManager.getElement("credits_title")->visible = show_credits;
+  m_uiManager.getElement("credits_box")->visible = show_credits;
+  m_uiManager.getElement("credits_back_btn")->visible = show_credits;
+  m_uiManager.getElement("credits_back_text")->visible = show_credits;
 
-  if (showCredits) {
-    float center_x = virtualWidth / 2.0f;
+  if (show_credits) {
+    float center_x = virtual_width / 2.0f;
 
     if (auto *title = dynamic_cast<TextElement *>(
             m_uiManager.getElement("credits_title"))) {

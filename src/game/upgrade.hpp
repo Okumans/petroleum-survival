@@ -9,7 +9,7 @@ class Game;
 struct Upgrade {
   std::string title;
   std::string description;
-  std::string iconName; // TextureManager name (TextureType::UI)
+  std::string iconName;              // TextureManager name (TextureType::UI)
   std::function<void(Game &)> apply; // Callback to apply the upgrade
 
   Upgrade() = default;

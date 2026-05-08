@@ -31,7 +31,7 @@ public:
   static void apply(Shader &shader);
   static void clear();
 
-  static glm::mat4 calculateLightSpaceMatrix(const glm::vec3 &targetPos);
+  static glm::mat4 calculateLightSpaceMatrix(const glm::vec3 &target_pos);
   [[nodiscard]] static bool hasShadowCaster();
   [[nodiscard]] static Light getShadowCaster();
 };

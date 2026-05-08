@@ -23,15 +23,16 @@ private:
   const BitmapFont *m_font = nullptr;
   GLuint m_vao = 0, m_vbo = 0;
 
-  void _setup_buffers();
+  void _setupBuffers();
 
 public:
   DamageTextManager();
   ~DamageTextManager();
 
   void init(const BitmapFont *font);
-  void addText(glm::vec3 pos, float damage, bool isCritical, bool isPlayerDamage = false);
+  void addText(glm::vec3 pos, float damage, bool is_critical,
+               bool is_player_damage = false);
   void update(float dt);
 
-  void render(const Camera &camera, int windowWidth, int windowHeight);
+  void render(const Camera &camera, int window_width, int window_height);
 };

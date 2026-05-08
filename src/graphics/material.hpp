@@ -26,13 +26,13 @@ private:
 public:
   Material(ShareTexture diffuse, ShareTexture normal, ShareTexture height,
            ShareTexture metallic, ShareTexture roughness, ShareTexture ao,
-           float metallicFactor = 0.0f, float roughnessFactor = 1.0f,
-           float aoFactor = 1.0f)
+           float metallic_factor = 0.0f, float roughness_factor = 1.0f,
+           float ao_factor = 1.0f)
       : m_diffuse(std::move(diffuse)), m_normal(std::move(normal)),
         m_height(std::move(height)), m_metallic(std::move(metallic)),
         m_roughness(std::move(roughness)), m_ao(std::move(ao)),
-        m_metallicFactor(metallicFactor), m_roughnessFactor(roughnessFactor),
-        m_aoFactor(aoFactor) {}
+        m_metallicFactor(metallic_factor), m_roughnessFactor(roughness_factor),
+        m_aoFactor(ao_factor) {}
 
   Material(Material &&other) noexcept
       : m_diffuse(std::move(other.m_diffuse)),

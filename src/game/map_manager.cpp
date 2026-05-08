@@ -22,34 +22,34 @@ void MapManager::setup() {
     return;
   }
 
-  auto fallbackDiffuse = TextureManager::copy(STATIC_WHITE_TEXTURE);
-  auto fallbackNormal = TextureManager::copy(STATIC_NORMAL_TEXTURE);
-  auto fallbackHeight = TextureManager::copy(STATIC_BLACK_TEXTURE);
-  auto fallbackRoughness = TextureManager::copy(STATIC_PBR_DEFAULT_TEXTURE);
-  auto fallbackAO = TextureManager::copy(STATIC_WHITE_TEXTURE);
+  auto fallback_diffuse = TextureManager::copy(STATIC_WHITE_TEXTURE);
+  auto fallback_normal = TextureManager::copy(STATIC_NORMAL_TEXTURE);
+  auto fallback_height = TextureManager::copy(STATIC_BLACK_TEXTURE);
+  auto fallback_roughness = TextureManager::copy(STATIC_PBR_DEFAULT_TEXTURE);
+  auto fallback_ao = TextureManager::copy(STATIC_WHITE_TEXTURE);
 
-  auto terrainDiffuse = TextureManager::tryGet(TERRAIN_DIFFUSE_TEXTURE)
-                            ? TextureManager::copy(TERRAIN_DIFFUSE_TEXTURE)
-                            : fallbackDiffuse;
-  auto terrainNormal = TextureManager::tryGet(TERRAIN_NORMAL_TEXTURE)
-                           ? TextureManager::copy(TERRAIN_NORMAL_TEXTURE)
-                           : fallbackNormal;
-  auto terrainHeight = TextureManager::tryGet(TERRAIN_HEIGHT_TEXTURE)
-                           ? TextureManager::copy(TERRAIN_HEIGHT_TEXTURE)
-                           : fallbackHeight;
-  auto terrainRoughness = TextureManager::tryGet(TERRAIN_ROUGHNESS_TEXTURE)
-                              ? TextureManager::copy(TERRAIN_ROUGHNESS_TEXTURE)
-                              : fallbackRoughness;
-  auto terrainAO = TextureManager::tryGet(TERRAIN_AO_TEXTURE)
-                       ? TextureManager::copy(TERRAIN_AO_TEXTURE)
-                       : fallbackAO;
+  auto terrain_diffuse = TextureManager::tryGet(TERRAIN_DIFFUSE_TEXTURE)
+                             ? TextureManager::copy(TERRAIN_DIFFUSE_TEXTURE)
+                             : fallback_diffuse;
+  auto terrain_normal = TextureManager::tryGet(TERRAIN_NORMAL_TEXTURE)
+                            ? TextureManager::copy(TERRAIN_NORMAL_TEXTURE)
+                            : fallback_normal;
+  auto terrain_height = TextureManager::tryGet(TERRAIN_HEIGHT_TEXTURE)
+                            ? TextureManager::copy(TERRAIN_HEIGHT_TEXTURE)
+                            : fallback_height;
+  auto terrain_roughness = TextureManager::tryGet(TERRAIN_ROUGHNESS_TEXTURE)
+                               ? TextureManager::copy(TERRAIN_ROUGHNESS_TEXTURE)
+                               : fallback_roughness;
+  auto terrain_ao = TextureManager::tryGet(TERRAIN_AO_TEXTURE)
+                        ? TextureManager::copy(TERRAIN_AO_TEXTURE)
+                        : fallback_ao;
 
   m_terrainMaterial = Material::builder()
-                          .setDiffuse(std::move(terrainDiffuse))
-                          .setNormal(std::move(terrainNormal))
-                          .setHeight(std::move(terrainHeight))
-                          .setRoughness(std::move(terrainRoughness))
-                          .setAO(std::move(terrainAO))
+                          .setDiffuse(std::move(terrain_diffuse))
+                          .setNormal(std::move(terrain_normal))
+                          .setHeight(std::move(terrain_height))
+                          .setRoughness(std::move(terrain_roughness))
+                          .setAO(std::move(terrain_ao))
                           .setMetallicFactor(0.0f)
                           .setRoughnessFactor(1.0f)
                           .setAOFactor(1.0f)
@@ -150,12 +150,12 @@ void MapManager::registerObject(const ObjectHandle &handle,
   int chunk_z = static_cast<int>(std::floor(position.z / s_chunkWorldSize));
   int64_t chunk_key = _encodeKey(chunk_x, chunk_z);
 
-  ChunkObjectSet &chunk_set = m_chunk_objects[chunk_key];
+  ChunkObjectSet &chunk_set = m_chunkObjects[chunk_key];
   std::vector<ObjectHandle> &target_vector =
       is_static ? chunk_set.static_objects : chunk_set.dynamic_objects;
   target_vector.push_back(handle);
 
-  m_tracked_objects[_encodeHandleKey(handle)] =
+  m_trackedObjects[_encodeHandleKey(handle)] =
       TrackedObjectState{.chunk_key = chunk_key, .is_static = is_static};
 }
 
@@ -163,15 +163,15 @@ void MapManager::unregisterObject(const ObjectHandle &handle) {
   if (!handle.isValid())
     return;
 
-  auto tracked_it = m_tracked_objects.find(_encodeHandleKey(handle));
-  if (tracked_it == m_tracked_objects.end())
+  auto tracked_it = m_trackedObjects.find(_encodeHandleKey(handle));
+  if (tracked_it == m_trackedObjects.end())
     return;
 
   int64_t chunk_key = tracked_it->second.chunk_key;
   bool is_static = tracked_it->second.is_static;
 
-  if (auto chunk_it = m_chunk_objects.find(chunk_key);
-      chunk_it != m_chunk_objects.end()) {
+  if (auto chunk_it = m_chunkObjects.find(chunk_key);
+      chunk_it != m_chunkObjects.end()) {
 
     std::vector<ObjectHandle> &target_vector =
         is_static ? chunk_it->second.static_objects
@@ -181,11 +181,11 @@ void MapManager::unregisterObject(const ObjectHandle &handle) {
 
     if (chunk_it->second.static_objects.empty() &&
         chunk_it->second.dynamic_objects.empty()) {
-      m_chunk_objects.erase(chunk_it);
+      m_chunkObjects.erase(chunk_it);
     }
   }
 
-  m_tracked_objects.erase(tracked_it);
+  m_trackedObjects.erase(tracked_it);
 }
 
 void MapManager::updateObjectChunk(const ObjectHandle &handle,
@@ -193,8 +193,8 @@ void MapManager::updateObjectChunk(const ObjectHandle &handle,
   if (!handle.isValid())
     return;
 
-  auto tracked_it = m_tracked_objects.find(_encodeHandleKey(handle));
-  if (tracked_it == m_tracked_objects.end() || tracked_it->second.is_static)
+  auto tracked_it = m_trackedObjects.find(_encodeHandleKey(handle));
+  if (tracked_it == m_trackedObjects.end() || tracked_it->second.is_static)
     return;
 
   int chunk_x = static_cast<int>(std::floor(new_position.x / s_chunkWorldSize));
@@ -205,18 +205,18 @@ void MapManager::updateObjectChunk(const ObjectHandle &handle,
     return;
 
   int64_t prev_chunk_key = tracked_it->second.chunk_key;
-  if (auto prev_chunk_it = m_chunk_objects.find(prev_chunk_key);
-      prev_chunk_it != m_chunk_objects.end()) {
+  if (auto prev_chunk_it = m_chunkObjects.find(prev_chunk_key);
+      prev_chunk_it != m_chunkObjects.end()) {
 
     std::erase(prev_chunk_it->second.dynamic_objects, handle);
 
     if (prev_chunk_it->second.static_objects.empty() &&
         prev_chunk_it->second.dynamic_objects.empty()) {
-      m_chunk_objects.erase(prev_chunk_it);
+      m_chunkObjects.erase(prev_chunk_it);
     }
   }
 
-  m_chunk_objects[next_chunk_key].dynamic_objects.push_back(handle);
+  m_chunkObjects[next_chunk_key].dynamic_objects.push_back(handle);
   tracked_it->second.chunk_key = next_chunk_key;
 }
 
@@ -225,17 +225,17 @@ void MapManager::collectLoadedChunkHandles(
   out_handles.clear();
 
   for (const auto &[chunk_key, _] : m_chunks) {
-    auto chunk_object_it = m_chunk_objects.find(chunk_key);
-    if (chunk_object_it == m_chunk_objects.end())
+    auto chunk_object_it = m_chunkObjects.find(chunk_key);
+    if (chunk_object_it == m_chunkObjects.end())
       continue;
 
     const ChunkObjectSet &chunk_set = chunk_object_it->second;
 
     bool include_static = static_cast<uint8_t>(filter) &
-                          static_cast<uint8_t>(ObjectFilter::Static);
+                          static_cast<uint8_t>(ObjectFilter::STATIC);
 
     bool include_dynamic = static_cast<uint8_t>(filter) &
-                           static_cast<uint8_t>(ObjectFilter::Dynamic);
+                           static_cast<uint8_t>(ObjectFilter::DYNAMIC);
 
     if (include_static) {
       out_handles.insert(out_handles.end(), chunk_set.static_objects.begin(),
@@ -250,8 +250,8 @@ void MapManager::collectLoadedChunkHandles(
 }
 
 void MapManager::clearObjectTracking() {
-  m_chunk_objects.clear();
-  m_tracked_objects.clear();
+  m_chunkObjects.clear();
+  m_trackedObjects.clear();
 }
 
 int64_t MapManager::_encodeKey(int chunk_x, int chunk_z) {
@@ -482,19 +482,19 @@ Mesh MapManager::_buildChunkMesh(int chunk_x, int chunk_z) const {
 
   for (size_t z = 0; z < s_chunkResolution; ++z) {
     for (size_t x = 0; x < s_chunkResolution; ++x) {
-      uint32_t topLeft = static_cast<uint32_t>(z * vertices_per_side + x);
-      uint32_t topRight = topLeft + 1;
-      uint32_t bottomLeft =
+      uint32_t top_left = static_cast<uint32_t>(z * vertices_per_side + x);
+      uint32_t top_right = top_left + 1;
+      uint32_t bottom_left =
           static_cast<uint32_t>((z + 1) * vertices_per_side + x);
-      uint32_t bottomRight = bottomLeft + 1;
+      uint32_t bottom_right = bottom_left + 1;
 
-      indices.push_back(topLeft);
-      indices.push_back(bottomLeft);
-      indices.push_back(topRight);
+      indices.push_back(top_left);
+      indices.push_back(bottom_left);
+      indices.push_back(top_right);
 
-      indices.push_back(topRight);
-      indices.push_back(bottomLeft);
-      indices.push_back(bottomRight);
+      indices.push_back(top_right);
+      indices.push_back(bottom_left);
+      indices.push_back(bottom_right);
     }
   }
 

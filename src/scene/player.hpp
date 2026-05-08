@@ -47,12 +47,10 @@ public:
 
     m_animations.set(PlayerAnimation::IDLE,
                      AnimationManager::copy(AnimationName::THE_WITCH_IDLE));
-    m_animations.set(
-        PlayerAnimation::WALKING,
-        AnimationManager::copy(AnimationName::THE_WITCH_WALKING));
-    m_animations.set(
-        PlayerAnimation::RUNNING,
-        AnimationManager::copy(AnimationName::THE_WITCH_RUNNING));
+    m_animations.set(PlayerAnimation::WALKING,
+                     AnimationManager::copy(AnimationName::THE_WITCH_WALKING));
+    m_animations.set(PlayerAnimation::RUNNING,
+                     AnimationManager::copy(AnimationName::THE_WITCH_RUNNING));
 
     assert(m_animations.isInitialized());
 
@@ -82,11 +80,11 @@ public:
     Entity::update(delta_time);
 
     // Smooth speed multiplier transition (exponential approach)
-    float targetMultiplier = m_isRunning ? 1.8f : 1.0f;
+    float target_multiplier = m_isRunning ? 1.8f : 1.0f;
     float k = 5.0f;
 
     m_currentSpeedMultiplier +=
-        (targetMultiplier - m_currentSpeedMultiplier) *
+        (target_multiplier - m_currentSpeedMultiplier) *
         (1.0f - std::exp(-k * static_cast<float>(delta_time)));
 
     for (auto &w : m_weapons) {

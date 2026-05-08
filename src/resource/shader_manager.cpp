@@ -9,19 +9,20 @@ Utility::SettableNotInitialized<
     EnumMapValidator<EnumMap<ShaderType, std::unique_ptr<Shader>>>>
     ShaderManager::s_shaders;
 
-Shader &ShaderManager::loadFromPath(ShaderType type, const char *vertShaderPath,
-                                    const char *fragShaderPath) {
-  s_shaders.set(
-      type, std::make_unique<Shader>(Shader(vertShaderPath, fragShaderPath)));
+Shader &ShaderManager::loadFromPath(ShaderType type,
+                                    const char *vert_shader_path,
+                                    const char *frag_shader_path) {
+  s_shaders.set(type, std::make_unique<Shader>(
+                          Shader(vert_shader_path, frag_shader_path)));
 
   return *s_shaders.getUnvalidated(type);
 }
 
 Shader &ShaderManager::loadFromSource(ShaderType type,
-                                      const char *vertShaderSource,
-                                      const char *fragShaderSource) {
+                                      const char *vert_shader_source,
+                                      const char *frag_shader_source) {
   s_shaders.set(type, std::make_unique<Shader>(Shader::fromSource(
-                          vertShaderSource, fragShaderSource)));
+                          vert_shader_source, frag_shader_source)));
 
   return *s_shaders.getUnvalidated(type);
 }

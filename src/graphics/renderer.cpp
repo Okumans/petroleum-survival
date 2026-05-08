@@ -21,7 +21,8 @@ Renderer::~Renderer() {
 }
 
 void Renderer::setup() {
-  GLbitfield flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+  GLbitfield flags =
+      GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
   if (!m_instanceSSBO) {
     glCreateBuffers(1, &m_instanceSSBO);
     glNamedBufferStorage(m_instanceSSBO, MAX_INSTANCES * sizeof(InstanceData),
@@ -70,29 +71,29 @@ void Renderer::flush(const RenderContext &ctx) {
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, m_instanceSSBO);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, m_boneSSBO);
 
-  const Model *currentModel = nullptr;
-  bool hasAnimation = false;
-  size_t batchCount = 0;
-  size_t batchStartOffset = m_instanceOffset;
+  const Model *current_model = nullptr;
+  bool has_animation = false;
+  size_t batch_count = 0;
+  size_t batch_start_offset = m_instanceOffset;
 
-  auto flushModelBatch = [&]() {
-    if (batchCount == 0 || !currentModel)
+  auto flush_model_batch = [&]() {
+    if (batch_count == 0 || !current_model)
       return;
 
     ctx.shader.setBool("u_EnableTerrainTint", false);
-    ctx.shader.setBool("u_HasAnimation", hasAnimation);
-    ctx.shader.setInt("u_BaseInstance", batchStartOffset);
-    const_cast<Model *>(currentModel)->drawInstanced(ctx, batchCount);
+    ctx.shader.setBool("u_HasAnimation", has_animation);
+    ctx.shader.setInt("u_BaseInstance", batch_start_offset);
+    const_cast<Model *>(current_model)->drawInstanced(ctx, batch_count);
 
-    hasAnimation = false;
-    batchCount = 0;
-    batchStartOffset = m_instanceOffset;
+    has_animation = false;
+    batch_count = 0;
+    batch_start_offset = m_instanceOffset;
   };
 
   for (const auto &cmd : m_modelQueue) {
-    if (cmd.model != currentModel) {
-      flushModelBatch();
-      currentModel = cmd.model;
+    if (cmd.model != current_model) {
+      flush_model_batch();
+      current_model = cmd.model;
     }
 
     if (m_instanceOffset >= MAX_INSTANCES) {
@@ -103,27 +104,28 @@ void Renderer::flush(const RenderContext &ctx) {
     m_instanceMapped[m_instanceOffset].emission = glm::vec4(cmd.emission, 0.0f);
 
     if (cmd.animator) {
-      hasAnimation = true;
+      has_animation = true;
       const auto &bones = cmd.animator->getFinalBoneMatrices();
-      size_t boneCount = std::min(bones.size(), MAX_BONES);
-      size_t boneStart = m_instanceOffset * MAX_BONES;
-      for (size_t i = 0; i < boneCount; ++i) {
-        m_boneMapped[boneStart + i] = bones[i];
-      }
-      for (size_t i = boneCount; i < MAX_BONES; ++i) {
-        m_boneMapped[boneStart + i] = glm::mat4(1.0f);
-      }
-    } else if (hasAnimation) { // Pad with identity if batch is mixed
-      size_t boneStart = m_instanceOffset * MAX_BONES;
+      size_t bone_count = std::min(bones.size(), MAX_BONES);
+      size_t bone_start = m_instanceOffset * MAX_BONES;
+
+      for (size_t i = 0; i < bone_count; ++i)
+        m_boneMapped[bone_start + i] = bones[i];
+      for (size_t i = bone_count; i < MAX_BONES; ++i)
+        m_boneMapped[bone_start + i] = glm::mat4(1.0f);
+    }
+
+    else if (has_animation) { // Pad with identity if batch is mixed
+      size_t bone_start = m_instanceOffset * MAX_BONES;
       for (size_t i = 0; i < MAX_BONES; ++i) {
-        m_boneMapped[boneStart + i] = glm::mat4(1.0f);
+        m_boneMapped[bone_start + i] = glm::mat4(1.0f);
       }
     }
 
     m_instanceOffset++;
-    batchCount++;
+    batch_count++;
   }
-  flushModelBatch();
+  flush_model_batch();
 
   // 2. Process Mesh Queue (Terrain)
   std::sort(m_meshQueue.begin(), m_meshQueue.end(),
@@ -131,12 +133,12 @@ void Renderer::flush(const RenderContext &ctx) {
               return a.mesh < b.mesh;
             });
 
-  const Mesh *currentMesh = nullptr;
-  batchCount = 0;
-  batchStartOffset = m_instanceOffset;
+  const Mesh *current_mesh = nullptr;
+  batch_count = 0;
+  batch_start_offset = m_instanceOffset;
 
-  auto flushMeshBatch = [&]() {
-    if (batchCount == 0 || !currentMesh)
+  auto flush_mesh_batch = [&]() {
+    if (batch_count == 0 || !current_mesh)
       return;
 
     ctx.shader.setBool("u_EnableTerrainTint", true);
@@ -145,17 +147,17 @@ void Renderer::flush(const RenderContext &ctx) {
     ctx.shader.setFloat("u_TerrainTintScale", 0.006f);
     ctx.shader.setFloat("u_TerrainTintStrength", 0.9f);
     ctx.shader.setBool("u_HasAnimation", false);
-    ctx.shader.setInt("u_BaseInstance", batchStartOffset);
-    const_cast<Mesh *>(currentMesh)->drawInstanced(ctx, batchCount);
+    ctx.shader.setInt("u_BaseInstance", batch_start_offset);
+    const_cast<Mesh *>(current_mesh)->drawInstanced(ctx, batch_count);
 
-    batchCount = 0;
-    batchStartOffset = m_instanceOffset;
+    batch_count = 0;
+    batch_start_offset = m_instanceOffset;
   };
 
   for (const auto &cmd : m_meshQueue) {
-    if (cmd.mesh != currentMesh) {
-      flushMeshBatch();
-      currentMesh = cmd.mesh;
+    if (cmd.mesh != current_mesh) {
+      flush_mesh_batch();
+      current_mesh = cmd.mesh;
     }
 
     if (m_instanceOffset >= MAX_INSTANCES) {
@@ -165,9 +167,9 @@ void Renderer::flush(const RenderContext &ctx) {
     m_instanceMapped[m_instanceOffset].model = cmd.transform;
     m_instanceMapped[m_instanceOffset].emission = glm::vec4(cmd.emission, 0.0f);
     m_instanceOffset++;
-    batchCount++;
+    batch_count++;
   }
-  flushMeshBatch();
+  flush_mesh_batch();
 
   m_fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 }

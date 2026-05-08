@@ -1,6 +1,5 @@
 #include "model.hpp"
 #include "assimp/mesh.h"
-#include "graphics/bone.hpp"
 #include "graphics/material.hpp"
 #include "graphics/render_context.hpp"
 #include "graphics/texture.hpp"
@@ -67,20 +66,20 @@ void Model::_loadModel(const char *path, bool flip_vertical) {
 
 void Model::_processNode(aiNode *node, const aiScene *scene, bool flip_vertical,
                          glm::mat4 transform) {
-  glm::mat4 nodeTransform;
-  memcpy(glm::value_ptr(nodeTransform), &node->mTransformation,
+  glm::mat4 node_transform;
+  memcpy(glm::value_ptr(node_transform), &node->mTransformation,
          sizeof(float) * 16);
-  nodeTransform = glm::transpose(nodeTransform);
-  glm::mat4 globalTransform = transform * nodeTransform;
+  node_transform = glm::transpose(node_transform);
+  glm::mat4 global_transform = transform * node_transform;
 
   for (size_t i = 0; i < node->mNumMeshes; ++i) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
     m_meshes.push_back(
-        _processMesh(mesh, scene, flip_vertical, globalTransform));
+        _processMesh(mesh, scene, flip_vertical, global_transform));
   }
 
   for (size_t i = 0; i < node->mNumChildren; ++i) {
-    _processNode(node->mChildren[i], scene, flip_vertical, globalTransform);
+    _processNode(node->mChildren[i], scene, flip_vertical, global_transform);
   }
 }
 
@@ -95,7 +94,7 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
   // Always pre-bake the node transform into vertices (keeps AABB correct
   // and non-animated appearance consistent). For skinned meshes, the bone
   // OffsetMatrix is adjusted with inverse(transform) to compensate.
-  glm::mat3 normalMat = glm::transpose(glm::inverse(glm::mat3(transform)));
+  glm::mat3 normal_mat = glm::transpose(glm::inverse(glm::mat3(transform)));
 
   for (size_t i = 0; i < mesh->mNumVertices; ++i) {
     glm::vec4 pos4 =
@@ -105,31 +104,31 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
 
     glm::vec3 normal =
         (mesh->mNormals)
-            ? normalMat * glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y,
-                                    mesh->mNormals[i].z)
+            ? normal_mat * glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y,
+                                     mesh->mNormals[i].z)
             : glm::vec3(0.0f);
 
-    glm::vec2 texCoords = (mesh->mTextureCoords[0])
-                              ? glm::vec2(mesh->mTextureCoords[0][i].x,
-                                          mesh->mTextureCoords[0][i].y)
-                              : glm::vec2(0.0f);
+    glm::vec2 tex_coords = (mesh->mTextureCoords[0])
+                               ? glm::vec2(mesh->mTextureCoords[0][i].x,
+                                           mesh->mTextureCoords[0][i].y)
+                               : glm::vec2(0.0f);
 
     glm::vec3 tangent =
         (mesh->mTangents)
-            ? normalMat * glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y,
-                                    mesh->mTangents[i].z)
+            ? normal_mat * glm::vec3(mesh->mTangents[i].x, mesh->mTangents[i].y,
+                                     mesh->mTangents[i].z)
             : glm::vec3(1.0f, 0.0f, 0.0f);
 
     glm::vec3 bitangent = (mesh->mBitangents)
-                              ? normalMat * glm::vec3(mesh->mBitangents[i].x,
-                                                      mesh->mBitangents[i].y,
-                                                      mesh->mBitangents[i].z)
+                              ? normal_mat * glm::vec3(mesh->mBitangents[i].x,
+                                                       mesh->mBitangents[i].y,
+                                                       mesh->mBitangents[i].z)
                               : glm::vec3(0.0f, 1.0f, 0.0f);
 
     Vertex vertex;
     vertex.position = position;
     vertex.normal = normal;
-    vertex.texCoords = texCoords;
+    vertex.texCoords = tex_coords;
     vertex.tangent = tangent;
     vertex.bitangent = bitangent;
 
@@ -147,11 +146,11 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
   }
 
   // PBR Factors fallback
-  float metallicFactor = 0.0f;
-  float roughnessFactor = 1.0f;
+  float metallic_factor = 0.0f;
+  float roughness_factor = 1.0f;
   float opacity = 1.0f;
-  float aoFactor = 1.0f;
-  aiColor4D diffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+  float ao_factor = 1.0f;
+  aiColor4D diffuse_color(1.0f, 1.0f, 1.0f, 1.0f);
 
   MaterialBuilder mat_builder = Material::builder();
 
@@ -159,15 +158,15 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
 
   // Fetch Factors
   aiGetMaterialFloat(assimp_material, AI_MATKEY_METALLIC_FACTOR,
-                     &metallicFactor);
+                     &metallic_factor);
   aiGetMaterialFloat(assimp_material, AI_MATKEY_ROUGHNESS_FACTOR,
-                     &roughnessFactor);
+                     &roughness_factor);
   aiGetMaterialFloat(assimp_material, AI_MATKEY_OPACITY, &opacity);
-  aiGetMaterialColor(assimp_material, AI_MATKEY_COLOR_DIFFUSE, &diffuseColor);
+  aiGetMaterialColor(assimp_material, AI_MATKEY_COLOR_DIFFUSE, &diffuse_color);
 
-  mat_builder.setMetallicFactor(metallicFactor);
-  mat_builder.setRoughnessFactor(roughnessFactor);
-  mat_builder.setAOFactor(aoFactor);
+  mat_builder.setMetallicFactor(metallic_factor);
+  mat_builder.setRoughnessFactor(roughness_factor);
+  mat_builder.setAOFactor(ao_factor);
 
   // 1. Diffuse / Base Color
   if (assimp_material->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
@@ -252,7 +251,7 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
   }
 
   Material material = mat_builder.create();
-  glm::vec3 final_color(diffuseColor.r, diffuseColor.g, diffuseColor.b);
+  glm::vec3 final_color(diffuse_color.r, diffuse_color.g, diffuse_color.b);
 
   _extractBoneWeightForVertices(vertices, mesh, transform);
 
@@ -263,7 +262,7 @@ Mesh Model::_processMesh(aiMesh *mesh, const aiScene *scene, bool flip_vertical,
 std::shared_ptr<Texture> Model::_loadMaterialTexture(aiMaterial *mat,
                                                      const aiScene *scene,
                                                      aiTextureType type,
-                                                     TextureType typeName,
+                                                     TextureType type_name,
                                                      bool flip_vertical) {
   for (size_t i = 0; i < mat->GetTextureCount(type); ++i) {
     aiString path;
@@ -307,17 +306,17 @@ std::shared_ptr<Texture> Model::_loadMaterialTexture(aiMaterial *mat,
     if (!TextureManager::exists(texture_name)) {
       if (embedded_tex) {
         if (embedded_tex->mHeight == 0) {
-          return TextureManager::load(texture_name, typeName,
+          return TextureManager::load(texture_name, type_name,
                                       embedded_tex->pcData,
                                       embedded_tex->mWidth, flip_vertical);
         }
 
         return TextureManager::load(
-            texture_name, typeName, embedded_tex->pcData,
+            texture_name, type_name, embedded_tex->pcData,
             embedded_tex->mWidth * embedded_tex->mHeight * 4, flip_vertical);
       }
 
-      return TextureManager::load(texture_name, typeName, unique_name.c_str(),
+      return TextureManager::load(texture_name, type_name, unique_name.c_str(),
                                   flip_vertical);
     } else {
       return TextureManager::copy(texture_name);

@@ -26,10 +26,10 @@ public:
     m_targetPosition = glm::vec3(0.0f);
   }
 
-  void update(float deltaTime);
+  void update(float delta_time);
 
-  void setTarget(glm::vec3 targetPos, bool immediate = false);
-  void follow(glm::vec3 targetPos) { m_targetPosition = targetPos; }
+  void setTarget(glm::vec3 target_pos, bool immediate = false);
+  void follow(glm::vec3 target_pos) { m_targetPosition = target_pos; }
   void shake(float intensity, float duration);
 
   void setLerpFactor(float factor) { m_lerpFactor = factor; }

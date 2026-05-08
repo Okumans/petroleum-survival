@@ -175,12 +175,12 @@ void Mesh::drawInstanced(const RenderContext &ctx, const Material &material,
   counter++;
 
   // Factors
-  bool usePackedMR = false;
+  bool use_packed_mr = false;
   if (material.existsMetallic() && material.existsRoughness() &&
       material.getMetallic().getTexID() == material.getRoughness().getTexID()) {
-    usePackedMR = true;
+    use_packed_mr = true;
   }
-  ctx.shader.setBool("u_UsePackedMR", usePackedMR);
+  ctx.shader.setBool("u_UsePackedMR", use_packed_mr);
 
   ctx.shader.setVec3("u_BaseColor", m_baseColor);
   ctx.shader.setVec3("u_EmissionColor", m_emissionColor);

@@ -1,17 +1,16 @@
 #include "shader.hpp"
-#include "utility/name_hash.hpp"
 #include <fstream>
 #include <iostream>
 #include <print>
 #include <sstream>
 #include <stdexcept>
 
-Shader::Shader(const char *vertexShaderPath, const char *fragmentShaderPath,
-               const char *geometryShaderPath)
-    : Shader(
-          fromFile(vertexShaderPath, fragmentShaderPath, geometryShaderPath)) {}
+Shader::Shader(const char *vertex_shader_path, const char *fragment_shader_path,
+               const char *geometry_shader_path)
+    : Shader(fromFile(vertex_shader_path, fragment_shader_path,
+                      geometry_shader_path)) {}
 
-Shader::Shader(GLuint ID) : m_id(ID) {}
+Shader::Shader(GLuint id) : m_id(id) {}
 
 Shader::~Shader() {
   if (m_id)
@@ -84,19 +83,19 @@ Shader Shader::fromSource(const char *vertex_shader_source,
   GLuint vertex = glCreateShader(GL_VERTEX_SHADER);
   glShaderSource(vertex, 1, &vertex_shader_source, NULL);
   glCompileShader(vertex);
-  checkCompileErrors(vertex, "VERTEX");
+  _checkCompileErrors(vertex, "VERTEX");
 
   GLuint fragment = glCreateShader(GL_FRAGMENT_SHADER);
   glShaderSource(fragment, 1, &fragment_shader_source, NULL);
   glCompileShader(fragment);
-  checkCompileErrors(fragment, "FRAGMENT");
+  _checkCompileErrors(fragment, "FRAGMENT");
 
   GLuint geometry = 0;
   if (geometry_shader_source != nullptr) {
     geometry = glCreateShader(GL_GEOMETRY_SHADER);
     glShaderSource(geometry, 1, &geometry_shader_source, NULL);
     glCompileShader(geometry);
-    checkCompileErrors(geometry, "GEOMETRY");
+    _checkCompileErrors(geometry, "GEOMETRY");
   }
 
   GLuint id = glCreateProgram();
@@ -106,7 +105,7 @@ Shader Shader::fromSource(const char *vertex_shader_source,
     glAttachShader(id, geometry);
 
   glLinkProgram(id);
-  checkCompileErrors(id, "PROGRAM");
+  _checkCompileErrors(id, "PROGRAM");
 
   glDeleteShader(vertex);
   glDeleteShader(fragment);
@@ -216,24 +215,24 @@ void Shader::define(const std::string name) {
   m_uniformLocationCache[name_hash] = {name, location};
 }
 
-void Shader::checkCompileErrors(GLuint shader, std::string type) {
+void Shader::_checkCompileErrors(GLuint shader, std::string type) {
   GLint success;
-  GLchar infoLog[1024];
+  GLchar info_log[1024];
   if (type != "PROGRAM") {
     glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
     if (!success) {
-      glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+      glGetShaderInfoLog(shader, 1024, NULL, info_log);
       std::println("ERROR::SHADER_COMPILATION_ERROR of type: {}\n{}\n -- "
                    "--------------------------------------------------- -- ",
-                   type, infoLog);
+                   type, info_log);
     }
   } else {
     glGetProgramiv(shader, GL_LINK_STATUS, &success);
     if (!success) {
-      glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+      glGetProgramInfoLog(shader, 1024, NULL, info_log);
       std::println("ERROR::PROGRAM_LINKING_ERROR of type: {}\n{}\n -- "
                    "--------------------------------------------------- -- ",
-                   type, infoLog);
+                   type, info_log);
     }
   }
 }

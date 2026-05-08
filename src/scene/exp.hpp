@@ -29,17 +29,17 @@ public:
     rotate({0.0f, m_spinSpeedDegPerSec * static_cast<float>(delta_time), 0.0f});
 
     // Move towards groundY (interpolated for smoothness)
-    float targetY = m_groundY;
-    float dy = targetY - m_position.y;
+    float target_y = m_groundY;
+    float dy = target_y - m_position.y;
 
     if (std::abs(dy) > 0.001f) {
       // Faster snapping to avoid sinking
-      float moveStep = 10.0f * static_cast<float>(delta_time);
-      if (std::abs(dy) < moveStep) {
-        m_position.y = targetY;
+      float move_step = 10.0f * static_cast<float>(delta_time);
+      if (std::abs(dy) < move_step) {
+        m_position.y = target_y;
       } else {
-        m_position.y += dy * moveStep; // Wait, nosign is not a thing
-        m_position.y += (dy > 0 ? 1.0f : -1.0f) * moveStep;
+        m_position.y += dy * move_step; // Wait, nosign is not a thing
+        m_position.y += (dy > 0 ? 1.0f : -1.0f) * move_step;
       }
       m_isTransformDirty = true;
     }

@@ -65,8 +65,8 @@ void TextElement::draw(Shader &shader) {
   glBindTexture(GL_TEXTURE_2D, font.getTexID());
   shader.setInt("u_icon", 0);
 
-  float currentX = bounds.x;
-  float currentY = bounds.y;
+  float current_x = bounds.x;
+  float current_y = bounds.y;
 
   for (char c : text) {
     const Character &ch = font.getCharacter(c);
@@ -75,7 +75,7 @@ void TextElement::draw(Shader &shader) {
     float h = ch.size.y * scale;
 
     glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(currentX, currentY, 0.0f));
+    model = glm::translate(model, glm::vec3(current_x, current_y, 0.0f));
     model = glm::scale(model, glm::vec3(w, h, 1.0f));
 
     shader.setMat4("u_model", model);
@@ -84,7 +84,7 @@ void TextElement::draw(Shader &shader) {
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    currentX += ch.advance * scale;
+    current_x += ch.advance * scale;
   }
 
   // Reset UVs for next elements
@@ -189,7 +189,7 @@ void TextBoxElement::draw(Shader &shader) {
 }
 
 // UIManager
-UIManager::UIManager() { _setup_buffers(); }
+UIManager::UIManager() { _setupBuffers(); }
 
 UIManager::~UIManager() {
   glDeleteBuffers(1, &m_vbo);
@@ -246,10 +246,10 @@ UIBase *UIManager::getElement(const std::string &name) {
   return it != m_elements.end() ? it->get() : nullptr;
 }
 
-bool UIManager::handleClick(double mouseX, double mouseY) {
+bool UIManager::handleClick(double mouse_x, double mouse_y) {
   // Convert screen pixels to virtual coordinates
-  float vx = (float)mouseX * (m_virtualWidth / (float)m_lastWindowWidth);
-  float vy = (float)mouseY * (m_virtualHeight / (float)m_lastWindowHeight);
+  float vx = (float)mouse_x * (m_virtualWidth / (float)m_lastWindowWidth);
+  float vy = (float)mouse_y * (m_virtualHeight / (float)m_lastWindowHeight);
 
   for (auto it = m_interactives.rbegin(); it != m_interactives.rend(); ++it) {
     if ((*it)->visible && (*it)->bounds.contains(vx, vy)) {
@@ -262,14 +262,14 @@ bool UIManager::handleClick(double mouseX, double mouseY) {
   return false;
 }
 
-void UIManager::render(int windowWidth, int windowHeight) {
+void UIManager::render(int window_width, int window_height) {
   Shader &shader = ShaderManager::get(ShaderType::UI);
   shader.use();
 
-  m_lastWindowWidth = windowWidth;
-  m_lastWindowHeight = windowHeight;
+  m_lastWindowWidth = window_width;
+  m_lastWindowHeight = window_height;
   m_virtualHeight = 40.0f;
-  float aspect = (float)windowWidth / (float)windowHeight;
+  float aspect = (float)window_width / (float)window_height;
   m_virtualWidth = m_virtualHeight * aspect;
 
   glm::mat4 projection =
@@ -292,7 +292,7 @@ void UIManager::render(int windowWidth, int windowHeight) {
 
 GLuint UIManager::getVAO() const { return m_vao; }
 
-void UIManager::_setup_buffers() {
+void UIManager::_setupBuffers() {
   UIVertex vertices[] = {
       {{0.0f, 0.0f}, {0.0f, 0.0f}}, {{0.0f, 1.0f}, {0.0f, 1.0f}},
       {{1.0f, 1.0f}, {1.0f, 1.0f}}, {{0.0f, 0.0f}, {0.0f, 0.0f}},

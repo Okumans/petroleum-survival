@@ -17,12 +17,12 @@ public:
   AnimationState<float> rotateState;
   AnimationState<glm::vec3> positionState;
 
-  void setup(float positionDuration, float rotateDuration) {
-    m_positionDurationPerUnit = positionDuration;
-    m_rotateDurationPer180Deg = rotateDuration;
+  void setup(float position_duration, float rotate_duration) {
+    m_positionDurationPerUnit = position_duration;
+    m_rotateDurationPer180Deg = rotate_duration;
 
-    positionState.duration = positionDuration;
-    rotateState.duration = rotateDuration;
+    positionState.duration = position_duration;
+    rotateState.duration = rotate_duration;
 
     reset();
   }
@@ -31,28 +31,31 @@ public:
     return positionState.animationStarted || rotateState.animationStarted;
   }
 
-  void startMove(const glm::vec3 &currentPosition,
-                 const glm::vec3 &currentRotation,
-                 const glm::vec3 &targetOffset,
-                 float speedMultiplier = 1.0f) {
-    float distance = glm::length(targetOffset);
-    glm::vec3 new_target_pos = currentPosition + targetOffset;
-    float target_yaw = glm::degrees(std::atan2(targetOffset.x, targetOffset.z));
+  void startMove(const glm::vec3 &current_position,
+                 const glm::vec3 &current_rotation,
+                 const glm::vec3 &target_offset,
+                 float speed_multiplier = 1.0f) {
+    float distance = glm::length(target_offset);
+    glm::vec3 new_target_pos = current_position + target_offset;
+    float target_yaw =
+        glm::degrees(std::atan2(target_offset.x, target_offset.z));
 
-    float yaw_delta = std::remainder(target_yaw - currentRotation.y, 360.0f);
+    float yaw_delta = std::remainder(target_yaw - current_rotation.y, 360.0f);
     float abs_yaw_delta = std::abs(yaw_delta);
 
     float position_duration =
-        std::max(m_minPositionDuration, (distance * m_positionDurationPerUnit) / speedMultiplier);
+        std::max(m_minPositionDuration,
+                 (distance * m_positionDurationPerUnit) / speed_multiplier);
     float rotate_duration =
         std::max(m_minRotateDuration,
-                 ((abs_yaw_delta / 180.0f) * m_rotateDurationPer180Deg) / speedMultiplier);
+                 ((abs_yaw_delta / 180.0f) * m_rotateDurationPer180Deg) /
+                     speed_multiplier);
 
     positionState.duration = position_duration;
     rotateState.duration = rotate_duration;
 
-    positionState.startAnimation(currentPosition, new_target_pos);
-    rotateState.startAnimation(currentRotation.y, target_yaw);
+    positionState.startAnimation(current_position, new_target_pos);
+    rotateState.startAnimation(current_rotation.y, target_yaw);
 
     positionState.timer = 0;
     rotateState.timer = 0;

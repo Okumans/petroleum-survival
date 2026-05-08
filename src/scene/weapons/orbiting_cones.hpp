@@ -3,7 +3,6 @@
 #include "graphics/animation_state.hpp"
 #include "scene/enemy/enemy.hpp"
 #include "scene/game_factories.hpp"
-#include "scene/game_object_manager.hpp"
 #include "scene/projectile.hpp"
 #include "scene/weapon/weapon.hpp"
 #include "utility/not_initialized.hpp"
@@ -65,8 +64,8 @@ public:
     }
   }
 
-  void onLevelUp(uint32_t newLevel) override {
-    switch (newLevel) {
+  void onLevelUp(uint32_t new_level) override {
+    switch (new_level) {
     case 2:
       setBaseCooldown(getBaseCooldown() * 0.9f);
       break;
@@ -101,7 +100,7 @@ public:
     for (uint32_t i = 0; i < m_coneCount; ++i) {
       float angle =
           (glm::pi<float>() * 2.0f) * (i / static_cast<float>(m_coneCount));
-      spawnConeAtAngle(player_pos, angle);
+      _spawnConeAtAngle(player_pos, angle);
     }
 
     return true;
@@ -179,7 +178,7 @@ public:
                                           : glm::normalize(to_enemy);
 
             auto dmg = calculateDamage();
-            emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
+            _emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
                 .enemy = enemy,
                 .amount = dmg.amount,
                 .isCritical = dmg.isCritical,
@@ -212,7 +211,7 @@ public:
   }
 
 private:
-  void spawnConeAtAngle(const glm::vec3 &player_pos, float angle) {
+  void _spawnConeAtAngle(const glm::vec3 &player_pos, float angle) {
     glm::vec3 spawn_pos =
         player_pos + glm::vec3(std::cos(angle) * m_orbitRadius, 0.2f,
                                std::sin(angle) * m_orbitRadius);
@@ -230,7 +229,7 @@ private:
               p.setHitboxScaleFactor({1.0f, 5.0f, 1.0f});
             }));
 
-    emitProjectile(GameEvents::ProjectileSpawnRequestedEvent{
+    _emitProjectile(GameEvents::ProjectileSpawnRequestedEvent{
         .projectile = proj,
         .onSpawned =
             [spawned_handle](const ObjectHandle &handle) {

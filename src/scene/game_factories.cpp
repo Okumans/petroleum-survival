@@ -14,14 +14,14 @@ std::optional<GameObjectFactory<MeleeProjectile>>
 
 void GameFactories::init() {
   // 1. Humanoid Enemy Factory
-  s_budhistEnemy = GameObjectFactory<BudhistEnemy>::create_factory([]() {
+  s_budhistEnemy = GameObjectFactory<BudhistEnemy>::createFactory([]() {
     BudhistEnemy enemy(ModelManager::copy(ModelName::BUDHIST_CHARACTER));
     enemy.setScale(12000.0f);
     enemy.setup();
     return enemy;
   });
 
-  s_militiaEnemy = GameObjectFactory<MilitiaEnemy>::create_factory([]() {
+  s_militiaEnemy = GameObjectFactory<MilitiaEnemy>::createFactory([]() {
     MilitiaEnemy enemy(ModelManager::copy(ModelName::MILITIA_HUMAN));
     enemy.setScale(300.0f);
     enemy.setup();
@@ -29,7 +29,7 @@ void GameFactories::init() {
   });
 
   // 2. Player Factory
-  s_player = GameObjectFactory<Player>::create_factory([]() {
+  s_player = GameObjectFactory<Player>::createFactory([]() {
     Player player(ModelManager::copy(ModelName::THE_WITCH));
     player.setScale(300.0f);
     player.setup();
@@ -37,7 +37,7 @@ void GameFactories::init() {
   });
 
   // 3. Exp Factory (Gem/Money)
-  s_exp = GameObjectFactory<Exp>::create_factory([]() {
+  s_exp = GameObjectFactory<Exp>::createFactory([]() {
     Exp exp(ModelManager::copy(ModelName::MONEY_20));
     exp.setScale(1.0f);
     exp.setEmissionColor(glm::vec3(0.0f));
@@ -45,13 +45,13 @@ void GameFactories::init() {
   });
 
   // 4. Car Factories
-  ModelName carModels[] = {ModelName::CAR_SEDAN,        ModelName::CAR_MUSCLE,
-                           ModelName::CAR_PICKUP,       ModelName::CAR_TAXI,
-                           ModelName::CAR_POLICE,       ModelName::CAR_BUS,
-                           ModelName::CAR_MONSTER_TRUCK};
+  ModelName car_models[] = {ModelName::CAR_SEDAN,        ModelName::CAR_MUSCLE,
+                            ModelName::CAR_PICKUP,       ModelName::CAR_TAXI,
+                            ModelName::CAR_POLICE,       ModelName::CAR_BUS,
+                            ModelName::CAR_MONSTER_TRUCK};
 
-  for (auto model : carModels) {
-    s_cars[model] = GameObjectFactory<CarEnemy>::create_factory([model]() {
+  for (auto model : car_models) {
+    s_cars[model] = GameObjectFactory<CarEnemy>::createFactory([model]() {
       CarEnemy car(ModelManager::copy(model));
       car.setScale(0.8f);
       return car;
@@ -59,22 +59,22 @@ void GameFactories::init() {
   }
 
   // 5. Projectile Factories (per model)
-  ModelName projectileModels[] = {
+  ModelName projectile_models[] = {
       ModelName::SPHERE,
       ModelName::WATER_BOTTLE,
       ModelName::TRAFFIC_CONE,
   };
 
-  for (auto model : projectileModels) {
+  for (auto model : projectile_models) {
     s_projectiles[model] =
-        GameObjectFactory<Projectile>::create_factory([model]() {
+        GameObjectFactory<Projectile>::createFactory([model]() {
           return Projectile(ModelManager::copy(model), glm::vec3(0.0f),
                             glm::vec3(0.0f), 10.0f, 1.0f);
         });
   }
 
   // 6. Melee Projectile Factory
-  s_meleeProjectile = GameObjectFactory<MeleeProjectile>::create_factory([]() {
+  s_meleeProjectile = GameObjectFactory<MeleeProjectile>::createFactory([]() {
     return MeleeProjectile(ModelManager::copy(ModelName::CUBE), glm::vec3(0.0f),
                            glm::vec3(0.0f, 0.0f, 1.0f), 0.0f, 10.0f, 1.0f);
   });

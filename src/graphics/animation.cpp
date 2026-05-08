@@ -93,8 +93,8 @@ void Animation::_readHierarchyData(AssimpNodeData &dest, const aiNode *src) {
   dest.childrenCount = src->mNumChildren;
 
   for (size_t i = 0; i < src->mNumChildren; ++i) {
-    AssimpNodeData newData;
-    _readHierarchyData(newData, src->mChildren[i]);
-    dest.children.push_back(newData);
+    AssimpNodeData new_data;
+    _readHierarchyData(new_data, src->mChildren[i]);
+    dest.children.push_back(new_data);
   }
 }

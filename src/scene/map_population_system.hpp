@@ -38,7 +38,7 @@ public:
    * @param objects The GameObjectManager to add props to
    * @param mapManager The MapManager for handling chunk registration
    */
-  void populateMap(GameObjectManager &objects, MapManager &mapManager);
+  void populateMap(GameObjectManager &objects, MapManager &map_manager);
 
 private:
   /**
@@ -53,6 +53,6 @@ private:
    * @param mapManager The map manager
    * @param propInstance The prop to spawn
    */
-  static void _spawnProp(GameObjectManager &objects, MapManager &mapManager,
-                         const PropInstance &propInstance);
+  static void _spawnProp(GameObjectManager &objects, MapManager &map_manager,
+                         const PropInstance &prop_instance);
 };

@@ -54,21 +54,22 @@ public:
     }
   }
 
-  void takeDamage(float amount, bool isCritical,
-                  glm::vec3 knockbackDir = glm::vec3(0.0f),
-                  float knockbackForce = 0.0f) override {
+  void takeDamage(float amount, bool is_critical,
+                  glm::vec3 knockback_dir = glm::vec3(0.0f),
+                  float knockback_force = 0.0f) override {
     // Call base takeDamage but prevent it from translating automatically
     // We handle translation via m_knockbackVelocity for smooth movement
-    Enemy::takeDamage(amount, isCritical, glm::vec3(0.0f), 0.0f);
+    Enemy::takeDamage(amount, is_critical, glm::vec3(0.0f), 0.0f);
 
     if (this->m_isDead || this->m_removeRequested ||
         !m_iFrameState.isFinished())
       return;
 
-    if (knockbackForce > 0.0f && this->m_knockbackResist < 1.0f) {
-      float actualKnockback = knockbackForce * (1.0f - this->m_knockbackResist);
+    if (knockback_force > 0.0f && this->m_knockbackResist < 1.0f) {
+      float actual_knockback =
+          knockback_force * (1.0f - this->m_knockbackResist);
       m_locomotion.reset();
-      m_knockbackVelocity += knockbackDir * (actualKnockback * 10.0f);
+      m_knockbackVelocity += knockback_dir * (actual_knockback * 10.0f);
     }
   }
 

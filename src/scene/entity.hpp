@@ -66,7 +66,7 @@ public:
   [[nodiscard]] float getMaxHealth() const { return m_maxHealth; }
   [[nodiscard]] bool isDead() const { return m_isDead; }
 
-  void setMaxHealth(float maxHealth) { m_maxHealth = maxHealth; }
+  void setMaxHealth(float max_health) { m_maxHealth = max_health; }
   void setHealth(float health) {
     m_health = std::clamp(health, 0.0f, m_maxHealth);
     if (m_health <= 0.0f && !m_isDead) {

@@ -26,12 +26,12 @@ __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 #define SHADER_PATH ASSETS_PATH "/shaders"
 #endif
 
-void process_input(GLFWwindow *window) {
+void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     glfwSetWindowShouldClose(window, 1);
 }
 
-GLFWwindow *initialize_window(int width, int height, const char *title) {
+GLFWwindow *initializeWindow(int width, int height, const char *title) {
   if (!glfwInit())
     exit(EXIT_FAILURE);
 
@@ -59,7 +59,7 @@ GLFWwindow *initialize_window(int width, int height, const char *title) {
 }
 
 int main() {
-  GLFWwindow *window = initialize_window(800, 600, "Petroleum Survival");
+  GLFWwindow *window = initializeWindow(800, 600, "Petroleum Survival");
 
   try {
     App application(window);
@@ -72,7 +72,7 @@ int main() {
       double delta_frame_time = current_frame_time - last_frame_time;
       last_frame_time = current_frame_time;
 
-      process_input(window);
+      processInput(window);
 
       // We don't clear here because App/Game handle their own clearing
       // with state-specific colors (e.g. loading screen vs game world)

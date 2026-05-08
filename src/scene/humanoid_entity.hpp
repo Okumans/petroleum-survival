@@ -42,14 +42,14 @@ public:
     moveWithAnimation(target - this->m_position);
   }
   virtual void moveTo(glm::vec3 target) { move(target - this->m_position); }
-  virtual void moveWithAnimation(glm::vec3 vec, float speedMultiplier = 1.0f) {
+  virtual void moveWithAnimation(glm::vec3 vec, float speed_multiplier = 1.0f) {
     if (glm::length(vec) < 0.001f)
       return;
 
     _setAnimation(AnimationTypes::WALKING);
 
     m_locomotion.startMove(this->m_position, this->m_rotation, vec,
-                           speedMultiplier);
+                           speed_multiplier);
   }
 
   virtual void move(glm::vec3 vec) {
@@ -58,23 +58,24 @@ public:
     this->translate(vec);
   }
 
-  virtual void takeDamage(float amount, bool isCritical,
-                          glm::vec3 knockbackDir = glm::vec3(0.0f),
-                          float knockbackForce = 0.0f) override {
+  virtual void takeDamage(float amount, bool is_critical,
+                          glm::vec3 knockback_dir = glm::vec3(0.0f),
+                          float knockback_force = 0.0f) override {
     // Call base takeDamage but prevent it from translating automatically
-    BaseClass::takeDamage(amount, isCritical, glm::vec3(0.0f), 0.0f);
+    BaseClass::takeDamage(amount, is_critical, glm::vec3(0.0f), 0.0f);
 
     if (this->m_isDead || this->m_removeRequested)
       return;
 
-    if (knockbackForce > 0.0f && this->m_knockbackResist < 1.0f) {
-      float actualKnockback = knockbackForce * (1.0f - this->m_knockbackResist);
+    if (knockback_force > 0.0f && this->m_knockbackResist < 1.0f) {
+      float actual_knockback =
+          knockback_force * (1.0f - this->m_knockbackResist);
 
       // Interrupt current movement to prevent setPosition overwriting knockback
       m_locomotion.reset();
 
       // Set initial high velocity for knockback (e.g. force * scalar)
-      m_knockbackVelocity += knockbackDir * (actualKnockback * 10.0f);
+      m_knockbackVelocity += knockback_dir * (actual_knockback * 10.0f);
     }
   }
 
@@ -162,7 +163,7 @@ protected:
     animator.updateAnimation(delta_time);
   }
 
-  [[nodiscard]] bool isMoving() const { return m_locomotion.isMoving(); }
+  [[nodiscard]] bool _isMoving() const { return m_locomotion.isMoving(); }
 
   inline virtual void _setupAnimationDuration() {
     m_locomotion.setup(0.3f, 0.2f);

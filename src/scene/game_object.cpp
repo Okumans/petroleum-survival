@@ -81,9 +81,9 @@ AABB GameObject::getHitboxAABB() const {
   glm::vec3 size = hitbox.getSize();
 
   // Apply scale directly to min/max from center
-  glm::vec3 scaledHalfSize = (size * 0.5f) * m_hitboxScaleFactor;
-  hitbox.min = center - scaledHalfSize;
-  hitbox.max = center + scaledHalfSize;
+  glm::vec3 scaled_half_size = (size * 0.5f) * m_hitboxScaleFactor;
+  hitbox.min = center - scaled_half_size;
+  hitbox.max = center + scaled_half_size;
 
   return hitbox;
 }

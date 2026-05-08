@@ -122,10 +122,10 @@ std::vector<Upgrade> UpgradeGenerator::generateUpgrades(Game &game, int count) {
     std::function<void(Game &)> apply;
   };
 
-  std::vector<Candidate> candidatePool;
-  candidatePool.reserve(64);
+  std::vector<Candidate> candidate_pool;
+  candidate_pool.reserve(64);
 
-  const bool hasFreeSlot = player->getWeapons().size() < Player::MAX_WEAPONS;
+  const bool has_free_slot = player->getWeapons().size() < Player::MAX_WEAPONS;
 
   for (const auto &offer : weaponPool()) {
     std::shared_ptr<Weapon> proto = offer.create();
@@ -133,40 +133,41 @@ std::vector<Upgrade> UpgradeGenerator::generateUpgrades(Game &game, int count) {
       continue;
     }
 
-    const std::string weaponId = proto->getId();
-    std::shared_ptr<Weapon> existing = findWeaponById(*player, weaponId);
+    const std::string weapon_id = proto->getId();
+    std::shared_ptr<Weapon> existing = findWeaponById(*player, weapon_id);
 
     if (existing) {
       if (!canLevelUpWeapon(*existing)) {
         continue;
       }
 
-      int nextLevel = existing->getLevel() + 1;
+      int next_level = existing->getLevel() + 1;
       Candidate c;
-      c.id = weaponId;
-      c.title = existing->getName() + " (Lv " + std::to_string(nextLevel) + ")";
+      c.id = weapon_id;
+      c.title =
+          existing->getName() + " (Lv " + std::to_string(next_level) + ")";
       c.iconName = existing->getIconName();
-      c.description = existing->getLevelDescription(nextLevel);
-      c.apply = [weaponId](Game &g) {
+      c.description = existing->getLevelDescription(next_level);
+      c.apply = [weapon_id](Game &g) {
         Player *p = g.getPlayer();
         if (!p) {
           return;
         }
-        std::shared_ptr<Weapon> w = findWeaponById(*p, weaponId);
+        std::shared_ptr<Weapon> w = findWeaponById(*p, weapon_id);
         if (w) {
           w->upgrade();
         }
       };
-      candidatePool.push_back(std::move(c));
+      candidate_pool.push_back(std::move(c));
       continue;
     }
 
-    if (!hasFreeSlot) {
+    if (!has_free_slot) {
       continue;
     }
 
     Candidate c;
-    c.id = weaponId;
+    c.id = weapon_id;
     c.title = proto->getName() + " (New)";
     c.iconName = proto->getIconName();
     c.description = proto->getLevelDescription(1);
@@ -185,7 +186,7 @@ std::vector<Upgrade> UpgradeGenerator::generateUpgrades(Game &game, int count) {
       w->setContext(&g);
       p->addWeapon(std::move(w));
     };
-    candidatePool.push_back(std::move(c));
+    candidate_pool.push_back(std::move(c));
   }
 
   for (const auto &item : itemPool()) {
@@ -195,15 +196,15 @@ std::vector<Upgrade> UpgradeGenerator::generateUpgrades(Game &game, int count) {
     c.iconName = item.iconName;
     c.description = item.description;
     c.apply = item.apply;
-    candidatePool.push_back(std::move(c));
+    candidate_pool.push_back(std::move(c));
   }
 
-  if (candidatePool.empty()) {
+  if (candidate_pool.empty()) {
     return upgrades;
   }
 
   // Pick unique candidates.
-  std::vector<int> indices(candidatePool.size());
+  std::vector<int> indices(candidate_pool.size());
   for (int i = 0; i < static_cast<int>(indices.size()); ++i) {
     indices[i] = i;
   }
@@ -212,9 +213,10 @@ std::vector<Upgrade> UpgradeGenerator::generateUpgrades(Game &game, int count) {
     std::swap(indices[i], indices[j]);
   }
 
-  const int outCount = std::min(count, static_cast<int>(candidatePool.size()));
-  for (int i = 0; i < outCount; ++i) {
-    const Candidate &c = candidatePool[indices[i]];
+  const int out_count =
+      std::min(count, static_cast<int>(candidate_pool.size()));
+  for (int i = 0; i < out_count; ++i) {
+    const Candidate &c = candidate_pool[indices[i]];
     upgrades.emplace_back(c.title, c.description, c.iconName, c.apply);
   }
 

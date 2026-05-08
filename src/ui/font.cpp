@@ -101,23 +101,20 @@ static const unsigned char font8x8_basic[95][8] = {
     {0x31, 0x6B, 0x46, 0x00, 0x00, 0x00, 0x00, 0x00}, // ~
 };
 
-BitmapFont::BitmapFont() : texID(0) {
+BitmapFont::BitmapFont() : m_texId(0) {
   for (int i = 0; i < 256; ++i) {
-    m_characters[i] = {glm::vec2(0.0f),
-                       glm::vec2(0.0f),
-                       glm::ivec2(0),
-                       glm::ivec2(0),
-                       0};
+    m_characters[i] = {glm::vec2(0.0f), glm::vec2(0.0f), glm::ivec2(0),
+                       glm::ivec2(0), 0};
   }
 }
 
 BitmapFont::~BitmapFont() {
-  if (texID)
-    glDeleteTextures(1, &texID);
+  if (m_texId)
+    glDeleteTextures(1, &m_texId);
 }
 
 bool BitmapFont::loadDefaultFont() {
-  _generate_font_texture();
+  _generateFontTexture();
   return true;
 }
 
@@ -136,51 +133,42 @@ float BitmapFont::getTextWidth(const std::string &text, float scale) const {
   return width;
 }
 
-void BitmapFont::_generate_font_texture() {
-  int texWidth = 128;
-  int texHeight = 128;
-  std::vector<unsigned char> data(texWidth * texHeight, 0);
+void BitmapFont::_generateFontTexture() {
+  int tex_width = 128;
+  int tex_height = 128;
+  std::vector<unsigned char> data(tex_width * tex_height, 0);
 
   for (int i = 0; i < 95; ++i) {
     char c = (char)(i + 32);
-    int gridX = i % 16;
-    int gridY = i / 16;
-    int startX = gridX * 8;
-    int startY = gridY * 8;
+    int grid_x = i % 16;
+    int grid_y = i / 16;
+    int start_x = grid_x * 8;
+    int start_y = grid_y * 8;
 
     for (int y = 0; y < 8; ++y) {
       unsigned char row = font8x8_basic[i][y];
       for (int x = 0; x < 8; ++x) {
         if (row & (1 << (7 - x))) {
-          data[(startY + y) * texWidth + (startX + x)] = 255;
+          data[(start_y + y) * tex_width + (start_x + x)] = 255;
         }
       }
     }
 
-    m_characters[(int)c] = {glm::vec2((float)startX / texWidth,
-                                      (float)startY / texHeight),
-                            glm::vec2((float)(startX + 8) / texWidth,
-                                      (float)(startY + 8) / texHeight),
-                            glm::ivec2(8, 8),
-                            glm::ivec2(0, 0),
-                            8};
+    m_characters[(int)c] = {
+        glm::vec2((float)start_x / tex_width, (float)start_y / tex_height),
+        glm::vec2((float)(start_x + 8) / tex_width,
+                  (float)(start_y + 8) / tex_height),
+        glm::ivec2(8, 8), glm::ivec2(0, 0), 8};
   }
 
-  glGenTextures(1, &texID);
-  glBindTexture(GL_TEXTURE_2D, texID);
-  glTexImage2D(GL_TEXTURE_2D,
-               0,
-               GL_RED,
-               texWidth,
-               texHeight,
-               0,
-               GL_RED,
-               GL_UNSIGNED_BYTE,
-               data.data());
+  glGenTextures(1, &m_texId);
+  glBindTexture(GL_TEXTURE_2D, m_texId);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, tex_width, tex_height, 0, GL_RED,
+               GL_UNSIGNED_BYTE, data.data());
 
   // Simple swizzling to make it white/transparent or just use GL_RED in shader
-  GLint swizzleMask[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
-  glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzleMask);
+  GLint swizzle_mask[] = {GL_ONE, GL_ONE, GL_ONE, GL_RED};
+  glTexParameteriv(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_RGBA, swizzle_mask);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

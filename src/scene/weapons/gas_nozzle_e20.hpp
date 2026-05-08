@@ -18,15 +18,15 @@ private:
   AnimationState<void> m_tickCooldown{0.3f};
 
 protected:
-  [[nodiscard]] virtual GameEvents::ParticleEffectType getSprayEffect() const {
+  [[nodiscard]] virtual GameEvents::ParticleEffectType _getSprayEffect() const {
     return GameEvents::ParticleEffectType::GAS_E20;
   }
 
-  [[nodiscard]] virtual glm::vec3 getSprayForward() const {
+  [[nodiscard]] virtual glm::vec3 _getSprayForward() const {
     return m_context.ensureInitialized()->getPlayerForward();
   }
 
-  [[nodiscard]] bool hasLighterSynergy() const {
+  [[nodiscard]] bool _hasLighterSynergy() const {
     if (getLevel() < getMaxLevel()) {
       return false;
     }
@@ -42,8 +42,8 @@ protected:
     return false;
   }
 
-  [[nodiscard]] float getSynergyDamageMultiplier() const {
-    return hasLighterSynergy() ? 1.35f : 1.0f;
+  [[nodiscard]] float _getSynergyDamageMultiplier() const {
+    return _hasLighterSynergy() ? 1.35f : 1.0f;
   }
 
 public:
@@ -80,8 +80,8 @@ public:
     }
   }
 
-  void onLevelUp(uint32_t newLevel) override {
-    switch (newLevel) {
+  void onLevelUp(uint32_t new_level) override {
+    switch (new_level) {
     case 2:
       setBaseCooldown(getBaseCooldown() * 0.9f);
       break;
@@ -117,7 +117,7 @@ public:
 
     if (m_tickCooldown.isFinished()) {
       glm::vec3 player_pos = m_context.ensureInitialized()->getPlayerPosition();
-      glm::vec3 player_forward = getSprayForward();
+      glm::vec3 player_forward = _getSprayForward();
 
       glm::vec3 normalized_forward = player_forward;
       float forward_length = glm::length(normalized_forward);
@@ -136,17 +136,17 @@ public:
       float cone_half_angle = m_coneHalfAngle + area_multiplier * 2.0f;
       float cos_cone_angle = std::cos(glm::radians(cone_half_angle));
 
-      const bool lighterSynergy = hasLighterSynergy();
-      const auto sprayEffect = lighterSynergy
-                                   ? GameEvents::ParticleEffectType::FLAME
-                                   : getSprayEffect();
+      const bool lighter_synergy = _hasLighterSynergy();
+      const auto spray_effect = lighter_synergy
+                                    ? GameEvents::ParticleEffectType::FLAME
+                                    : _getSprayEffect();
 
-      emitParticle(GameEvents::ParticleSpawnRequestedEvent{
+      _emitParticle(GameEvents::ParticleSpawnRequestedEvent{
           .position = player_pos + (normalized_forward * 1.0f),
           .direction = normalized_forward,
           .length = cone_range,
           .thickness = glm::max(0.18f, cone_range * 0.12f),
-          .effectId = sprayEffect,
+          .effectId = spray_effect,
       });
 
       m_context.ensureInitialized()->findTargets(
@@ -177,17 +177,17 @@ public:
               return;
 
             float falloff = 1.0f - (dist_to_enemy / cone_range);
-            float baseDmg = getDamage() * getSynergyDamageMultiplier() *
-                            (0.65f + falloff * 0.35f);
-            auto dmg = calculateDamage(baseDmg);
-            emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
+            float base_damage = getDamage() * _getSynergyDamageMultiplier() *
+                                (0.65f + falloff * 0.35f);
+            CalculatedDamage damage = calculateDamage(base_damage);
+            _emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
                 .enemy = enemy,
-                .amount = dmg.amount,
-                .isCritical = dmg.isCritical,
+                .amount = damage.amount,
+                .isCritical = damage.isCritical,
                 .knockbackDirection = normalized_forward,
                 .knockbackStrength = 0.5f + falloff * 0.35f,
                 .hitPosition = closest_on_enemy + glm::vec3(0.0f, 1.0f, 0.0f),
-                .hitEffect = sprayEffect,
+                .hitEffect = spray_effect,
             });
           });
 

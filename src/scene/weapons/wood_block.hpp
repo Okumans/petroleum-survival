@@ -6,8 +6,8 @@
 #include "scene/weapon/weapon.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
-#include <unordered_set>
 #include <string>
+#include <unordered_set>
 
 class SolidWoodBlock : public Weapon {
 private:
@@ -57,8 +57,8 @@ public:
     }
   }
 
-  void onLevelUp(uint32_t newLevel) override {
-    switch (newLevel) {
+  void onLevelUp(uint32_t new_level) override {
+    switch (new_level) {
     case 2:
       setBaseCooldown(getBaseCooldown() * 0.9f);
       break;
@@ -116,9 +116,9 @@ public:
     auto &ctx = *m_context.ensureInitialized();
 
     m_coolDownState.updateTimer(dt);
-    const bool isSweeping =
+    const bool is_sweeping =
         m_sweepState.animationStarted && !m_sweepState.isFinished();
-    if (!isSweeping) {
+    if (!is_sweeping) {
       if (m_coolDownState.isFinished()) {
         if (fire()) {
           m_coolDownState.reset();
@@ -162,7 +162,7 @@ public:
 
     // Emit sweep particles at a fixed interval while sweeping.
     if (m_sweepEmitTimer.isFinished()) {
-      emitParticle(GameEvents::ParticleSpawnRequestedEvent{
+      _emitParticle(GameEvents::ParticleSpawnRequestedEvent{
           .position = player_pos,
           .direction = sweep_dir,
           .length = m_lastSweepRange,
@@ -199,7 +199,7 @@ public:
       m_sweepHit.insert(enemy);
 
       auto dmg = calculateDamage();
-      emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
+      _emitEnemyDamage(GameEvents::EnemyDamageRequestedEvent{
           .enemy = enemy,
           .amount = dmg.amount,
           .isCritical = dmg.isCritical,

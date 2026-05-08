@@ -30,8 +30,8 @@ float Camera::getAspect() const {
   return (m_sceneHeight > 0) ? (m_sceneWidth / m_sceneHeight) : 1.0f;
 }
 
-void Camera::processKeyboard(Camera_Movement direction, float deltaTime) {
-  float velocity = movementSpeed * deltaTime;
+void Camera::processKeyboard(CameraMovement direction, float delta_time) {
+  float velocity = movementSpeed * delta_time;
   if (direction == FORWARD)
     position += m_front * velocity;
   if (direction == BACKWARD)

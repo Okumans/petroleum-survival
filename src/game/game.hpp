@@ -206,7 +206,7 @@ public:
 
   void startGame();
 
-  void movePlayer(glm::vec3 vec, bool isRunning);
+  void movePlayer(glm::vec3 vec, bool is_running);
 
   auto getClosestEnemies(float radius, uint32_t top_k) const;
 

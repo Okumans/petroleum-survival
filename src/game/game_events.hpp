@@ -46,7 +46,7 @@ enum class ParticleEffectType {
   GAS_E95,
   WOOD_SWEEP,
   FUME_IDLE,
-  FUME_ATTACk,
+  FUME_ATTACK,
 };
 
 struct ParticleSpawnRequestedEvent {

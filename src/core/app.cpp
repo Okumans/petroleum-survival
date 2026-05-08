@@ -95,12 +95,12 @@ App::~App() = default;
 
 void App::_setupResources() {
   // Helpers
-  auto loadModel = [](ModelName name, const std::string &path) {
+  auto load_model = [](ModelName name, const std::string &path) {
     return [name, path]() { ModelManager::load(name, path.c_str(), false); };
   };
 
-  auto loadAnimation = [](AnimationName name, const std::string &path,
-                          ModelName model_name) {
+  auto load_animation = [](AnimationName name, const std::string &path,
+                           ModelName model_name) {
     return [name, path, model_name]() {
       AnimationManager::load(name, path.c_str(),
                              &ModelManager::get(model_name));
@@ -131,150 +131,151 @@ void App::_setupResources() {
   // Models
   m_loadingTasks.push_back(
       {"Model: Car Sedan",
-       loadModel(ModelName::CAR_SEDAN, ASSETS_PATH "/objects/car/sedan.glb")});
+       load_model(ModelName::CAR_SEDAN, ASSETS_PATH "/objects/car/sedan.glb")});
   m_loadingTasks.push_back(
-      {"Model: Car Muscle", loadModel(ModelName::CAR_MUSCLE,
-                                      ASSETS_PATH "/objects/car/muscle.glb")});
+      {"Model: Car Muscle", load_model(ModelName::CAR_MUSCLE,
+                                       ASSETS_PATH "/objects/car/muscle.glb")});
   m_loadingTasks.push_back(
-      {"Model: Car Pickup", loadModel(ModelName::CAR_PICKUP,
-                                      ASSETS_PATH "/objects/car/pickup.glb")});
+      {"Model: Car Pickup", load_model(ModelName::CAR_PICKUP,
+                                       ASSETS_PATH "/objects/car/pickup.glb")});
   m_loadingTasks.push_back(
       {"Model: Car Taxi",
-       loadModel(ModelName::CAR_TAXI, ASSETS_PATH "/objects/car/taxi.glb")});
+       load_model(ModelName::CAR_TAXI, ASSETS_PATH "/objects/car/taxi.glb")});
   m_loadingTasks.push_back(
-      {"Model: Car Police", loadModel(ModelName::CAR_POLICE, ASSETS_PATH
-                                      "/objects/car/policeSedan.glb")});
+      {"Model: Car Police", load_model(ModelName::CAR_POLICE, ASSETS_PATH
+                                       "/objects/car/policeSedan.glb")});
   m_loadingTasks.push_back(
       {"Model: Car Bus",
-       loadModel(ModelName::CAR_BUS, ASSETS_PATH "/objects/car/bus.glb")});
+       load_model(ModelName::CAR_BUS, ASSETS_PATH "/objects/car/bus.glb")});
   m_loadingTasks.push_back({"Model: Car Monster Truck",
-                            loadModel(ModelName::CAR_MONSTER_TRUCK, ASSETS_PATH
-                                      "/objects/car/monsterTruck.glb")});
+                            load_model(ModelName::CAR_MONSTER_TRUCK, ASSETS_PATH
+                                       "/objects/car/monsterTruck.glb")});
 
   m_loadingTasks.push_back(
-      {"Model: The Witch", loadModel(ModelName::THE_WITCH, ASSETS_PATH
-                                     "/objects/the_witch/the_witch.dae")});
+      {"Model: The Witch", load_model(ModelName::THE_WITCH, ASSETS_PATH
+                                      "/objects/the_witch/the_witch.dae")});
   m_loadingTasks.push_back(
       {"Model: Budhist Character",
-       loadModel(ModelName::BUDHIST_CHARACTER, ASSETS_PATH
-                 "/objects/budhist_character/budhist_character.dae")});
+       load_model(ModelName::BUDHIST_CHARACTER, ASSETS_PATH
+                  "/objects/budhist_character/budhist_character.dae")});
   m_loadingTasks.push_back(
-      {"Model: Money 20", loadModel(ModelName::MONEY_20, ASSETS_PATH
-                                    "/objects/items/money/20_baht.glb")});
+      {"Model: Money 20", load_model(ModelName::MONEY_20, ASSETS_PATH
+                                     "/objects/items/money/20_baht.glb")});
   m_loadingTasks.push_back(
-      {"Model: Money 100", loadModel(ModelName::MONEY_100, ASSETS_PATH
-                                     "/objects/items/money/100_baht.glb")});
+      {"Model: Money 100", load_model(ModelName::MONEY_100, ASSETS_PATH
+                                      "/objects/items/money/100_baht.glb")});
   m_loadingTasks.push_back(
-      {"Model: Money 500", loadModel(ModelName::MONEY_500, ASSETS_PATH
-                                     "/objects/items/money/500_baht.glb")});
+      {"Model: Money 500", load_model(ModelName::MONEY_500, ASSETS_PATH
+                                      "/objects/items/money/500_baht.glb")});
   m_loadingTasks.push_back(
-      {"Model: Money 1000", loadModel(ModelName::MONEY_1000, ASSETS_PATH
-                                      "/objects/items/money/1000_baht.glb")});
+      {"Model: Money 1000", load_model(ModelName::MONEY_1000, ASSETS_PATH
+                                       "/objects/items/money/1000_baht.glb")});
   m_loadingTasks.push_back(
       {"Model: Car Sedan",
-       loadModel(ModelName::CAR_SEDAN, ASSETS_PATH "/objects/car/sedan.glb")});
+       load_model(ModelName::CAR_SEDAN, ASSETS_PATH "/objects/car/sedan.glb")});
   m_loadingTasks.push_back(
-      {"Model: Car Muscle", loadModel(ModelName::CAR_MUSCLE,
-                                      ASSETS_PATH "/objects/car/muscle.glb")});
+      {"Model: Car Muscle", load_model(ModelName::CAR_MUSCLE,
+                                       ASSETS_PATH "/objects/car/muscle.glb")});
   m_loadingTasks.push_back(
-      {"Model: Car Pickup", loadModel(ModelName::CAR_PICKUP,
-                                      ASSETS_PATH "/objects/car/pickup.glb")});
+      {"Model: Car Pickup", load_model(ModelName::CAR_PICKUP,
+                                       ASSETS_PATH "/objects/car/pickup.glb")});
   m_loadingTasks.push_back(
       {"Model: Car Taxi",
-       loadModel(ModelName::CAR_TAXI, ASSETS_PATH "/objects/car/taxi.glb")});
+       load_model(ModelName::CAR_TAXI, ASSETS_PATH "/objects/car/taxi.glb")});
   m_loadingTasks.push_back(
-      {"Model: Car Police", loadModel(ModelName::CAR_POLICE, ASSETS_PATH
-                                      "/objects/car/policeSedan.glb")});
+      {"Model: Car Police", load_model(ModelName::CAR_POLICE, ASSETS_PATH
+                                       "/objects/car/policeSedan.glb")});
   m_loadingTasks.push_back(
       {"Model: Car Bus",
-       loadModel(ModelName::CAR_BUS, ASSETS_PATH "/objects/car/bus.glb")});
+       load_model(ModelName::CAR_BUS, ASSETS_PATH "/objects/car/bus.glb")});
   m_loadingTasks.push_back({"Model: Car Monster Truck",
-                            loadModel(ModelName::CAR_MONSTER_TRUCK, ASSETS_PATH
-                                      "/objects/car/monsterTruck.glb")});
+                            load_model(ModelName::CAR_MONSTER_TRUCK, ASSETS_PATH
+                                       "/objects/car/monsterTruck.glb")});
   m_loadingTasks.push_back(
       {"Model: Sphere",
-       loadModel(ModelName::SPHERE, ASSETS_PATH "/objects/sphere.obj")});
+       load_model(ModelName::SPHERE, ASSETS_PATH "/objects/sphere.obj")});
   m_loadingTasks.push_back(
       {"Model: Cube",
-       loadModel(ModelName::CUBE, ASSETS_PATH "/objects/cube.obj")});
+       load_model(ModelName::CUBE, ASSETS_PATH "/objects/cube.obj")});
   m_loadingTasks.push_back(
       {"Model: Water Bottle",
-       loadModel(ModelName::WATER_BOTTLE, ASSETS_PATH
-                 "/objects/projectiles/water_bottle/water_bottle.glb")});
+       load_model(ModelName::WATER_BOTTLE, ASSETS_PATH
+                  "/objects/projectiles/water_bottle/water_bottle.glb")});
   m_loadingTasks.push_back(
       {"Model: Traffic Cone",
-       loadModel(ModelName::TRAFFIC_CONE,
-                 ASSETS_PATH "/objects/traffic_cone/traffic_cone.glb")});
+       load_model(ModelName::TRAFFIC_CONE,
+                  ASSETS_PATH "/objects/traffic_cone/traffic_cone.glb")});
   m_loadingTasks.push_back(
       {"Model: Tree 1",
-       loadModel(ModelName::TREE_1, ASSETS_PATH "/objects/tree/tree_1.glb")});
+       load_model(ModelName::TREE_1, ASSETS_PATH "/objects/tree/tree_1.glb")});
   m_loadingTasks.push_back(
       {"Model: Tree 2",
-       loadModel(ModelName::TREE_2, ASSETS_PATH "/objects/tree/tree_2.glb")});
+       load_model(ModelName::TREE_2, ASSETS_PATH "/objects/tree/tree_2.glb")});
   m_loadingTasks.push_back(
       {"Model: Bush 1",
-       loadModel(ModelName::BUSH_1, ASSETS_PATH "/objects/tree/bush_1.glb")});
+       load_model(ModelName::BUSH_1, ASSETS_PATH "/objects/tree/bush_1.glb")});
   m_loadingTasks.push_back(
       {"Model: Bush 2",
-       loadModel(ModelName::BUSH_2, ASSETS_PATH "/objects/tree/bush_2.glb")});
+       load_model(ModelName::BUSH_2, ASSETS_PATH "/objects/tree/bush_2.glb")});
   m_loadingTasks.push_back(
       {"Model: Rock 1",
-       loadModel(ModelName::ROCK_1, ASSETS_PATH "/objects/rock/rock_1.glb")});
+       load_model(ModelName::ROCK_1, ASSETS_PATH "/objects/rock/rock_1.glb")});
 
   m_loadingTasks.push_back(
-      {"Model: Militia Human", loadModel(ModelName::MILITIA_HUMAN, ASSETS_PATH
-                                         "/objects/human/human.dae")});
+      {"Model: Militia Human", load_model(ModelName::MILITIA_HUMAN, ASSETS_PATH
+                                          "/objects/human/human.dae")});
 
   // Animations
   m_loadingTasks.push_back({"Animation: The Witch Idle",
-                            loadAnimation(AnimationName::THE_WITCH_IDLE,
-                                          ASSETS_PATH "/objects/the_witch/"
-                                                      "Idle.dae",
-                                          ModelName::THE_WITCH)});
+                            load_animation(AnimationName::THE_WITCH_IDLE,
+                                           ASSETS_PATH "/objects/the_witch/"
+                                                       "Idle.dae",
+                                           ModelName::THE_WITCH)});
   m_loadingTasks.push_back({"Animation: The Witch Walking",
-                            loadAnimation(AnimationName::THE_WITCH_WALKING,
-                                          ASSETS_PATH "/objects/the_witch/"
-                                                      "Walking.dae",
-                                          ModelName::THE_WITCH)});
+                            load_animation(AnimationName::THE_WITCH_WALKING,
+                                           ASSETS_PATH "/objects/the_witch/"
+                                                       "Walking.dae",
+                                           ModelName::THE_WITCH)});
   m_loadingTasks.push_back({"Animation: The Witch Running",
-                            loadAnimation(AnimationName::THE_WITCH_RUNNING,
-                                          ASSETS_PATH "/objects/the_witch/"
-                                                      "Running.dae",
-                                          ModelName::THE_WITCH)});
+                            load_animation(AnimationName::THE_WITCH_RUNNING,
+                                           ASSETS_PATH "/objects/the_witch/"
+                                                       "Running.dae",
+                                           ModelName::THE_WITCH)});
   // Dancing slot intentionally loads Idle.dae — there is no separate
   // dancing animation for this character, so dancing falls back to idle.
   m_loadingTasks.push_back({"Animation: The Witch Dancing",
-                            loadAnimation(AnimationName::THE_WITCH_DANCING,
-                                          ASSETS_PATH "/objects/the_witch/"
-                                                      "Idle.dae",
-                                          ModelName::THE_WITCH)});
+                            load_animation(AnimationName::THE_WITCH_DANCING,
+                                           ASSETS_PATH "/objects/the_witch/"
+                                                       "Idle.dae",
+                                           ModelName::THE_WITCH)});
 
   // Budhist character only ships with a walking animation, so we reuse it for
   // both the idle and walking slots. Replace the IDLE source with a real
   // idle .dae once one is available.
   m_loadingTasks.push_back(
       {"Animation: Budhist Character Idle",
-       loadAnimation(AnimationName::BUDHIST_CHARACTER_IDLE,
-                     ASSETS_PATH
-                     "/objects/budhist_character/budhist_character.dae",
-                     ModelName::BUDHIST_CHARACTER)});
+       load_animation(AnimationName::BUDHIST_CHARACTER_IDLE,
+                      ASSETS_PATH
+                      "/objects/budhist_character/budhist_character.dae",
+                      ModelName::BUDHIST_CHARACTER)});
   m_loadingTasks.push_back(
       {"Animation: Budhist Character Walking",
-       loadAnimation(AnimationName::BUDHIST_CHARACTER_WALKING,
-                     ASSETS_PATH
-                     "/objects/budhist_character/budhist_character_walking.dae",
-                     ModelName::BUDHIST_CHARACTER)});
+       load_animation(
+           AnimationName::BUDHIST_CHARACTER_WALKING,
+           ASSETS_PATH
+           "/objects/budhist_character/budhist_character_walking.dae",
+           ModelName::BUDHIST_CHARACTER)});
 
   m_loadingTasks.push_back({"Animation: Human Walking",
-                            loadAnimation(AnimationName::HUMAN_IDLE,
-                                          ASSETS_PATH "/objects/human/"
-                                                      "human_walking.dae",
-                                          ModelName::MILITIA_HUMAN)});
+                            load_animation(AnimationName::HUMAN_IDLE,
+                                           ASSETS_PATH "/objects/human/"
+                                                       "human_walking.dae",
+                                           ModelName::MILITIA_HUMAN)});
   m_loadingTasks.push_back({"Animation: Human Walking",
-                            loadAnimation(AnimationName::HUMAN_WALKING,
-                                          ASSETS_PATH "/objects/human/"
-                                                      "human_walking.dae",
-                                          ModelName::MILITIA_HUMAN)});
+                            load_animation(AnimationName::HUMAN_WALKING,
+                                           ASSETS_PATH "/objects/human/"
+                                                       "human_walking.dae",
+                                           ModelName::MILITIA_HUMAN)});
 
   // Static texture generation
   m_loadingTasks.push_back(
@@ -409,27 +410,26 @@ void App::_setupUIElements() {
 }
 
 void App::_updateUIElements(double delta_time) {
-  // Update FPS Counter
-  static double timeAccumulator = 0.0;
-  static int frameCount = 0;
-  static double lastFps = 0.0;
+  static double time_accumulator = 0.0;
+  static int frame_count = 0;
+  static double last_fps = 0.0;
 
-  timeAccumulator += delta_time;
-  frameCount++;
+  time_accumulator += delta_time;
+  frame_count++;
 
-  if (timeAccumulator >= 0.5) {
-    lastFps = frameCount / timeAccumulator;
-    timeAccumulator = 0.0;
-    frameCount = 0;
+  if (time_accumulator >= 0.5) {
+    last_fps = frame_count / time_accumulator;
+    time_accumulator = 0.0;
+    frame_count = 0;
 
-    auto *fpsElement =
+    auto *fps_elelment =
         dynamic_cast<TextElement *>(m_uiManager.getElement("fps_counter"));
-    if (fpsElement) {
-      fpsElement->text = std::format("FPS: {}", static_cast<int>(lastFps));
+    if (fps_elelment) {
+      fps_elelment->text = std::format("FPS: {}", static_cast<int>(last_fps));
     }
   }
 
-  float vWidth = m_uiManager.getVirtualWidth();
+  float virtual_width = m_uiManager.getVirtualWidth();
   GameState state = m_game.getState();
 
   // Handle Loading Screen
@@ -437,23 +437,23 @@ void App::_updateUIElements(double delta_time) {
           m_uiManager.getElement("loading_title"))) {
     title->visible = (state == GameState::LOADING);
     float w = m_font.getTextWidth(title->text, title->scale);
-    title->bounds.x = (vWidth - w) / 2.0f;
+    title->bounds.x = (virtual_width - w) / 2.0f;
   }
   if (auto *status = dynamic_cast<TextElement *>(
           m_uiManager.getElement("loading_status"))) {
     status->visible = (state == GameState::LOADING);
     float w = m_font.getTextWidth(status->text, status->scale);
-    status->bounds.x = (vWidth - w) / 2.0f;
+    status->bounds.x = (virtual_width - w) / 2.0f;
   }
 
   // Handle Global Overlay
-  bool isMenu = (state != GameState::PLAYING && state != GameState::LEVEL_UP);
+  bool is_menu = (state != GameState::PLAYING && state != GameState::LEVEL_UP);
   m_uiManager.getElement("darken_screen")->visible =
-      isMenu || state == GameState::LEVEL_UP;
-  m_uiManager.getElement("darken_screen")->bounds.w = vWidth;
+      is_menu || state == GameState::LEVEL_UP;
+  m_uiManager.getElement("darken_screen")->bounds.w = virtual_width;
 
-  m_levelUI.update(m_game, vWidth);
-  m_menuUI.update(m_game, vWidth);
+  m_levelUI.update(m_game, virtual_width);
+  m_menuUI.update(m_game, virtual_width);
 }
 
 void App::_setupShaders() {
@@ -550,8 +550,9 @@ void App::_setupShaders() {
          pbr_shader.define("u_AnimationTex");
          pbr_shader.define("u_EmissionColor");
 
-         constexpr auto lightUniforms = ShaderUniforms::generateLightUniforms();
-         for (const auto &u : lightUniforms) {
+         constexpr auto light_uniform = ShaderUniforms::generateLightUniforms();
+
+         for (const ShaderUniforms::LightUniforms &u : light_uniform) {
            pbr_shader.define(u.position.data());
            pbr_shader.define(u.color.data());
            pbr_shader.define(u.type.data());
@@ -607,14 +608,6 @@ void App::_setupShaders() {
          irradiance_shader.define("u_View");
          irradiance_shader.define("u_Projection");
 
-         // Shader &debug_shader = ShaderManager::get(ShaderType::DEBUG);
-         // debug_shader.use();
-         //
-         // debug_shader.define("u_Model");
-         // debug_shader.define("u_View");
-         // debug_shader.define("u_Projection");
-         // debug_shader.define("u_Color");
-
          Shader &debug_shader = ShaderManager::get(ShaderType::DEBUG);
          debug_shader.use();
 
@@ -633,8 +626,8 @@ void App::_handleProcessInput(double delta_time) {
   const float step_amount = 1.0f;
   glm::vec3 direction(0.0f);
 
-  bool isRunning = glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
-                   glfwGetKey(m_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
+  bool is_running = glfwGetKey(m_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS ||
+                    glfwGetKey(m_window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
 
   if (glfwGetKey(m_window, GLFW_KEY_W) == GLFW_PRESS ||
       glfwGetKey(m_window, GLFW_KEY_UP) == GLFW_PRESS) {
@@ -657,7 +650,7 @@ void App::_handleProcessInput(double delta_time) {
   }
 
   if (direction != glm::vec3(0.0f))
-    m_game.movePlayer(direction, isRunning);
+    m_game.movePlayer(direction, is_running);
 }
 
 void App::_handleKeyCallback(int key, int scancode, int action, int mods) {

@@ -40,6 +40,6 @@ void ShadowMap::bindForReading(unsigned int unit) {
   glBindTextureUnit(unit, m_shadowMapTex);
 }
 
-void ShadowMap::updateLightSpaceMatrix(const glm::vec3 &targetPos) {
-  m_lightSpaceMatrix = LightingManager::calculateLightSpaceMatrix(targetPos);
+void ShadowMap::updateLightSpaceMatrix(const glm::vec3 &target_pos) {
+  m_lightSpaceMatrix = LightingManager::calculateLightSpaceMatrix(target_pos);
 }

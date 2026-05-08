@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-enum Camera_Movement { FORWARD, BACKWARD, LEFT, RIGHT };
+enum CameraMovement { FORWARD, BACKWARD, LEFT, RIGHT };
 
 // Default camera values
 const float YAW = -90.0f;
@@ -51,7 +51,7 @@ public:
   [[nodiscard]] float getAspect() const;
 
   // Input Processing
-  void processKeyboard(Camera_Movement direction, float deltaTime);
+  void processKeyboard(CameraMovement direction, float delta_time);
   void processMouseMovement(float x_offset, float y_offset,
                             GLboolean constrain_pitch);
   void processMouseScroll(float y_offset);

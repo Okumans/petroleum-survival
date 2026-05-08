@@ -124,5 +124,5 @@ public:
   GLuint getVAO() const;
 
 private:
-  void _setup_buffers();
+  void _setupBuffers();
 };

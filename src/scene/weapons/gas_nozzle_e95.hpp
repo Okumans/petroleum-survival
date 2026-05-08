@@ -6,11 +6,12 @@
 // darker gas palette.
 class GasNozzleE95 : public GasNozzleE20 {
 protected:
-  [[nodiscard]] GameEvents::ParticleEffectType getSprayEffect() const override {
+  [[nodiscard]] GameEvents::ParticleEffectType
+  _getSprayEffect() const override {
     return GameEvents::ParticleEffectType::GAS_E95;
   }
 
-  [[nodiscard]] glm::vec3 getSprayForward() const override {
+  [[nodiscard]] glm::vec3 _getSprayForward() const override {
     return -m_context.ensureInitialized()->getPlayerForward();
   }
 

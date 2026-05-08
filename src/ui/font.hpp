@@ -18,13 +18,13 @@ public:
   ~BitmapFont();
 
   bool loadDefaultFont();
-  GLuint getTexID() const { return texID; }
+  GLuint getTexID() const { return m_texId; }
   const Character &getCharacter(char c) const;
   float getTextWidth(const std::string &text, float scale) const;
   float getLineHeight() const { return 8.0f; }
 
 private:
-  GLuint texID = 0;
+  GLuint m_texId = 0;
   Character m_characters[256];
-  void _generate_font_texture();
+  void _generateFontTexture();
 };

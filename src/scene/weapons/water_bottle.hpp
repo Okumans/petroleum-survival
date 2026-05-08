@@ -50,8 +50,8 @@ public:
     }
   }
 
-  void onLevelUp(uint32_t newLevel) override {
-    switch (newLevel) {
+  void onLevelUp(uint32_t new_level) override {
+    switch (new_level) {
     case 2:
       setBaseCooldown(getBaseCooldown() * 0.9f);
       break;
@@ -151,7 +151,7 @@ public:
                     m_context.ensureInitialized()->getGroundLevel(
                         p.getPosition())) {
                   p.requestRemoval();
-                  emitParticle(GameEvents::ParticleSpawnRequestedEvent{
+                  _emitParticle(GameEvents::ParticleSpawnRequestedEvent{
                       .position = p.getPosition(),
                       .direction = p.getVelocity(),
                       .effectId = GameEvents::ParticleEffectType::PHYSICAL_HIT,
@@ -160,7 +160,7 @@ public:
               });
             }));
 
-    emitProjectile(
+    _emitProjectile(
         GameEvents::ProjectileSpawnRequestedEvent{.projectile = proj});
     return true;
   }

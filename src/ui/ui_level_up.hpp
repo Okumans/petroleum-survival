@@ -15,14 +15,14 @@ public:
   ~LevelUI();
 
   void setup(Game &game);
-  void update(const Game &game, float virtualWidth);
+  void update(const Game &game, float virtual_width);
 
 private:
   void _setupHUD();
   void _setupLevelUpOverlay(Game &game);
   void _setupGameOverOverlay(Game &game);
-  void _updateHUD(const Game &game, float virtualWidth);
-  void _updateLevelUpOverlay(const Game &game, float virtualWidth);
-  void _updateGameOverOverlay(const Game &game, float virtualWidth);
-  void _updateHealthBar(const Game &game, float virtualWidth);
+  void _updateHUD(const Game &game, float virtual_width);
+  void _updateLevelUpOverlay(const Game &game, float virtual_width);
+  void _updateGameOverOverlay(const Game &game, float virtual_width);
+  void _updateHealthBar(const Game &game, float virtual_width);
 };

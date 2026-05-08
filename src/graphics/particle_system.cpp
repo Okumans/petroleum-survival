@@ -2,9 +2,9 @@
 
 #include <random>
 
-ParticleSystem::ParticleSystem(uint32_t maxParticles)
-    : m_poolIndex(maxParticles - 1) {
-  m_particlePool.resize(maxParticles);
+ParticleSystem::ParticleSystem(uint32_t max_particles)
+    : m_poolIndex(max_particles - 1) {
+  m_particlePool.resize(max_particles);
 }
 
 ParticleSystem::~ParticleSystem() {
@@ -81,7 +81,7 @@ void ParticleSystem::render(const RenderContext &ctx) {
     m_fence = nullptr;
   }
 
-  uint32_t activeParticleCount = 0;
+  uint32_t active_particle_count = 0;
   for (const auto &particle : m_particlePool) {
     if (!particle.active)
       continue;
@@ -94,16 +94,16 @@ void ParticleSystem::render(const RenderContext &ctx) {
     float size = glm::mix(particle.sizeBegin, particle.sizeEnd, t);
     glm::vec4 color = glm::mix(particle.colorBegin, particle.colorEnd, t);
 
-    m_ssboMapped[activeParticleCount].positionSize =
+    m_ssboMapped[active_particle_count].positionSize =
         glm::vec4(particle.position, size);
-    m_ssboMapped[activeParticleCount].directionStretch =
+    m_ssboMapped[active_particle_count].directionStretch =
         glm::vec4(particle.direction, particle.stretch);
-    m_ssboMapped[activeParticleCount].color = color;
+    m_ssboMapped[active_particle_count].color = color;
 
-    activeParticleCount++;
+    active_particle_count++;
   }
 
-  if (activeParticleCount == 0)
+  if (active_particle_count == 0)
     return;
 
   m_fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -122,46 +122,46 @@ void ParticleSystem::render(const RenderContext &ctx) {
   glBindVertexArray(m_quadVAO);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, m_ssbo);
 
-  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, activeParticleCount);
+  glDrawArraysInstanced(GL_TRIANGLES, 0, 6, active_particle_count);
 
   // Restore state
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glDepthMask(GL_TRUE);
 }
 
-void ParticleSystem::emit(const ParticleProps &particleProps) {
+void ParticleSystem::emit(const ParticleProps &particle_props) {
   Particle &particle = m_particlePool[m_poolIndex];
   particle.active = true;
-  particle.position = particleProps.position;
+  particle.position = particle_props.position;
 
   // Add random variation to velocity
-  particle.velocity = particleProps.velocity;
+  particle.velocity = particle_props.velocity;
   particle.velocity.x +=
-      particleProps.velocityVariation.x * (_randomFloat() - 0.5f);
+      particle_props.velocityVariation.x * (_randomFloat() - 0.5f);
   particle.velocity.y +=
-      particleProps.velocityVariation.y * (_randomFloat() - 0.5f);
+      particle_props.velocityVariation.y * (_randomFloat() - 0.5f);
   particle.velocity.z +=
-      particleProps.velocityVariation.z * (_randomFloat() - 0.5f);
+      particle_props.velocityVariation.z * (_randomFloat() - 0.5f);
 
-  particle.colorBegin = particleProps.colorBegin;
-  particle.colorEnd = particleProps.colorEnd;
+  particle.colorBegin = particle_props.colorBegin;
+  particle.colorEnd = particle_props.colorEnd;
 
-  particle.lifeTime = particleProps.lifeTime;
-  particle.lifeRemaining = particleProps.lifeTime;
+  particle.lifeTime = particle_props.lifeTime;
+  particle.lifeRemaining = particle_props.lifeTime;
 
-  particle.direction = particleProps.direction;
+  particle.direction = particle_props.direction;
   if (glm::length(particle.direction) < 0.001f) {
     particle.direction = glm::vec3(0.0f, 1.0f, 0.0f);
   } else {
     particle.direction = glm::normalize(particle.direction);
   }
 
-  particle.sizeBegin = particleProps.sizeBegin +
-                       particleProps.sizeVariation * (_randomFloat() - 0.5f);
-  particle.sizeEnd = particleProps.sizeEnd;
+  particle.sizeBegin = particle_props.sizeBegin +
+                       particle_props.sizeVariation * (_randomFloat() - 0.5f);
+  particle.sizeEnd = particle_props.sizeEnd;
   particle.stretch =
-      glm::max(1.0f, particleProps.stretch + particleProps.stretchVariation *
-                                                 (_randomFloat() - 0.5f));
+      glm::max(1.0f, particle_props.stretch + particle_props.stretchVariation *
+                                                  (_randomFloat() - 0.5f));
 
   m_poolIndex =
       (m_poolIndex == 0) ? m_particlePool.size() - 1 : m_poolIndex - 1;

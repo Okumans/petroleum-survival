@@ -45,5 +45,5 @@ private:
   GLuint _loadTextureFromMemory(const void *data, size_t size,
                                 bool flip_vertical);
   GLuint _createTexture(unsigned char *data, int width, int height,
-                        int nrComponents);
+                        int nr_components);
 };

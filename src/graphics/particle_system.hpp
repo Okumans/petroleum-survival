@@ -57,14 +57,14 @@ private:
   std::shared_ptr<Shader> m_shader;
 
 public:
-  ParticleSystem(uint32_t maxParticles = 10000);
+  ParticleSystem(uint32_t max_particles = 10000);
   ~ParticleSystem();
 
   void setup();
   void update(double delta_time);
   void render(const RenderContext &ctx);
 
-  void emit(const ParticleProps &particleProps);
+  void emit(const ParticleProps &particle_props);
 
 private:
   uint32_t _randomUint();
