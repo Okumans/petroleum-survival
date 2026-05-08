@@ -299,9 +299,8 @@ void Game::render(double delta_time) {
   Utility::concat(
       [this](const LoadedChunkObject &val) {
         GameObject *object = val.object;
-        assert(object);
 
-        if (object->isRemovalRequested())
+        if (!object || object->isRemovalRequested())
           return;
 
         object->ensureTransformUpdated();
